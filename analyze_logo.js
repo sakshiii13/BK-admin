@@ -1,4 +1,4 @@
-const { Jimp } = require("jimp");
+import { Jimp } from "jimp";
 
 async function analyzeLogo() {
   const image = await Jimp.read("public/logo.png");

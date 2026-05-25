@@ -1,529 +1,578 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  FaPlus,
-  FaEdit,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaEnvelope,
-  FaClock,
-  FaTimes,
-} from "react-icons/fa";
+  import React, { useEffect, useMemo, useState } from "react";
+  import {
+    FaPlus,
+    FaEdit,
+    FaEye,
+    FaMapMarkerAlt,
+    FaPhoneAlt,
+    FaEnvelope,
+    FaClock,
+    FaTimes,
+  } from "react-icons/fa";
 
-import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+  import { useNavigate } from "react-router-dom";
+  import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+  import L from "leaflet";
 
-import {
-  createStoreApi,
-  getAllStoresApi,
-  updateStoreApi,
-} from "../../../api/admin.api";
+  import {
+    createStoreApi,
+    getAllStoresApi,
+    updateStoreApi,
+  } from "../../../api/admin.api";
 
-const emptyForm = {
-  name: "",
-  address: "",
-  description: "",
-  phoneNumber: "",
-  email: "",
-  openingTime: "",
-  closingTime: "",
-  lat: "",
-  lng: "",
-  deliveryRadius: "",
-  isActive: true,
-};
+  import "leaflet/dist/leaflet.css";
 
-const Stores = () => {
-  const [stores, setStores] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [selectedStoreId, setSelectedStoreId] = useState(null);
-  const [formData, setFormData] = useState(emptyForm);
+  delete L.Icon.Default.prototype._getIconUrl;
 
-  const fetchStores = async () => {
-    try {
-      setLoading(true);
-      const res = await getAllStoresApi();
-
-      if (res?.success) {
-        setStores(res?.data || []);
-      } else {
-        alert(res?.message || "Stores not found");
-      }
-    } catch (error) {
-      console.log("Fetch stores error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStores();
-  }, []);
-
-  const openAddPopup = () => {
-    setIsEdit(false);
-    setSelectedStoreId(null);
-    setFormData(emptyForm);
-    setShowPopup(true);
-  };
-
-  const openEditPopup = (store) => {
-    setIsEdit(true);
-    setSelectedStoreId(store?._id);
-
-    setFormData({
-      name: store?.name || "",
-      address: store?.address || "",
-      description: store?.description || "",
-      phoneNumber: store?.phoneNumber || "",
-      email: store?.email || "",
-      openingTime: store?.openingTime || "",
-      closingTime: store?.closingTime || "",
-      lat: store?.lat || store?.location?.coordinates?.[1] || "",
-      lng: store?.lng || store?.location?.coordinates?.[0] || "",
-      deliveryRadius: store?.deliveryRadius || "",
-      isActive: store?.isActive ?? true,
-    });
-
-    setShowPopup(true);
-  };
-
-  const closePopup = () => {
-    setShowPopup(false);
-    setIsEdit(false);
-    setSelectedStoreId(null);
-    setFormData(emptyForm);
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!formData.lat || !formData.lng) {
-      alert("Please select store location from map");
-      return;
-    }
-
-    const payload = {
-      ...formData,
-      lat: Number(formData.lat),
-      lng: Number(formData.lng),
-      deliveryRadius: Number(formData.deliveryRadius),
-    };
-
-    try {
-      setLoading(true);
-
-      const res = isEdit
-        ? await updateStoreApi(selectedStoreId, payload)
-        : await createStoreApi(payload);
-
-      if (res?.success) {
-        alert(isEdit ? "Store updated successfully" : "Store created successfully");
-        closePopup();
-        fetchStores();
-      } else {
-        alert(res?.message || "Something went wrong");
-      }
-    } catch (error) {
-      console.log("Submit store error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[var(--app-bg)] px-5 py-6 text-white">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">
-            Store Management
-          </p>
-          <h1 className="mt-2 text-3xl font-bold">Stores</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Manage store branches, timings, delivery radius and map location.
-          </p>
-        </div>
-
-        <button
-          onClick={openAddPopup}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 font-bold text-slate-950 transition hover:bg-orange-400"
-        >
-          <FaPlus /> Add Store
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {loading ? (
-          <div className="col-span-full rounded-3xl border border-[var(--border-soft)] bg-[var(--card-bg)] p-8 text-center text-slate-300">
-            Loading stores...
-          </div>
-        ) : stores.length === 0 ? (
-          <div className="col-span-full rounded-3xl border border-[var(--border-soft)] bg-[var(--card-bg)] p-8 text-center text-slate-300">
-            No stores found.
-          </div>
-        ) : (
-          stores.map((store) => (
-            <div
-              key={store?._id}
-              className="overflow-hidden rounded-[28px] border border-[var(--border-soft)] bg-[var(--card-bg)] shadow-xl"
-            >
-              <div className="h-44 w-full overflow-hidden bg-black/20">
-                <img
-                  src={store?.images?.[0] || "/logo.png"}
-                  alt={store?.name}
-                  className="h-full w-full object-cover transition duration-300 hover:scale-105"
-                />
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-xl font-bold">{store?.name}</h2>
-                    <p className="mt-1 flex items-center gap-2 text-sm text-slate-400">
-                      <FaMapMarkerAlt className="text-orange-400" />
-                      {store?.address}
-                    </p>
-                  </div>
-
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      store?.isActive
-                        ? "bg-green-500/15 text-green-400"
-                        : "bg-red-500/15 text-red-400"
-                    }`}
-                  >
-                    {store?.isActive ? "Active" : "Inactive"}
-                  </span>
-                </div>
-
-                <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-300">
-                  {store?.description}
-                </p>
-
-                <div className="mt-5 space-y-3 text-sm text-slate-300">
-                  <p className="flex items-center gap-2">
-                    <FaPhoneAlt className="text-orange-400" />
-                    {store?.phoneNumber}
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <FaEnvelope className="text-orange-400" />
-                    {store?.email}
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <FaClock className="text-orange-400" />
-                    {store?.openingTime} - {store?.closingTime}
-                  </p>
-                </div>
-
-                <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <p className="text-xs text-slate-400">Radius</p>
-                    <p className="mt-1 font-bold">{store?.deliveryRadius} KM</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <p className="text-xs text-slate-400">Lat</p>
-                    <p className="mt-1 font-bold">
-                      {store?.lat || store?.location?.coordinates?.[1] || "-"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <p className="text-xs text-slate-400">Lng</p>
-                    <p className="mt-1 font-bold">
-                      {store?.lng || store?.location?.coordinates?.[0] || "-"}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => openEditPopup(store)}
-                  className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 font-bold text-orange-400 transition hover:bg-orange-500 hover:text-slate-950"
-                >
-                  <FaEdit /> Update Store
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {showPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[32px] border border-orange-500/20 bg-[#111827] p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">
-                  {isEdit ? "Update Store" : "Create Store"}
-                </p>
-                <h2 className="mt-2 text-2xl font-bold">
-                  {isEdit ? "Edit Store Details" : "Add New Store"}
-                </h2>
-              </div>
-
-              <button
-                onClick={closePopup}
-                type="button"
-                className="rounded-full bg-white/10 p-3 text-slate-300 transition hover:bg-red-500 hover:text-white"
-              >
-                <FaTimes />
-              </button>
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 gap-4 md:grid-cols-2"
-            >
-              <Input
-                label="Store Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="DMart Palasia area"
-                required
-              />
-
-              <Input
-                label="Phone Number"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="9999999999"
-                required
-              />
-
-              <Input
-                label="Email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="store@gmail.com"
-                required
-              />
-
-              <Input
-                label="Address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Address will auto fill from map"
-                required
-              />
-
-              <Input
-                label="Opening Time"
-                name="openingTime"
-                value={formData.openingTime}
-                onChange={handleChange}
-                placeholder="9 AM"
-                required
-              />
-
-              <Input
-                label="Closing Time"
-                name="closingTime"
-                value={formData.closingTime}
-                onChange={handleChange}
-                placeholder="11 PM"
-                required
-              />
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-300">
-                  Pick Store Location From Map
-                </label>
-
-                <MapPicker formData={formData} setFormData={setFormData} />
-
-                <p className="mt-2 text-xs text-slate-400">
-                  Map par click karte hi latitude, longitude aur address
-                  automatically fill ho jayega.
-                </p>
-              </div>
-
-              <Input
-                label="Latitude"
-                name="lat"
-                type="number"
-                value={formData.lat}
-                readOnly
-                placeholder="Auto from map"
-              />
-
-              <Input
-                label="Longitude"
-                name="lng"
-                type="number"
-                value={formData.lng}
-                readOnly
-                placeholder="Auto from map"
-              />
-
-              <Input
-                label="Delivery Radius KM"
-                name="deliveryRadius"
-                type="number"
-                value={formData.deliveryRadius}
-                onChange={handleChange}
-                placeholder="10"
-                required
-              />
-
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={handleChange}
-                  className="h-5 w-5 accent-orange-500"
-                />
-                <span className="font-semibold text-slate-300">
-                  Store Active
-                </span>
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-300">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  rows="4"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Grocery and daily needs store"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-orange-500"
-                  required
-                />
-              </div>
-
-              <div className="md:col-span-2 flex justify-end gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="rounded-2xl bg-white/10 px-6 py-3 font-bold text-slate-300 transition hover:bg-white/20"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="rounded-2xl bg-orange-500 px-6 py-3 font-bold text-slate-950 transition hover:bg-orange-400 disabled:opacity-60"
-                >
-                  {loading
-                    ? "Please wait..."
-                    : isEdit
-                    ? "Update Store"
-                    : "Create Store"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const MapPicker = ({ formData, setFormData }) => {
-  const defaultCenter = useMemo(
-    () => ({
-      lat: Number(formData?.lat) || 22.7196,
-      lng: Number(formData?.lng) || 75.8577,
-    }),
-    [formData?.lat, formData?.lng]
-  );
-
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAP_KEY,
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl:
+      "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+    iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+    shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   });
 
-  const handleMapClick = async (event) => {
-    const lat = Number(event.latLng.lat().toFixed(6));
-    const lng = Number(event.latLng.lng().toFixed(6));
+  const emptyForm = {
+    name: "",
+    address: "",
+    description: "",
+    phoneNumber: "",
+    email: "",
+    openingTime: "",
+    closingTime: "",
+    lat: "",
+    lng: "",
+    deliveryRadius: "",
+    images: [],
+    existingImages: [],
+  };
 
-    setFormData((prev) => ({
-      ...prev,
-      lat,
-      lng,
-    }));
+  const Stores = () => {
+    const navigate = useNavigate();
 
-    try {
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${
-          import.meta.env.VITE_GOOGLE_MAP_KEY
-        }`
-      );
+    const [stores, setStores] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [showPopup, setShowPopup] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [selectedStoreId, setSelectedStoreId] = useState(null);
+    const [formData, setFormData] = useState(emptyForm);
 
-      const data = await res.json();
+    const fetchStores = async () => {
+      try {
+        setLoading(true);
+
+        const res = await getAllStoresApi();
+
+        if (res?.success) {
+          setStores(res?.data || []);
+        } else {
+          alert(res?.message || "Stores not found");
+        }
+      } catch (error) {
+        console.log("Fetch stores error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    useEffect(() => {
+      fetchStores();
+    }, []);
+
+    const openAddPopup = () => {
+      setIsEdit(false);
+      setSelectedStoreId(null);
+      setFormData(emptyForm);
+      setShowPopup(true);
+    };
+
+    const openEditPopup = (store) => {
+      setIsEdit(true);
+      setSelectedStoreId(store?._id);
+
+      setFormData({
+        name: store?.name || "",
+        address: store?.address || "",
+        description: store?.description || "",
+        phoneNumber: store?.phoneNumber || "",
+        email: store?.email || "",
+        openingTime: store?.openingTime || "",
+        closingTime: store?.closingTime || "",
+        lat: store?.lat || store?.location?.coordinates?.[1] || "",
+        lng: store?.lng || store?.location?.coordinates?.[0] || "",
+        deliveryRadius: store?.deliveryRadius || "",
+        images: [],
+        existingImages: Array.isArray(store?.images) ? store.images : [],
+      });
+
+      setShowPopup(true);
+    };
+
+    const closePopup = () => {
+      setShowPopup(false);
+      setIsEdit(false);
+      setSelectedStoreId(null);
+      setFormData(emptyForm);
+    };
+
+    const handleChange = (e) => {
+      const { name, value, files } = e.target;
+
+      if (name === "images") {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...Array.from(files || [])],
+        }));
+        return;
+      }
 
       setFormData((prev) => ({
         ...prev,
-        lat,
-        lng,
-        address: data?.results?.[0]?.formatted_address || prev.address,
+        [name]: value,
       }));
-    } catch (error) {
-      console.log("Address fetch error:", error);
-    }
+    };
+
+    const handleRemoveNewImage = (indexToRemove) => {
+      setFormData((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, index) => index !== indexToRemove),
+      }));
+    };
+
+    const handleRemoveExistingImage = (indexToRemove) => {
+      setFormData((prev) => ({
+        ...prev,
+        existingImages: prev.existingImages.filter(
+          (_, index) => index !== indexToRemove
+        ),
+      }));
+    };
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+
+      if (!formData.lat || !formData.lng) {
+        alert("Please select store location from map");
+        return;
+      }
+
+      const payload = new FormData();
+
+      payload.append("name", formData.name);
+      payload.append("address", formData.address);
+      payload.append("description", formData.description);
+      payload.append("phoneNumber", formData.phoneNumber);
+      payload.append("email", formData.email);
+      payload.append("openingTime", formData.openingTime);
+      payload.append("closingTime", formData.closingTime);
+      payload.append("lat", Number(formData.lat));
+      payload.append("lng", Number(formData.lng));
+      payload.append("deliveryRadius", Number(formData.deliveryRadius));
+
+      if (isEdit) {
+        payload.append(
+          "existingImages",
+          JSON.stringify(formData.existingImages)
+        );
+      }
+
+      formData.images.forEach((image) => {
+        payload.append("images", image);
+      });
+
+      try {
+        setLoading(true);
+
+        const res = isEdit
+          ? await updateStoreApi(selectedStoreId, payload)
+          : await createStoreApi(payload);
+
+        if (res?.success) {
+          alert(
+            isEdit
+              ? "Store updated successfully"
+              : "Store created successfully"
+          );
+
+          closePopup();
+          fetchStores();
+        } else {
+          alert(res?.message || "Something went wrong");
+        }
+      } catch (error) {
+        console.log("Submit store error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <div className="p-6 space-y-6">
+        {/* HEADER */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-white/[0.01] via-transparent to-transparent p-5 rounded-3xl border border-white/[0.03]">
+          <div>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">Stores</h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Manage physical grocery stores and delivery coverages
+            </p>
+          </div>
+
+          <button
+            onClick={openAddPopup}
+            className="flex items-center gap-2 h-11 bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white px-5 rounded-xl transition-all shadow-md shadow-orange-500/20 font-bold text-xs shrink-0 cursor-pointer hover:scale-[1.01]"
+          >
+            <FaPlus /> Add Store
+          </button>
+        </div>
+
+        {/* CARDS GRID */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {loading ? (
+            <div className="col-span-full glass-premium rounded-3xl p-10 text-center text-xs text-slate-500 font-medium border border-white/[0.03]">
+              Loading stores...
+            </div>
+          ) : stores.length === 0 ? (
+            <div className="col-span-full glass-premium rounded-3xl p-10 text-center text-xs text-slate-500 font-medium border border-white/[0.03]">
+              No physical stores configured yet.
+            </div>
+          ) : (
+            stores.map((store) => (
+              <div
+                key={store?._id}
+                className="overflow-hidden rounded-3xl border border-white/[0.02] bg-[#080e0a] shadow-xl glass-premium glass-premium-hover flex flex-col h-full"
+              >
+                <div className="h-44 overflow-hidden bg-black/40 border-b border-white/[0.03]">
+                  <img
+                    src={store?.images?.[0] || "/logo.png"}
+                    alt={store?.name}
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </div>
+
+                <div className="p-5 flex flex-col flex-1 justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-bold text-white tracking-wide">{store?.name}</h2>
+
+                        <p className="mt-1.5 flex gap-2 text-xs text-slate-400 font-medium leading-relaxed">
+                          <FaMapMarkerAlt className="mt-0.5 text-[var(--primary-orange)] shrink-0" />
+                          {store?.address}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 uppercase tracking-wider ${
+                          store?.isActive
+                            ? "bg-[rgba(57,181,74,0.06)] border-[rgba(57,181,74,0.15)] text-[var(--primary-green-light)]"
+                            : "bg-red-500/5 border-red-500/15 text-red-400"
+                        }`}
+                      >
+                        {store?.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+
+                    <p className="mt-3 text-xs text-slate-500 font-medium leading-relaxed line-clamp-2">
+                      {store?.description}
+                    </p>
+
+                    <div className="mt-4 space-y-2 text-xs text-slate-400 font-medium border-t border-white/[0.02] pt-4">
+                      <p className="flex items-center gap-2">
+                        <FaPhoneAlt className="text-[var(--primary-orange-light)] text-xs" />
+                        {store?.phoneNumber}
+                      </p>
+
+                      <p className="flex items-center gap-2">
+                        <FaEnvelope className="text-[var(--primary-orange-light)] text-xs" />
+                        <span className="truncate">{store?.email}</span>
+                      </p>
+
+                      <p className="flex items-center gap-2">
+                        <FaClock className="text-[var(--primary-orange-light)] text-xs" />
+                        {store?.openingTime} - {store?.closingTime}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-xl bg-white/[0.01] border border-white/5 p-2">
+                        <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Radius</p>
+                        <p className="mt-0.5 text-xs font-black text-white">
+                          {store?.deliveryRadius} KM
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white/[0.01] border border-white/5 p-2">
+                        <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Lat</p>
+                        <p className="mt-0.5 text-xs font-black text-white truncate">
+                          {Number(store?.lat || store?.location?.coordinates?.[1] || 0).toFixed(4)}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white/[0.01] border border-white/5 p-2">
+                        <p className="text-[9px] font-bold uppercase text-slate-500 tracking-wider">Lng</p>
+                        <p className="mt-0.5 text-xs font-black text-white truncate">
+                          {Number(store?.lng || store?.location?.coordinates?.[0] || 0).toFixed(4)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-3 pt-2">
+                      <button
+                        onClick={() => navigate(`/stores/${store?._id}`)}
+                        className="flex items-center justify-center gap-2 h-10 rounded-xl bg-white/[0.02] border border-white/5 text-xs font-bold text-slate-300 hover:bg-white/[0.04] transition-all cursor-pointer"
+                      >
+                        <FaEye />
+                        Details
+                      </button>
+
+                      <button
+                        onClick={() => openEditPopup(store)}
+                        className="flex items-center justify-center gap-2 h-10 rounded-xl border border-[var(--primary-orange)]/20 bg-[var(--primary-orange)]/10 text-xs font-bold text-[var(--primary-orange-light)] hover:bg-[var(--primary-orange)] hover:text-white transition-all cursor-pointer"
+                      >
+                        <FaEdit />
+                        Update
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* MODAL */}
+        {showPopup && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+            <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-white/5 bg-[#080e0a] p-6 shadow-2xl relative glass-premium scrollbar-thin">
+              <div className="absolute top-[-30px] right-[-30px] w-32 h-32 bg-[var(--primary-orange)]/5 rounded-full blur-3xl" />
+              
+              <div className="mb-6 flex items-center justify-between border-b border-white/[0.03] pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white tracking-wide">
+                    {isEdit ? "Update Store Properties" : "Create Grocery Outlet"}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500 font-medium">
+                    {isEdit ? "Modify configuration parameters and geometry" : "Register a brand new retail store location"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closePopup}
+                  className="rounded-lg bg-white/5 p-2.5 text-slate-400 hover:text-white border border-white/5 cursor-pointer"
+                >
+                  <FaTimes size={12} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={handleSubmit}
+                className="grid grid-cols-1 gap-5 md:grid-cols-2"
+              >
+                <Input
+                  label="Store Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Phone Number"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Opening Time"
+                  name="openingTime"
+                  value={formData.openingTime}
+                  onChange={handleChange}
+                  required
+                />
+
+                <Input
+                  label="Closing Time"
+                  name="closingTime"
+                  value={formData.closingTime}
+                  onChange={handleChange}
+                  required
+                />
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Pick Store Location Coordinates
+                  </label>
+
+                  <MapPicker
+                    formData={formData}
+                    setFormData={setFormData}
+                  />
+                </div>
+
+                <Input
+                  label="Latitude"
+                  name="lat"
+                  value={formData.lat}
+                  readOnly
+                />
+
+                <Input
+                  label="Longitude"
+                  name="lng"
+                  value={formData.lng}
+                  readOnly
+                />
+
+                <Input
+                  label="Delivery Radius (KM)"
+                  name="deliveryRadius"
+                  value={formData.deliveryRadius}
+                  onChange={handleChange}
+                  required
+                />
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Store Photo Uploads
+                  </label>
+
+                  <input
+                    type="file"
+                    name="images"
+                    multiple
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-white/5 bg-black/40 px-4 py-2.5 text-xs text-slate-400 outline-none focus:border-[var(--primary-orange)]/40 transition-all file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-[var(--primary-orange)]/10 file:text-[var(--primary-orange-light)] file:cursor-pointer"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Outlet Description
+                  </label>
+
+                  <textarea
+                    name="description"
+                    rows="3"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-white/5 bg-black/40 px-4 py-3 text-xs text-white outline-none focus:border-[var(--primary-orange)]/45 focus:bg-black/60 transition-all resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex justify-end gap-3 border-t border-white/[0.03] pt-4">
+                  <button
+                    type="button"
+                    onClick={closePopup}
+                    className="rounded-xl border border-white/5 bg-white/[0.02] px-5 h-11 text-xs font-bold text-slate-300 hover:bg-white/[0.04] transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="rounded-xl btn-gradient-orange px-6 h-11 text-xs font-bold text-white disabled:opacity-50 cursor-pointer"
+                  >
+                    {loading
+                      ? "Processing Request..."
+                      : isEdit
+                      ? "Update Properties"
+                      : "Create Store"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
-  if (!import.meta.env.VITE_GOOGLE_MAP_KEY) {
+  const LocationMarker = ({ setFormData }) => {
+    useMapEvents({
+      click(e) {
+        const lat = Number(e.latlng.lat.toFixed(6));
+        const lng = Number(e.latlng.lng.toFixed(6));
+
+        setFormData((prev) => ({
+          ...prev,
+          lat,
+          lng,
+        }));
+      },
+    });
+
+    return null;
+  };
+
+  const MapPicker = ({ formData, setFormData }) => {
+    const position = useMemo(
+      () => [
+        Number(formData?.lat) || 22.7196,
+        Number(formData?.lng) || 75.8577,
+      ],
+      [formData?.lat, formData?.lng]
+    );
+
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-[24px] border border-red-500/30 bg-red-500/10 px-4 text-center text-red-300">
-        Google Map API key missing. Add VITE_GOOGLE_MAP_KEY in .env file.
+      <div className="overflow-hidden rounded-2xl border border-white/5 shadow-lg bg-black/40">
+        <MapContainer
+          center={position}
+          zoom={13}
+          scrollWheelZoom
+          style={{
+            height: "320px",
+            width: "100%",
+          }}
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+
+          <LocationMarker setFormData={setFormData} />
+
+          <Marker position={position} />
+        </MapContainer>
       </div>
     );
-  }
+  };
 
-  if (!isLoaded) {
+  const Input = ({ label, ...props }) => {
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-[24px] bg-white/5 text-slate-300">
-        Loading map...
+      <div>
+        <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+          {label}
+        </label>
+
+        <input
+          {...props}
+          className="w-full h-11 rounded-xl border border-white/5 bg-black/40 px-4 text-xs text-white outline-none focus:border-[var(--primary-orange)]/45 focus:bg-black/60 transition-all"
+        />
       </div>
     );
-  }
+  };
 
-  return (
-    <GoogleMap
-      mapContainerStyle={{
-        width: "100%",
-        height: "320px",
-        borderRadius: "24px",
-      }}
-      center={defaultCenter}
-      zoom={14}
-      onClick={handleMapClick}
-    >
-      <Marker position={defaultCenter} />
-    </GoogleMap>
-  );
-};
-
-const Input = ({ label, ...props }) => {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-semibold text-slate-300">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-orange-500 read-only:cursor-not-allowed read-only:opacity-80"
-      />
-    </div>
-  );
-};
-
-export default Stores;
+  export default Stores;

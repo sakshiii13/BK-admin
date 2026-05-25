@@ -28,32 +28,32 @@ const TableComponent = ({
   }, [search, data]);
 
   return (
-    <div className="rounded-[28px] border border-[var(--border-soft)] bg-[var(--card-bg)] p-5 shadow-xl">
+    <div className="rounded-3xl border border-white/[0.03] bg-gradient-to-b from-[#080f0a] to-[#040805] p-6 shadow-2xl glass-premium">
       {/* Header */}
-      <div className="mb-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.25em] text-orange-400">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--primary-orange-light)]">
             Admin Panel
           </p>
 
-          <h2 className="mt-1 text-2xl font-bold text-white">{title}</h2>
+          <h2 className="mt-1.5 text-2xl font-extrabold text-white tracking-tight">{title}</h2>
 
           {subtitle && (
-            <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+            <p className="mt-1 text-xs text-slate-500 font-medium">{subtitle}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           {showSearch && (
-            <div className="relative w-full sm:w-80">
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative w-full sm:w-72">
+              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
 
               <input
                 type="text"
                 placeholder={searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--app-bg)] pl-11 pr-4 text-sm text-white outline-none placeholder:text-slate-500 transition focus:border-orange-400"
+                className="h-11 w-full rounded-xl border border-white/5 bg-black/40 pl-11 pr-4 text-xs text-white outline-none placeholder:text-slate-600 transition-all focus:border-[var(--primary-orange)]/45 focus:bg-black/60"
               />
             </div>
           )}
@@ -62,9 +62,9 @@ const TableComponent = ({
             <button
               type="button"
               onClick={onRefresh}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl border border-[var(--border-soft)] bg-[var(--app-bg)] px-4 text-sm font-bold text-slate-300 transition hover:border-orange-400 hover:text-orange-400"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-4 text-xs font-bold text-slate-300 hover:text-white hover:border-white/20 transition-all cursor-pointer"
             >
-              <FaSyncAlt />
+              <FaSyncAlt className="text-[10px]" />
               Refresh
             </button>
           )}
@@ -73,7 +73,7 @@ const TableComponent = ({
             <button
               type="button"
               onClick={onAdd}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 text-sm font-bold text-white transition hover:bg-orange-400"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] px-5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 hover:scale-[1.01] transition-all cursor-pointer"
             >
               <FaPlus />
               {addButtonText}
@@ -83,12 +83,12 @@ const TableComponent = ({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border-soft)]">
-        <table className="w-full min-w-[900px] border-collapse">
-          <thead className="bg-orange-500/10">
+      <div className="overflow-x-auto rounded-2xl border border-white/[0.03] bg-black/25">
+        <table className="w-full min-w-[900px] border-collapse text-left">
+          <thead className="bg-white/[0.01] border-b border-white/[0.03]">
             <tr>
               {showIndex && (
-                <th className="w-20 px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-orange-300">
+                <th className="w-16 px-5 py-4 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   S.No
                 </th>
               )}
@@ -96,7 +96,7 @@ const TableComponent = ({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-orange-300 ${
+                  className={`px-5 py-4 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)] ${
                     col.className || ""
                   }`}
                 >
@@ -106,24 +106,24 @@ const TableComponent = ({
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-white/[0.02]">
             {loading ? (
               <tr>
                 <td
                   colSpan={columns.length + (showIndex ? 1 : 0)}
-                  className="px-4 py-12 text-center text-sm text-slate-400"
+                  className="px-5 py-12 text-center text-xs text-slate-500 font-medium"
                 >
-                  Loading data...
+                  Loading details...
                 </td>
               </tr>
             ) : filteredData.length > 0 ? (
               filteredData.map((row, rowIndex) => (
                 <tr
                   key={row.id || row._id || rowIndex}
-                  className="border-t border-[var(--border-soft)] transition hover:bg-white/[0.03]"
+                  className="transition-colors hover:bg-white/[0.01]"
                 >
                   {showIndex && (
-                    <td className="px-4 py-4 text-sm font-semibold text-slate-400">
+                    <td className="px-5 py-4 text-xs font-bold text-slate-400">
                       {rowIndex + 1}
                     </td>
                   )}
@@ -131,7 +131,7 @@ const TableComponent = ({
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={`px-4 py-4 text-sm text-slate-300 ${
+                      className={`px-5 py-4 text-xs text-slate-300 font-medium ${
                         col.tdClassName || ""
                       }`}
                     >
@@ -146,9 +146,9 @@ const TableComponent = ({
               <tr>
                 <td
                   colSpan={columns.length + (showIndex ? 1 : 0)}
-                  className="px-4 py-12 text-center text-sm text-slate-400"
+                  className="px-5 py-12 text-center text-xs text-slate-500 font-medium"
                 >
-                  No data found
+                  No data records found
                 </td>
               </tr>
             )}
@@ -157,13 +157,13 @@ const TableComponent = ({
       </div>
 
       {/* Footer */}
-      <div className="mt-4 flex items-center justify-between text-sm text-slate-400">
+      <div className="mt-4 flex items-center justify-between text-xs text-slate-500 font-medium">
         <p>
           Showing{" "}
-          <span className="font-bold text-orange-400">
+          <span className="font-extrabold text-[var(--primary-orange-light)]">
             {filteredData.length}
           </span>{" "}
-          of <span className="font-bold text-white">{data.length}</span> records
+          of <span className="font-extrabold text-white">{data.length}</span> records
         </p>
       </div>
     </div>

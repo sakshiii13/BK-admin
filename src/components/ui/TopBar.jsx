@@ -142,10 +142,10 @@ const TopBar = ({ onMenuClick }) => {
       className="
         sticky top-0 z-40 w-full
         border-b border-[var(--border-soft)]
-        bg-[var(--app-bg)]/90
-        px-4 sm:px-6 lg:px-8 py-3
-        shadow-[var(--shadow-soft)]
-        backdrop-blur-[20px]
+        bg-[rgba(6,10,7,0.75)]
+        px-4 sm:px-6 lg:px-8 py-3.5
+        shadow-xl
+        backdrop-blur-xl
         flex items-center justify-between
         transition-all duration-300
       "
@@ -158,12 +158,12 @@ const TopBar = ({ onMenuClick }) => {
             flex h-10 w-10 items-center justify-center
             rounded-xl
             text-white
-            bg-gradient-to-r from-orange-500 to-orange-400
-            shadow-md hover:shadow-orange-500/30
-            hover:scale-105 transition-all
+            bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)]
+            shadow-md hover:shadow-[var(--primary-orange)]/30
+            hover:scale-105 transition-all cursor-pointer
           "
         >
-          <GiHamburgerMenu size={20} />
+          <GiHamburgerMenu size={18} />
         </button>
 
         <div className="hidden sm:block text-[var(--text-primary)] font-semibold">
@@ -176,33 +176,32 @@ const TopBar = ({ onMenuClick }) => {
           <input
             type="text"
             placeholder="Search products, orders, users..."
-            className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-full pl-11 pr-4 py-2.5 text-sm outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all shadow-[var(--shadow-inset)] group-hover:border-orange-500/30"
+            className="w-full h-11 bg-white/[0.02] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-xl pl-11 pr-4 text-sm outline-none focus:border-[var(--primary-orange)]/50 focus:bg-white/[0.04] transition-all shadow-inner placeholder-slate-500 group-hover:border-white/10"
           />
 
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] group-hover:text-orange-400 transition-colors" />
+          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-hover:text-[var(--primary-orange)] transition-colors" />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <button
           onClick={toggleFullscreen}
           title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           className="
             flex h-10 w-10 items-center justify-center
-            rounded-full
-            bg-[var(--card-bg)]
-            text-[var(--text-secondary)]
-            shadow-[var(--shadow-inset)]
+            rounded-xl
+            bg-white/[0.02]
+            text-slate-400
             border border-[var(--border-soft)]
             transition-all duration-300
-            hover:text-orange-400 hover:border-orange-500/30
-            hover:-translate-y-0.5
+            hover:text-[var(--primary-orange)] hover:border-[var(--primary-orange)]/25 hover:bg-white/[0.04]
+            hover:-translate-y-0.5 cursor-pointer
           "
         >
           {isFullscreen ? (
-            <FaCompressArrowsAlt size={15} />
+            <FaCompressArrowsAlt size={14} />
           ) : (
-            <FaExpandArrowsAlt size={15} />
+            <FaExpandArrowsAlt size={14} />
           )}
         </button>
 
@@ -211,45 +210,45 @@ const TopBar = ({ onMenuClick }) => {
             onClick={() => setShowNotifications(!showNotifications)}
             className={`
               relative flex h-10 w-10 items-center justify-center
-              rounded-full bg-[var(--card-bg)]
-              text-[var(--text-secondary)]
+              rounded-xl bg-white/[0.02]
+              text-slate-400
               border border-[var(--border-soft)]
               transition-all duration-300
-              hover:text-orange-400 hover:border-orange-500/30
-              ${showNotifications ? "ring-2 ring-orange-500/50 text-orange-400" : ""}
+              hover:text-[var(--primary-orange)] hover:border-[var(--primary-orange)]/25 hover:bg-white/[0.04] cursor-pointer
+              ${showNotifications ? "ring-2 ring-[var(--primary-orange)]/30 border-[var(--primary-orange)]/40 text-[var(--primary-orange)]" : ""}
             `}
           >
-            <FaBell size={16} />
-            <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-orange-500"></span>
+            <FaBell size={15} />
+            <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[var(--primary-orange)] animate-pulse"></span>
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-3 w-80 rounded-2xl bg-[#111827] shadow-2xl overflow-hidden z-50 border border-white/10">
-              <div className="px-4 py-3 border-b border-white/10 flex justify-between items-center">
-                <h3 className="font-semibold text-white">Notifications</h3>
-                <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
-                  2 New
+            <div className="absolute right-0 mt-3 w-80 rounded-2xl bg-[#090f0b] shadow-2xl overflow-hidden z-50 border border-[var(--border-soft)] glass-premium">
+              <div className="px-4 py-3.5 border-b border-[var(--border-soft)] flex justify-between items-center bg-white/[0.01]">
+                <h3 className="font-semibold text-white tracking-wide">Notifications</h3>
+                <span className="text-[10px] bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white px-2 py-0.5 rounded-full font-bold">
+                  2 NEW
                 </span>
               </div>
 
-              <div className="max-h-72 overflow-y-auto">
-                <div className="px-4 py-3 hover:bg-white/5 cursor-pointer border-b border-white/5 flex gap-3">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-orange-500"></div>
+              <div className="max-h-72 overflow-y-auto divide-y divide-white/[0.02]">
+                <div className="px-4 py-3 hover:bg-white/[0.02] cursor-pointer flex gap-3 transition-colors">
+                  <div className="mt-1.5 h-2 w-2 rounded-full bg-[var(--primary-orange)] shrink-0"></div>
                   <div>
-                    <p className="text-sm text-white font-medium">
+                    <p className="text-sm text-slate-200 font-medium">
                       New order #1024 received
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">2 mins ago</p>
+                    <p className="text-[10px] text-slate-500 mt-1">2 mins ago</p>
                   </div>
                 </div>
 
-                <div className="px-4 py-3 hover:bg-white/5 cursor-pointer flex gap-3">
-                  <div className="mt-1 h-2 w-2 rounded-full bg-orange-500"></div>
+                <div className="px-4 py-3 hover:bg-white/[0.02] cursor-pointer flex gap-3 transition-colors">
+                  <div className="mt-1.5 h-2 w-2 rounded-full bg-[var(--primary-green)] shrink-0"></div>
                   <div>
-                    <p className="text-sm text-white font-medium">
+                    <p className="text-sm text-slate-200 font-medium">
                       Stock alert for Fresh Apples
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">1 hour ago</p>
+                    <p className="text-[10px] text-slate-500 mt-1">1 hour ago</p>
                   </div>
                 </div>
               </div>
@@ -262,58 +261,58 @@ const TopBar = ({ onMenuClick }) => {
             onClick={() => setShowProfile(!showProfile)}
             className={`
               flex items-center gap-3 cursor-pointer 
-              bg-[var(--card-bg)] p-1 pr-4 rounded-full 
+              bg-white/[0.02] p-1 pr-4 rounded-xl 
               border border-[var(--border-soft)] 
               transition-all duration-300
-              hover:border-orange-500/50
-              ${showProfile ? "ring-2 ring-orange-500/50 border-orange-500/50" : ""}
+              hover:border-[var(--primary-orange)]/45
+              ${showProfile ? "ring-2 ring-[var(--primary-orange)]/30 border-[var(--primary-orange)]/40" : ""}
             `}
           >
             <img
               src="https://i.pravatar.cc/150?img=11"
               alt="User"
-              className="w-8 h-8 rounded-full object-cover border border-orange-500/50"
+              className="w-8 h-8 rounded-lg object-cover border border-white/10"
             />
 
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-bold text-[var(--text-primary)] leading-none">
+              <p className="text-xs font-bold text-[var(--text-primary)] leading-none">
                 Admin User
               </p>
-              <p className="text-[10px] text-[var(--text-secondary)] mt-0.5 uppercase tracking-wider">
+              <p className="text-[9px] text-slate-500 mt-0.5 uppercase tracking-widest font-semibold">
                 Store Manager
               </p>
             </div>
           </div>
 
           {showProfile && (
-            <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-[#111827] shadow-2xl overflow-hidden z-50 border border-white/10">
-              <div className="px-4 py-3 border-b border-white/10 text-center">
+            <div className="absolute right-0 mt-3 w-56 rounded-2xl bg-[#090f0b] shadow-2xl overflow-hidden z-50 border border-[var(--border-soft)] glass-premium">
+              <div className="px-4 py-4 border-b border-[var(--border-soft)] text-center bg-white/[0.01]">
                 <img
                   src="https://i.pravatar.cc/150?img=11"
                   alt="User"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-orange-500 mx-auto mb-2"
+                  className="w-16 h-16 rounded-xl object-cover border-2 border-[var(--primary-orange)] mx-auto mb-2.5 shadow-lg"
                 />
 
-                <p className="text-sm font-bold text-white">Admin User</p>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-sm font-bold text-white tracking-wide">Admin User</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   admin@bkgrocery.com
                 </p>
               </div>
 
               <div className="py-1">
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-orange-400 hover:bg-white/5">
-                  <FaUser className="text-lg" /> My Profile
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:text-[var(--primary-orange)] hover:bg-white/[0.02] transition-colors cursor-pointer">
+                  <FaUser className="text-slate-500 text-sm" /> My Profile
                 </button>
 
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:text-orange-400 hover:bg-white/5">
-                  <FaCog className="text-lg" /> Account Settings
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-slate-300 hover:text-[var(--primary-orange)] hover:bg-white/[0.02] transition-colors cursor-pointer">
+                  <FaCog className="text-slate-500 text-sm" /> Account Settings
                 </button>
               </div>
 
-              <div className="border-t border-white/10 bg-red-500/5">
+              <div className="border-t border-[var(--border-soft)] bg-red-500/[0.02]">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 font-medium"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/[0.06] font-semibold transition-colors cursor-pointer"
                 >
                   <FaSignOutAlt /> Sign Out
                 </button>

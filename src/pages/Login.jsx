@@ -36,111 +36,125 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f7fbf1] flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute top-[-120px] left-[-120px] w-[350px] h-[350px] bg-green-300/40 rounded-full blur-3xl" />
-      <div className="absolute bottom-[-130px] right-[-100px] w-[420px] h-[420px] bg-orange-300/40 rounded-full blur-3xl" />
+    <div className="min-h-screen w-full bg-[#030604] flex items-center justify-center px-4 relative overflow-hidden font-sans">
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[var(--primary-green)]/10 rounded-full blur-[120px] animate-ambient-slow" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[var(--primary-orange)]/10 rounded-full blur-[120px] animate-ambient-slow" style={{ animationDelay: '-4s' }} />
 
-      <div className="relative w-full max-w-[1050px] min-h-[620px] bg-white/80 backdrop-blur-2xl rounded-[36px] shadow-[0_25px_80px_rgba(36,80,35,0.18)] overflow-hidden grid lg:grid-cols-2 border border-white">
-        <div className="hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-[#0f7a38] via-[#57b72f] to-[#ffb11f] relative overflow-hidden">
+      <div className="relative w-full max-w-[1000px] min-h-[600px] bg-white/[0.02] backdrop-blur-xl rounded-[32px] shadow-2xl overflow-hidden grid lg:grid-cols-2 border border-white/[0.04]">
+        
+        {/* Left Side Branding */}
+        <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-[#0b1710] via-[#091b10] to-[#121c11] relative overflow-hidden border-r border-white/[0.02]">
+          {/* Visual gradient overlay line */}
+          <div className="absolute top-0 right-0 w-[2px] h-full bg-gradient-to-b from-[var(--primary-orange)] via-[var(--primary-green-light)] to-transparent opacity-30" />
+          
           <div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full text-sm font-semibold">
-              <MdLocalGroceryStore />
-              Grocery Admin
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/[0.03] border border-white/5 text-slate-300 rounded-full text-xs font-semibold tracking-wider">
+              <MdLocalGroceryStore className="text-[var(--primary-orange)]" />
+              BK GROCERY ADMIN
             </div>
 
-            <h1 className="mt-10 text-5xl font-black text-white leading-tight">
+            <h1 className="mt-12 text-4xl font-extrabold text-white leading-tight tracking-tight">
               Manage Your <br />
-              Grocery Store
+              <span className="gradient-text-orange-green font-black">Grocery Store</span>
             </h1>
 
-            <p className="mt-5 text-white/85 text-base max-w-sm">
-              Smart admin dashboard for products, orders and customers.
+            <p className="mt-4 text-slate-400 text-sm leading-relaxed max-w-xs">
+              Smart admin dashboard for products, category parameters, and customer order management.
             </p>
           </div>
 
-          <div className="bg-white/20 rounded-[28px] p-5 border border-white/20">
-            <p className="text-white font-semibold text-lg">
-              Fresh Grocery Dashboard
+          <div className="bg-white/[0.02] rounded-2xl p-5 border border-white/5 relative group hover:border-[var(--primary-green)]/20 transition-all duration-300">
+            <div className="absolute -top-10 -right-10 w-24 h-24 bg-[var(--primary-green)]/10 rounded-full blur-xl group-hover:bg-[var(--primary-green)]/20 transition-all" />
+            <p className="text-white font-bold text-base tracking-wide">
+              Fresh Store Management
             </p>
-            <p className="text-white/70 text-sm mt-2">Easy. Fast. Modern.</p>
+            <p className="text-slate-500 text-xs mt-1.5 leading-relaxed">
+              Realtime stock tracking, order notifications, and route planning.
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-center p-6 sm:p-10">
-          <div className="w-full max-w-md">
+        {/* Right Side Form */}
+        <div className="flex items-center justify-center p-8 sm:p-12">
+          <div className="w-full max-w-sm">
             <div className="text-center mb-8">
-              <img src="/logo.png" alt="logo" className="w-40 mx-auto" />
+              <div className="h-16 flex items-center justify-center mb-4">
+                <img src="/logo.png" alt="logo" className="h-14 object-contain animate-premium-float" />
+              </div>
 
-              <h2 className="mt-6 text-3xl font-black text-[#173b20]">
+              <h2 className="text-2xl font-bold text-white tracking-wide">
                 Welcome Back
               </h2>
 
-              <p className="text-[#6b7d68] mt-2 text-sm">
-                Login to continue
+              <p className="text-slate-500 mt-1.5 text-xs">
+                Login to access administrative workspace
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="text-sm font-bold text-[#263f27] mb-2 block">
+                <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">
                   Email Address
                 </label>
 
-                <div className="h-14 rounded-2xl bg-[#f3f8ee] border border-green-100 flex items-center px-4 gap-3">
-                  <FaEnvelope className="text-[#67b737]" />
+                <div className="h-12 rounded-xl bg-white/[0.02] border border-white/5 flex items-center px-4 gap-3 focus-within:border-[var(--primary-orange)]/50 focus-within:bg-white/[0.04] transition-all">
+                  <FaEnvelope className="text-slate-500 text-sm shrink-0" />
 
                   <input
                     type="email"
-                    placeholder="admin@example.com"
+                    placeholder="admin@bkgrocery.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent outline-none text-sm"
+                    className="w-full bg-transparent outline-none text-xs text-white placeholder-slate-600"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-bold text-[#263f27] mb-2 block">
+                <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider">
                   Password
                 </label>
 
-                <div className="h-14 rounded-2xl bg-[#f3f8ee] border border-green-100 flex items-center px-4 gap-3">
-                  <FaLock className="text-[#67b737]" />
+                <div className="h-12 rounded-xl bg-white/[0.02] border border-white/5 flex items-center px-4 gap-3 focus-within:border-[var(--primary-orange)]/50 focus-within:bg-white/[0.04] transition-all">
+                  <FaLock className="text-slate-500 text-sm shrink-0" />
 
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-transparent outline-none text-sm"
+                    className="w-full bg-transparent outline-none text-xs text-white placeholder-slate-600"
                     required
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-[#7c8f76]"
+                    className="text-slate-500 hover:text-white transition-colors cursor-pointer"
                   >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
                   </button>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full h-14 rounded-2xl bg-gradient-to-r from-[#69bd2e] via-[#f6b51e] to-[#ff8a00] text-white font-black hover:scale-[1.02] transition-all"
+                className="w-full h-12 rounded-xl btn-gradient-orange text-white text-sm font-bold tracking-wide cursor-pointer transition-all hover:scale-[1.01]"
               >
-                Login
+                Send Verification OTP
               </button>
 
               {localStorage.getItem("adminOtp") && (
-                <p className="text-center text-sm text-[#6b7d68]">
-                  Testing OTP:{" "}
-                  <span className="font-bold text-orange-500">
-                    {localStorage.getItem("adminOtp")}
-                  </span>
-                </p>
+                <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-center">
+                  <p className="text-xs text-slate-400">
+                    Testing OTP:{" "}
+                    <span className="font-extrabold text-[var(--primary-orange-light)] tracking-widest text-sm">
+                      {localStorage.getItem("adminOtp")}
+                    </span>
+                  </p>
+                </div>
               )}
             </form>
           </div>

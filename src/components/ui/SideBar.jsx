@@ -84,15 +84,15 @@ const SideBar = () => {
     return (
       <div
         onClick={() => handleNavigate(router)}
-        className={`flex items-center gap-3 py-3 px-4 mx-2 rounded-2xl cursor-pointer transition-all duration-300
+        className={`flex items-center gap-3 py-3 px-4 mx-3 rounded-xl cursor-pointer transition-all duration-300 group
         ${
           isActive
-            ? "bg-orange-500 text-white shadow-lg"
-            : "text-slate-300 hover:bg-[var(--card-bg)] hover:text-orange-400"
+            ? "bg-gradient-to-r from-[rgba(243,112,35,0.15)] to-[rgba(57,181,74,0.05)] text-white border-l-4 border-[var(--primary-orange)] shadow-md"
+            : "text-slate-400 hover:bg-white/[0.02] hover:text-white border-l-4 border-transparent hover:border-[var(--primary-green-light)]"
         }`}
       >
-        <span className="text-xl">{icon}</span>
-        <span className="text-sm font-medium">{label}</span>
+        <span className={`text-xl transition-all duration-300 ${isActive ? "text-[var(--primary-orange)]" : "text-slate-400 group-hover:text-[var(--primary-green-light)]"}`}>{icon}</span>
+        <span className="text-sm font-medium tracking-wide">{label}</span>
       </div>
     );
   };
@@ -101,32 +101,32 @@ const SideBar = () => {
     const isChildActive = items.some((item) => pathname === item.route);
 
     return (
-      <div className="mx-2">
+      <div className="mx-3">
         <div
           onClick={onToggle}
-          className={`flex items-center justify-between py-3 px-4 rounded-2xl cursor-pointer transition-all duration-300
+          className={`flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer transition-all duration-300 group
           ${
             isChildActive
-              ? "bg-orange-500 text-white"
-              : "text-slate-300 hover:bg-[var(--card-bg)] hover:text-orange-400"
+              ? "bg-gradient-to-r from-[rgba(243,112,35,0.08)] to-[rgba(57,181,74,0.03)] text-white border-l-4 border-[var(--primary-orange)]"
+              : "text-slate-400 hover:bg-white/[0.02] hover:text-white border-l-4 border-transparent hover:border-[var(--primary-green-light)]"
           }`}
         >
           <div className="flex items-center gap-3">
-            <span className="text-xl">{icon}</span>
-            <span className="text-sm font-medium">{label}</span>
+            <span className={`text-xl transition-all duration-300 ${isChildActive ? "text-[var(--primary-orange)]" : "text-slate-400 group-hover:text-[var(--primary-green-light)]"}`}>{icon}</span>
+            <span className="text-sm font-medium tracking-wide">{label}</span>
           </div>
 
           <MdChevronLeft
-            className={`transition-all duration-300 ${
-              isOpen ? "-rotate-90" : ""
+            className={`transition-all duration-300 text-slate-400 group-hover:text-white ${
+              isOpen ? "-rotate-90 text-[var(--primary-orange)]" : ""
             }`}
-            size={20}
+            size={18}
           />
         </div>
 
         <div
-          className={`overflow-hidden transition-all duration-300 ${
-            isOpen ? "max-h-[700px] mt-2" : "max-h-0"
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isOpen ? "max-h-[500px] mt-1.5 space-y-1" : "max-h-0"
           }`}
         >
           {items.map((item, index) => {
@@ -136,15 +136,15 @@ const SideBar = () => {
               <div
                 key={index}
                 onClick={() => handleNavigate(item.route)}
-                className={`flex items-center gap-2 ml-6 py-2 px-3 rounded-xl cursor-pointer transition-all duration-300
+                className={`flex items-center gap-2 ml-6 py-2 px-3 rounded-lg cursor-pointer transition-all duration-300
                 ${
                   isActive
-                    ? "text-orange-400 font-semibold"
-                    : "text-slate-400 hover:text-orange-300"
+                    ? "text-[var(--primary-green-light)] font-semibold bg-white/[0.03]"
+                    : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.01]"
                 }`}
               >
-                <MdKeyboardArrowRight size={18} />
-                <span className="text-sm">{item.label}</span>
+                <MdKeyboardArrowRight size={16} className={isActive ? "text-[var(--primary-green-light)] animate-pulse" : "text-slate-600"} />
+                <span className="text-xs tracking-wide">{item.label}</span>
               </div>
             );
           })}
@@ -156,27 +156,27 @@ const SideBar = () => {
   return (
     <div
       className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-[260px]
-      bg-[var(--app-bg)] border-r border-[var(--border-soft)]
+      bg-[rgba(6,10,7,0.95)] backdrop-blur-xl border-r border-[var(--border-soft)]
       transition-all duration-300 ease-in-out
-      flex flex-col justify-between
+      flex flex-col justify-between shadow-[10px_0_30px_rgba(0,0,0,0.5)]
       ${sideToggle ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
     >
-      <div className="relative border-b border-[var(--border-soft)] px-4 py-5 flex items-center justify-center">
+      <div className="relative border-b border-[var(--border-soft)] px-6 py-5 flex items-center justify-center bg-black/10">
         <img
           src={logo}
           alt="logo"
-          className="w-32 object-contain cursor-pointer"
+          className="w-32 object-contain cursor-pointer transition-transform duration-300 hover:scale-105 hover:rotate-1"
           onClick={() => handleNavigate(Routers.DASHBOARD)}
         />
 
         <MdOutlineKeyboardDoubleArrowLeft
-          size={28}
-          className="absolute right-4 text-orange-400 cursor-pointer lg:hidden"
+          size={24}
+          className="absolute right-4 text-[var(--primary-orange-light)] cursor-pointer lg:hidden hover:text-white transition-colors"
           onClick={() => dispatch(closeSideMenu())}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4 space-y-2 hide-scrollbar">
+      <div className="flex-1 overflow-y-auto py-6 space-y-1.5 sidebar-scroll">
         <NavItem
           icon={<MdDashboard />}
           label="Dashboard"
@@ -301,23 +301,25 @@ const SideBar = () => {
           ]}
         />
 
-        <NavItem
-          icon={<MdSupportAgent />}
-          label="Support"
-          router={Routers.SUPPORT}
-        />
+        <div className="pt-4 border-t border-[var(--border-soft)] space-y-1.5">
+          <NavItem
+            icon={<MdSupportAgent />}
+            label="Support"
+            router={Routers.SUPPORT}
+          />
 
-        <NavItem
-          icon={<MdNotifications />}
-          label="Notifications"
-          router={Routers.NOTIFICATIONS}
-        />
+          <NavItem
+            icon={<MdNotifications />}
+            label="Notifications"
+            router={Routers.NOTIFICATIONS}
+          />
 
-        <NavItem
-          icon={<MdSettings />}
-          label="Settings"
-          router={Routers.SETTINGS}
-        />
+          <NavItem
+            icon={<MdSettings />}
+            label="Settings"
+            router={Routers.SETTINGS}
+          />
+        </div>
       </div>
     </div>
   );

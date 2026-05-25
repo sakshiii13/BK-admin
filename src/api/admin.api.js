@@ -54,6 +54,20 @@ const handleApiError = (error, fallbackMessage) => {
   };
 };
 
+
+// ================= ADMIN DASHBOARD =================
+
+export const getAdminDashboardApi = async () => {
+  try {
+    const response = await Axios.get("/admin/dashboard");
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Get admin dashboard failed");
+  }
+};
+
+// ================= AUTH =================
+
 export const adminRegisterApi = async (payload) => {
   try {
     const response = await Axios.post("/admin/register", payload);
@@ -100,7 +114,7 @@ export const getAllStoresApi = async (page = 1, limit = 10) => {
     );
     return response.data;
   } catch (error) {
-    return handleApiError(error, "Get all stores failed");
+    return handleApiError(error, "Failed to fetch stores");
   }
 };
 
@@ -134,28 +148,74 @@ export const findNearestStoreApi = async ({ lat, lng }) => {
   }
 };
 
-// ================= STORE INVENTORY =================
+// ================= CATEGORY =================
+
+export const createCategoryApi = async (data) => {
+  try {
+    const response = await Axios.post("/admin/category-create", data);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to create category");
+  }
+};
+
+export const getAllCategoriesApi = async (page = 1, limit = 10) => {
+  try {
+    const response = await Axios.get(
+      `/user/get-all-categories?page=${page}&limit=${limit}`
+    );
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch categories");
+  }
+};
+
+// GET CATEGORY BY ID
+export const getCategoryByIdApi = async (categoryId) => {
+  try {
+    const response = await Axios.get(`/user/category/${categoryId}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Get category by id failed");
+  }
+};
+
+// UPDATE CATEGORY
+export const updateCategoryApi = async (categoryId, payload) => {
+  try {
+    const response = await Axios.put(
+      `/admin/update-category/${categoryId}`,
+      payload
+    );
+
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Update category failed");
+  }
+};
+// ================= INVENTORY =================
 
 export const createInventoryApi = async (payload) => {
   try {
-    const response = await Axios.post(
-      "/store-inventory/create-inventory",
-      payload
-    );
+    const response = await Axios.post("/admin/create-inventory", payload);
     return response.data;
   } catch (error) {
     return handleApiError(error, "Create inventory failed");
   }
 };
 
-export const getInventoryByStoreIdApi = async (storeId) => {
+export const getInventoryByStoreIdApi = async (
+  storeId,
+  page = 1,
+  limit = 10
+) => {
   try {
     const response = await Axios.get(
-      `/store-inventory/get-inventory-by-store-id/${storeId}`
+      `/user/store-inventory/${storeId}?page=${page}&limit=${limit}`
     );
     return response.data;
   } catch (error) {
-    return handleApiError(error, "Get inventory failed");
+    return handleApiError(error, "Get store inventory failed");
   }
 };
 
@@ -216,137 +276,4 @@ export const getProductDetailsOfStoreApi = async (productId) => {
   } catch (error) {
     return handleApiError(error, "Get product details failed");
   }
-};
-
-// ================= ORDER =================
-
-export const getOrdersByStoreIdApi = async (storeId) => {
-  try {
-    const response = await Axios.get(`/order/get-orders-by-Store-id/${storeId}`);
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get orders failed");
-  }
-};
-
-export const updateOrderToPackedApi = async (orderId, payload = {}) => {
-  try {
-    const response = await Axios.patch(
-      `/order/update-order-to-packed/${orderId}`,
-      payload
-    );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Update order failed");
-  }
-};
-
-export const assignOrderToDriverApi = async (orderId, payload) => {
-  try {
-    const response = await Axios.patch(
-      `/order/Assign-order-to-driver/${orderId}`,
-      payload
-    );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Assign driver failed");
-  }
-};
-
-export const getAllOrderByStatusApi = async (status) => {
-  try {
-    const response = await Axios.get(
-      `/order/get-all-order-by-status?status=${status}`
-    );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get order by status failed");
-  }
-};
-
-// ================= TRANSACTION =================
-
-export const getAllTransactionApi = async () => {
-  try {
-    const response = await Axios.get("/transaction/Get-all-transaction");
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get transactions failed");
-  }
-};
-
-export const getTransactionByUserIdApi = async (userId) => {
-  try {
-    const response = await Axios.get(
-      `/transaction/get-transaction-by-user-id/${userId}`
-    );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get transaction failed");
-  }
-};
-
-// ================= DRIVER =================
-
-export const registerDriverApi = async (payload) => {
-  try {
-    const response = await Axios.post("/driver/Register-driver", payload);
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Register driver failed");
-  }
-};
-
-export const getAllDriverByStoreIdApi = async (storeId) => {
-  try {
-    const response = await Axios.get(
-      `/driver/Get-All-driver-by-store-id/${storeId}`
-    );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get drivers failed");
-  }
-};
-
-// ================= DASHBOARD =================
-
-export const getDashboardApi = async () => {
-  try {
-    const response = await Axios.get("/dashboard/get-dashboard");
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get dashboard failed");
-  }
-};
-
-// ================= RATING =================
-
-export const getAllRatingApi = async () => {
-  try {
-    const response = await Axios.get("/rating/Get-all-rating");
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get ratings failed");
-  }
-};
-
-export const getAvgRatingApi = async () => {
-  try {
-    const response = await Axios.get("/rating/get-avg-rating");
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get average rating failed");
-  }
-};
-
-export const adminLogout = () => {
-  localStorage.removeItem("adminToken");
-  localStorage.removeItem("token");
-  localStorage.removeItem("isAdminLogin");
-  localStorage.removeItem("adminData");
-  localStorage.removeItem("adminEmail");
-  localStorage.removeItem("adminOtp");
-
-  sessionStorage.removeItem("adminToken");
-  sessionStorage.removeItem("token");
 };

@@ -7,13 +7,11 @@ export const AdminRouters = {
   // =========================
   // DASHBOARD
   // =========================
-
   DASHBOARD: "/dashboard",
 
   // =========================
   // USER MANAGEMENT
   // =========================
-
   USERS: "/users",
   ALL_USERS: "/users/all",
   ADD_USER: "/users/add",
@@ -22,7 +20,6 @@ export const AdminRouters = {
   // =========================
   // PRODUCT MANAGEMENT
   // =========================
-
   PRODUCTS: "/products",
   ALL_PRODUCTS: "/products/all",
   ADD_PRODUCT: "/products/add",
@@ -30,7 +27,6 @@ export const AdminRouters = {
   // =========================
   // CATEGORY MANAGEMENT
   // =========================
-
   CATEGORIES: "/categories",
   SUB_CATEGORIES: "/sub-categories",
   BRANDS: "/brands",
@@ -38,8 +34,8 @@ export const AdminRouters = {
   // =========================
   // STORE MANAGEMENT
   // =========================
-
   STORES: "/stores",
+  STORE_DETAILS: "/stores/:storeId",
   INVENTORY: "/inventory",
 
   STORE_CATEGORIES: "/store-categories",
@@ -50,7 +46,6 @@ export const AdminRouters = {
   // =========================
   // ORDER MANAGEMENT
   // =========================
-
   ORDERS: "/orders",
   ALL_ORDERS: "/orders/all",
   PENDING_ORDERS: "/orders/pending",
@@ -63,16 +58,13 @@ export const AdminRouters = {
   // =========================
   // TRANSACTIONS
   // =========================
-
   TRANSACTIONS: "/payments/transactions",
   WALLETS: "/payments/wallets",
-
   USER_TRANSACTIONS: "/payments/user-transactions",
 
   // =========================
   // DRIVER MANAGEMENT
   // =========================
-
   DRIVERS: "/drivers",
   ALL_DRIVERS: "/drivers/all",
   ADD_DRIVER: "/drivers/add",
@@ -80,7 +72,6 @@ export const AdminRouters = {
   // =========================
   // RATING MANAGEMENT
   // =========================
-
   RATINGS: "/ratings",
   ALL_RATINGS: "/ratings/all",
   AVG_RATING: "/ratings/average",
@@ -88,27 +79,23 @@ export const AdminRouters = {
   // =========================
   // REPORTS
   // =========================
-
   SALES_REPORT: "/reports/sales",
   USER_ANALYTICS: "/reports/users",
 
   // =========================
   // SUPPORT
   // =========================
-
   SUPPORT: "/support",
   NOTIFICATIONS: "/notifications",
 
   // =========================
   // SETTINGS
   // =========================
-
   SETTINGS: "/settings",
 
   // =========================
   // AUTH
   // =========================
-
   LOGOUT: "/logout",
 };
 

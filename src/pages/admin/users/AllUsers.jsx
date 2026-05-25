@@ -27,12 +27,12 @@ const AllUsers = () => {
   ];
 
   return (
-    <div className="p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-white/[0.01] via-transparent to-transparent p-5 rounded-3xl border border-white/[0.03]">
         <div>
-          <h1 className="text-2xl font-bold text-white">All Users</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Manage all registered users in the system
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">All Users</h1>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage all registered users in the system database
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -40,74 +40,78 @@ const AllUsers = () => {
             <input
               type="text"
               placeholder="Search users..."
-              className="w-full sm:w-64 bg-[var(--card-bg)] border border-[var(--border-soft)] text-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-orange-500/50"
+              className="w-full sm:w-64 h-11 bg-white/[0.02] border border-white/5 text-white rounded-xl pl-10 pr-4 text-xs outline-none focus:border-[var(--primary-orange)]/50 focus:bg-white/[0.04] transition-all"
             />
-            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs" />
           </div>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-600 hover:to-orange-500 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-orange-500/20 font-medium shrink-0">
+          <button className="flex items-center gap-2 h-11 bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] hover:from-[var(--primary-orange-dark)] text-white px-4 rounded-xl transition-all shadow-md shadow-orange-500/20 font-bold text-xs shrink-0 cursor-pointer">
             <FaPlus /> Add User
           </button>
         </div>
       </div>
 
-      <div className="glass rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+      <div className="glass-premium rounded-3xl overflow-hidden border border-white/[0.03] shadow-2xl bg-black/20">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[var(--card-bg)]/50 border-b border-white/10">
-                <th className="p-4 text-sm font-semibold text-[var(--text-secondary)]">
+              <tr className="bg-white/[0.01] border-b border-white/[0.03]">
+                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   Name
                 </th>
-                <th className="p-4 text-sm font-semibold text-[var(--text-secondary)]">
+                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   Email
                 </th>
-                <th className="p-4 text-sm font-semibold text-[var(--text-secondary)]">
+                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   Role
                 </th>
-                <th className="p-4 text-sm font-semibold text-[var(--text-secondary)]">
+                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   Status
                 </th>
-                <th className="p-4 text-sm font-semibold text-[var(--text-secondary)]">
+                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/[0.02]">
               {users.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  className="transition-colors hover:bg-white/[0.01]"
                 >
-                  <td className="p-4">
+                  <td className="p-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold border border-orange-500/30">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--primary-orange)] to-[var(--primary-green-light)] text-white flex items-center justify-center font-black text-sm shadow-md">
                         {user.name.charAt(0)}
                       </div>
-                      <span className="text-white font-medium">
+                      <span className="text-white font-bold text-xs tracking-wide">
                         {user.name}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4 text-gray-300">{user.email}</td>
-                  <td className="p-4">
-                    <span className="bg-white/10 text-gray-300 px-3 py-1 rounded-full text-xs border border-white/10">
+                  <td className="p-5 text-slate-300 font-medium text-xs">{user.email}</td>
+                  <td className="p-5">
+                    <span className="bg-white/[0.03] text-slate-400 px-3 py-1 rounded-full text-[10px] font-bold border border-white/5 uppercase tracking-wider">
                       {user.role}
                     </span>
                   </td>
-                  <td className="p-4">
+                  <td className="p-5">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium border ${user.status === "Active" ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}
+                      className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-bold border ${
+                        user.status === "Active" 
+                          ? "bg-[rgba(57,181,74,0.06)] border-[rgba(57,181,74,0.15)] text-[var(--primary-green-light)]" 
+                          : "bg-red-500/5 border-red-500/15 text-red-400"
+                      }`}
                     >
                       {user.status}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex gap-3">
-                      <button className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors border border-blue-500/20">
-                        <FaEdit />
+                  <td className="p-5">
+                    <div className="flex gap-2">
+                      <button className="h-8 w-8 rounded-lg bg-blue-500/5 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors border border-blue-500/10 cursor-pointer">
+                        <FaEdit size={12} />
                       </button>
-                      <button className="h-8 w-8 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors border border-red-500/20">
-                        <FaTrash />
+                      <button className="h-8 w-8 rounded-lg bg-red-500/5 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors border border-red-500/10 cursor-pointer">
+                        <FaTrash size={12} />
                       </button>
                     </div>
                   </td>
@@ -116,21 +120,21 @@ const AllUsers = () => {
             </tbody>
           </table>
         </div>
-        <div className="p-4 border-t border-white/10 bg-[var(--card-bg)]/30 flex items-center justify-between">
-          <p className="text-sm text-[var(--text-secondary)]">
-            Showing 3 of 150 users
+        <div className="p-5 border-t border-white/[0.03] bg-white/[0.01] flex items-center justify-between text-xs text-slate-500 font-medium">
+          <p>
+            Showing <span className="font-extrabold text-[var(--primary-orange-light)]">3</span> of <span className="font-extrabold text-white">150</span> users
           </p>
-          <div className="flex gap-1">
-            <button className="px-3 py-1 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 text-sm disabled:opacity-50 border border-white/10">
+          <div className="flex gap-1.5">
+            <button className="px-3 py-1.5 rounded-lg bg-white/[0.02] text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
               Prev
             </button>
-            <button className="px-3 py-1 rounded-lg bg-orange-500 text-white hover:bg-orange-600 text-sm shadow-lg shadow-orange-500/20 border border-orange-500">
+            <button className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white font-bold shadow-md shadow-orange-500/15 border border-orange-500/10 cursor-pointer">
               1
             </button>
-            <button className="px-3 py-1 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 text-sm border border-white/10">
+            <button className="px-3.5 py-1.5 rounded-lg bg-white/[0.02] text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
               2
             </button>
-            <button className="px-3 py-1 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 text-sm border border-white/10">
+            <button className="px-3 py-1.5 rounded-lg bg-white/[0.02] text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
               Next
             </button>
           </div>

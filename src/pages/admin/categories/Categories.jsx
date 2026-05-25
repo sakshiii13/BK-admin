@@ -1,17 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  FaPlus,
-  FaEdit,
-  FaTrash,
-  FaTimes,
-  FaUpload,
-} from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaTimes, FaUpload } from "react-icons/fa";
 
 import {
   createCategoryApi,
   getAllCategoriesApi,
   updateCategoryApi,
-} from "../../../api/category.api";
+} from "../../../api/admin.api";
 
 const Categories = () => {
   const fileRef = useRef(null);
@@ -25,98 +19,50 @@ const Categories = () => {
 
   const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  // =========================
-  // NORMALIZE CATEGORY DATA
-  // =========================
-
   const normalizeCategories = (apiData) => {
     if (Array.isArray(apiData)) return apiData;
-
     if (Array.isArray(apiData?.data)) return apiData.data;
-
-    if (Array.isArray(apiData?.categories))
-      return apiData.categories;
-
-    if (Array.isArray(apiData?.data?.categories))
-      return apiData.data.categories;
-
-    if (Array.isArray(apiData?.data?.docs))
-      return apiData.data.docs;
-
+    if (Array.isArray(apiData?.categories)) return apiData.categories;
+    if (Array.isArray(apiData?.data?.categories)) return apiData.data.categories;
+    if (Array.isArray(apiData?.data?.docs)) return apiData.data.docs;
     return [];
   };
 
-  // =========================
-  // IMAGE URL
-  // =========================
-
   const getImageUrl = (item) => {
-    const imageValue =
-      item?.image ||
-      item?.imageUrl ||
-      item?.categoryImage ||
-      item?.thumbnail ||
-      item?.photo ||
-      item?.file ||
-      item?.media?.url ||
-      item?.image?.url ||
-      item?.image?.path;
+    const imageValue = item?.image || item?.imageUrl || item?.thumbnail;
 
     if (!imageValue) return "/logo.png";
 
     if (typeof imageValue === "string") {
-      if (imageValue.startsWith("data:image"))
-        return imageValue;
-
-      if (imageValue.startsWith("http"))
-        return imageValue;
-
-      if (imageValue.startsWith("/"))
-        return `http://192.168.29.96:5000${imageValue}`;
-
+      if (imageValue.startsWith("http")) return imageValue;
+      if (imageValue.startsWith("/")) return `http://192.168.29.96:5000${imageValue}`;
       return `http://192.168.29.96:5000/${imageValue}`;
     }
 
     return "/logo.png";
   };
 
-  // =========================
-  // FETCH CATEGORIES
-  // =========================
-
   const fetchCategories = async () => {
     try {
       setFetchLoading(true);
 
       const response = await getAllCategoriesApi(1, 10);
-
       console.log("CATEGORY RESPONSE 👉", response);
 
       if (response?.success) {
-        const apiList = normalizeCategories(response);
-
-        setCategories(apiList);
+        setCategories(normalizeCategories(response));
       } else {
         setCategories([]);
-
-        alert(
-          response?.message ||
-            "Failed to fetch categories"
-        );
+        alert(response?.message || "Failed to fetch categories");
       }
     } catch (error) {
       console.log("FETCH CATEGORY ERROR 👉", error);
-
-      setCategories([]);
-
-      alert(
-        error?.message ||
-          "Something went wrong while fetching categories"
-      );
+      alert(error?.message || "Something went wrong while fetching categories");
     } finally {
       setFetchLoading(false);
     }
@@ -126,68 +72,42 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
-  // =========================
-  // RESET FORM
-  // =========================
-
   const resetForm = () => {
     setCategoryName("");
     setDescription("");
+    setIsActive(true);
     setImage(null);
     setPreview(null);
     setEditCategory(null);
 
-    if (fileRef.current) {
-      fileRef.current.value = "";
-    }
+    if (fileRef.current) fileRef.current.value = "";
   };
-
-  // =========================
-  // OPEN ADD MODAL
-  // =========================
 
   const openAddModal = () => {
     resetForm();
     setShowModal(true);
   };
 
-  // =========================
-  // OPEN EDIT MODAL
-  // =========================
-
   const openEditModal = (category) => {
-    setEditCategory(category);
+    console.log("EDIT CATEGORY 👉", category);
 
+    setEditCategory(category);
     setCategoryName(category?.name || "");
     setDescription(category?.description || "");
-
+    setIsActive(category?.isActive ?? true);
     setPreview(getImageUrl(category));
-
     setImage(null);
-
     setShowModal(true);
   };
-
-  // =========================
-  // CLOSE MODAL
-  // =========================
 
   const closeModal = () => {
     setShowModal(false);
     resetForm();
   };
 
-  // =========================
-  // OPEN FILE
-  // =========================
-
   const handleOpenFile = () => {
     fileRef.current?.click();
   };
-
-  // =========================
-  // IMAGE CHANGE
-  // =========================
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -202,17 +122,9 @@ const Categories = () => {
     setImage(file);
 
     const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
-
+    reader.onloadend = () => setPreview(reader.result);
     reader.readAsDataURL(file);
   };
-
-  // =========================
-  // CREATE / UPDATE CATEGORY
-  // =========================
 
   const handleSubmitCategory = async (e) => {
     e.preventDefault();
@@ -232,65 +144,36 @@ const Categories = () => {
 
       const formData = new FormData();
 
-      // ✅ ONLY THESE FIELDS
       formData.append("name", categoryName.trim());
-      formData.append(
-        "description",
-        description.trim()
-      );
+      formData.append("description", description.trim());
+      formData.append("isActive", isActive);
 
       if (image) {
         formData.append("image", image);
       }
 
-      const categoryId =
-        editCategory?._id || editCategory?.id;
+      const categoryId = editCategory?._id || editCategory?.id;
 
       const response = editCategory
-        ? await updateCategoryApi(
-            categoryId,
-            formData
-          )
+        ? await updateCategoryApi(categoryId, formData)
         : await createCategoryApi(formData);
 
-      console.log(
-        "SAVE CATEGORY RESPONSE 👉",
-        response
-      );
+      console.log("SAVE CATEGORY RESPONSE 👉", response);
 
       if (response?.success) {
-        alert(
-          response?.message ||
-            "Category saved successfully"
-        );
-
+        alert(response?.message || "Category saved successfully");
         closeModal();
-
         fetchCategories();
       } else {
-        alert(
-          response?.message ||
-            "Failed to save category"
-        );
+        alert(response?.message || "Failed to save category");
       }
     } catch (error) {
-      console.log(
-        "SAVE CATEGORY ERROR 👉",
-        error
-      );
-
-      alert(
-        error?.message ||
-          "Something went wrong while saving category"
-      );
+      console.log("SAVE CATEGORY ERROR 👉", error);
+      alert(error?.message || "Something went wrong while saving category");
     } finally {
       setLoading(false);
     }
   };
-
-  // =========================
-  // DELETE
-  // =========================
 
   const handleDelete = (id) => {
     const confirmDelete = window.confirm(
@@ -299,47 +182,37 @@ const Categories = () => {
 
     if (!confirmDelete) return;
 
-    setCategories((prev) =>
-      prev.filter(
-        (item) =>
-          (item?._id || item?.id) !== id
-      )
-    );
+    setCategories((prev) => prev.filter((item) => (item?._id || item?.id) !== id));
   };
 
   return (
-    <div className="p-6">
-      {/* HEADER */}
-
-      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-white/[0.01] via-transparent to-transparent p-5 rounded-3xl border border-white/[0.03]">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
             Categories
           </h1>
-
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Manage main product categories
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage main product categories for the storefront
           </p>
         </div>
 
         <button
           type="button"
           onClick={openAddModal}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 font-medium text-white shadow-lg transition-all hover:scale-[1.02]"
+          className="flex items-center gap-2 h-11 bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white px-5 rounded-xl transition-all shadow-md shadow-orange-500/20 font-bold text-xs shrink-0 cursor-pointer hover:scale-[1.01]"
         >
           <FaPlus /> Add Category
         </button>
       </div>
 
-      {/* LOADING */}
-
       {fetchLoading ? (
-        <div className="rounded-2xl border border-white/10 bg-[var(--card-bg)] p-8 text-center text-slate-400">
+        <div className="glass-premium rounded-3xl border border-white/[0.03] p-10 text-center text-xs text-slate-500 font-medium">
           Loading categories...
         </div>
       ) : categories.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-[var(--card-bg)] p-8 text-center text-slate-400">
-          No categories found
+        <div className="glass-premium rounded-3xl border border-white/[0.03] p-10 text-center text-xs text-slate-500 font-medium">
+          No categories found. Start by adding one!
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -349,49 +222,52 @@ const Categories = () => {
             return (
               <div
                 key={id}
-                className="glass group rounded-2xl border border-white/10 p-5 shadow-xl transition-all hover:-translate-y-1"
+                className="glass-premium glass-premium-hover group rounded-2xl p-5 border border-white/[0.02] shadow-xl relative"
               >
                 <div className="mb-4 flex items-start justify-between">
-                  <div className="h-16 w-16 overflow-hidden rounded-2xl border border-orange-500/20 bg-orange-500/10">
+                  <div className="h-16 w-16 overflow-hidden rounded-xl border border-white/5 bg-white/[0.02]">
                     <img
                       src={getImageUrl(cat)}
-                      alt={
-                        cat?.name || "Category"
-                      }
-                      className="h-full w-full object-cover"
+                      alt={cat?.name || "Category"}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
 
-                  <div className="flex gap-2 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openEditModal(cat)
-                      }
-                      className="text-blue-400 hover:text-blue-300"
-                    >
-                      <FaEdit />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDelete(id)
-                      }
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
+                  <span
+                    className={`text-[10px] px-2 py-1 rounded-full font-bold ${
+                      cat?.isActive
+                        ? "bg-green-500/10 text-green-400"
+                        : "bg-red-500/10 text-red-400"
+                    }`}
+                  >
+                    {cat?.isActive ? "Active" : "Inactive"}
+                  </span>
                 </div>
 
-                <h3 className="text-lg font-bold text-white">
+                <div className="absolute right-4 top-20 flex gap-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-black/60 p-1.5 rounded-lg border border-white/5 backdrop-blur-md">
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(cat)}
+                    className="text-blue-400 hover:text-blue-300 p-1 cursor-pointer"
+                  >
+                    <FaEdit size={13} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(id)}
+                    className="text-red-400 hover:text-red-300 p-1 cursor-pointer"
+                  >
+                    <FaTrash size={13} />
+                  </button>
+                </div>
+
+                <h3 className="text-sm font-bold text-white tracking-wide">
                   {cat?.name || "Category"}
                 </h3>
 
-                <p className="mt-1 line-clamp-2 text-sm text-slate-400">
-                  {cat?.description ||
-                    "No description"}
+                <p className="mt-1.5 line-clamp-2 text-xs text-slate-500 font-medium leading-relaxed">
+                  {cat?.description || "No description provided."}
                 </p>
               </div>
             );
@@ -399,85 +275,83 @@ const Categories = () => {
         </div>
       )}
 
-      {/* MODAL */}
-
       {showModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[var(--app-bg)] p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md">
+          <div className="w-full max-w-md rounded-3xl border border-white/5 bg-[#080e0a] p-6 shadow-2xl relative overflow-hidden glass-premium">
+            <div className="mb-6 flex items-center justify-between border-b border-white/[0.03] pb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">
-                  {editCategory
-                    ? "Update Category"
-                    : "Add Category"}
+                <h2 className="text-lg font-bold text-white tracking-wide">
+                  {editCategory ? "Update Category" : "Add Category"}
                 </h2>
 
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                <p className="mt-0.5 text-xs text-slate-500 font-medium">
                   {editCategory
-                    ? "Update category details"
-                    : "Create a new category"}
+                    ? "Modify existing category properties"
+                    : "Define a new product catalog category"}
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={closeModal}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white cursor-pointer border border-white/5"
               >
-                <FaTimes />
+                <FaTimes size={12} />
               </button>
             </div>
 
-            <form
-              onSubmit={handleSubmitCategory}
-              className="space-y-4"
-            >
-              {/* NAME */}
-
+            <form onSubmit={handleSubmitCategory} className="space-y-5">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
+                <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Category Name
                 </label>
 
                 <input
                   type="text"
                   value={categoryName}
-                  onChange={(e) =>
-                    setCategoryName(
-                      e.target.value
-                    )
-                  }
-                  placeholder="e.g. MakeUp"
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="e.g. Fruits & Vegetables"
                   required
-                  className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--card-bg)] px-4 py-3 text-white outline-none focus:border-orange-500/60"
+                  className="w-full h-11 rounded-xl border border-white/5 bg-black/40 px-4 text-xs text-white outline-none focus:border-[var(--primary-orange)]/45 focus:bg-black/60 transition-all"
                 />
               </div>
 
-              {/* DESCRIPTION */}
-
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
+                <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
                   Description
                 </label>
 
                 <textarea
-                  rows="4"
+                  rows="3"
                   value={description}
-                  onChange={(e) =>
-                    setDescription(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Enter category description..."
-                  className="w-full rounded-xl border border-[var(--border-soft)] bg-[var(--card-bg)] px-4 py-3 text-white outline-none focus:border-orange-500/60"
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Summarize product types included..."
+                  className="w-full rounded-xl border border-white/5 bg-black/40 px-4 py-3 text-xs text-white outline-none focus:border-[var(--primary-orange)]/45 focus:bg-black/60 transition-all resize-none"
                 />
               </div>
 
-              {/* IMAGE */}
+              <div>
+                <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Status
+                </label>
+
+                <select
+                  value={String(isActive)}
+                  onChange={(e) => setIsActive(e.target.value === "true")}
+                  className="w-full h-11 rounded-xl border border-white/5 bg-black/40 px-4 text-xs text-white outline-none focus:border-[var(--primary-orange)]/45"
+                >
+                  <option className="bg-slate-900" value="true">
+                    Active
+                  </option>
+                  <option className="bg-slate-900" value="false">
+                    Inactive
+                  </option>
+                </select>
+              </div>
 
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
-                  Upload Image
+                <label className="mb-2 block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Category Image
                 </label>
 
                 <input
@@ -490,33 +364,30 @@ const Categories = () => {
 
                 <div
                   onClick={handleOpenFile}
-                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/10 bg-[var(--card-bg)] p-6 transition hover:border-orange-500/50"
+                  className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.01] p-6 transition-all hover:border-[var(--primary-orange)]/40 hover:bg-white/[0.02]"
                 >
                   {preview ? (
                     <img
                       src={preview}
                       alt="Preview"
-                      className="h-32 w-full rounded-xl object-cover"
+                      className="h-28 w-full rounded-xl object-cover"
                     />
                   ) : (
                     <>
-                      <FaUpload className="text-3xl text-orange-400" />
-
-                      <p className="text-sm text-gray-400">
-                        Click to upload image
+                      <FaUpload className="text-xl text-[var(--primary-orange-light)]" />
+                      <p className="text-xs text-slate-500 font-bold">
+                        Click to select image file
                       </p>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* BUTTONS */}
-
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-3">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-semibold text-gray-300 hover:bg-white/10"
+                  className="w-full h-11 rounded-xl border border-white/5 bg-white/[0.02] text-slate-300 font-bold text-xs hover:bg-white/[0.04] transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -524,15 +395,15 @@ const Categories = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 font-bold text-white transition hover:scale-[1.02] disabled:opacity-60"
+                  className="w-full h-11 rounded-xl btn-gradient-orange text-white font-bold text-xs transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {loading
                     ? editCategory
-                      ? "Updating..."
-                      : "Creating..."
+                      ? "Saving Updates..."
+                      : "Adding Category..."
                     : editCategory
-                    ? "Update"
-                    : "Add Category"}
+                    ? "Update Category"
+                    : "Create Category"}
                 </button>
               </div>
             </form>
