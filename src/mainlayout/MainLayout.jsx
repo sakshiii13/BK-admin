@@ -1,3 +1,5 @@
+// src/layouts/MainLayout.jsx
+
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SideBar from "../components/ui/SideBar";
@@ -9,14 +11,19 @@ const MainLayout = ({ inner }) => {
   const sideToggle = useSelector((state) => state?.sideMenu?.open);
 
   return (
-    <div className="flex min-h-screen bg-[var(--app-bg)] text-white">
+    // Background color ko dark variable se hata kar light gray (slate-50) kar diya hai
+    <div className="flex min-h-screen bg-slate-50 text-slate-800">
       <SideBar />
       <div 
         className={`w-full min-h-screen flex flex-col transition-all duration-300 ease-in-out
           ${sideToggle ? "lg:w-[calc(100%-260px)]" : "lg:w-full"}`}
       >
         <TopBar onMenuClick={() => dispatch(toggleSideMenu())} />
-        <div className="p-4 sm:p-6 flex-1">{inner}</div>
+        
+        {/* Content area ka padding maintain rakha hai */}
+        <main className="p-4 sm:p-6 flex-1">
+          {inner}
+        </main>
       </div>
     </div>
   );

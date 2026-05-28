@@ -311,3 +311,22 @@ export const packStoreOrderApi = async (storeId, orderId) => {
 
   return response.data;
 };
+
+// ==========================================
+// ASSIGN DRIVER API
+// ==========================================
+
+export const assignDriverApi = async (
+  storeId,
+  orderId,
+  driverId
+) => {
+  const response = await Axios.patch(
+    `/store/orders/${storeId}/${orderId}/assign-driver`,
+    {
+      driverId,
+    }
+  );
+
+  return response.data;
+};

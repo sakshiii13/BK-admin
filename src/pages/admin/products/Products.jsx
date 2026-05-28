@@ -1,10 +1,11 @@
+// src/pages/products/Products.jsx
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
 import { showConfirm, showSuccess } from "../../../utils/alertService";
-
 import TableComponent from "../../../components/global/TableComponent";
 
 const defaultProducts = [
@@ -59,7 +60,6 @@ const Products = () => {
 
     try {
       dispatch(showLoader());
-      // Simulate quick action loader
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
@@ -81,17 +81,11 @@ const Products = () => {
       label: "Product",
       render: (_, row) => (
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-            <img
-              src={row.image}
-              alt={row.name}
-              className="h-full w-full object-cover"
-            />
-          </div>
-
+          {/* Direct use of our img-3d utility class */}
+          <img src={row.image} alt={row.name} className="img-3d h-12 w-12 object-cover" />
           <div>
-            <p className="font-semibold text-white">{row.name}</p>
-            <p className="text-xs text-slate-400">{row.brand}</p>
+            <p className="font-bold text-slate-800 text-sm">{row.name}</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5">{row.brand}</p>
           </div>
         </div>
       ),
@@ -99,12 +93,13 @@ const Products = () => {
     {
       key: "category",
       label: "Category",
+      render: (value) => <span className="font-bold text-slate-700">{value}</span>
     },
     {
       key: "subCategory",
       label: "Sub Category",
       render: (value) => (
-        <span className="rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
+        <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
           {value || "-"}
         </span>
       ),
@@ -113,7 +108,7 @@ const Products = () => {
       key: "variant",
       label: "Variant",
       render: (value) => (
-        <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-xs font-bold text-orange-300">
+        <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-extrabold text-orange-600">
           {value || "-"}
         </span>
       ),
@@ -121,26 +116,23 @@ const Products = () => {
     {
       key: "price",
       label: "Price",
+      render: (value) => <span className="font-extrabold text-slate-900 text-sm">{value}</span>
     },
     {
       key: "stock",
       label: "Stock",
-      render: (value) => (
-        <span className="font-semibold text-white">{value} units</span>
-      ),
+      render: (value) => <span className="font-bold text-slate-800">{value} units</span>
     },
     {
       key: "status",
       label: "Status",
       render: (value) => (
         <span
-          className={`rounded-full border px-3 py-1 text-xs font-bold
+          className={`rounded-full border px-3 py-1 text-xs font-extrabold 
           ${
-            value === "In Stock"
-              ? "border-green-500/20 bg-green-500/10 text-green-400"
-              : value === "Low Stock"
-              ? "border-yellow-500/20 bg-yellow-500/10 text-yellow-400"
-              : "border-red-500/20 bg-red-500/10 text-red-400"
+            value === "In Stock" ? "border-green-200 bg-green-50 text-green-600"
+            : value === "Low Stock" ? "border-yellow-200 bg-yellow-50 text-yellow-600"
+            : "border-red-200 bg-red-50 text-red-600"
           }`}
         >
           {value}
@@ -151,19 +143,19 @@ const Products = () => {
       key: "actions",
       label: "Actions",
       render: (_, row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          {/* Action buttons utilizing btn-3d and btn-white */}
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 transition hover:bg-blue-500/20"
+            className="btn-3d btn-white h-9 w-9 rounded-xl flex items-center justify-center text-blue-600"
             onClick={() => console.log("Edit:", row.id)}
           >
-            <FaEdit />
+            <FaEdit className="text-sm" />
           </button>
-
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-red-400 transition hover:bg-red-500/20"
+            className="btn-3d btn-white h-9 w-9 rounded-xl flex items-center justify-center text-red-500"
             onClick={() => handleDelete(row.id)}
           >
-            <FaTrash />
+            <FaTrash className="text-xs" />
           </button>
         </div>
       ),
@@ -171,7 +163,7 @@ const Products = () => {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-7xl mx-auto">
       <TableComponent
         title="Products"
         subtitle="Manage your grocery catalog"

@@ -2,211 +2,131 @@
 
 @layer base {
   :root {
-    --app-bg: #030704;
-    --card-bg: #080f0a;
-    --card-bg-elevated: #0f1811;
-    --border-soft: rgba(57, 181, 74, 0.08);
-    --border-glowing: rgba(243, 112, 35, 0.2);
-    
-    --primary-orange: #f37023;
-    --primary-orange-light: #f7941d;
+    /* Brand Colors */
+    --primary-orange: #f7941d;
+    --primary-orange-light: #f37023;
     --primary-green: #39b54a;
     --primary-green-light: #8cc63f;
+
+    /* Light Theme Canvas */
+    --app-bg: #f4f7f6; /* Subtle cool background */
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
     
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    
-    --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
-    --shadow-glow-orange: 0 0 25px rgba(243, 112, 35, 0.15);
-    --shadow-glow-green: 0 0 25px rgba(57, 181, 74, 0.15);
+    /* 3D Shadows & Depth */
+    --shadow-3d: 0 6px 12px -2px rgba(0, 0, 0, 0.05), 0 3px 6px -3px rgba(0, 0, 0, 0.03);
+    --shadow-3d-hover: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 8px 12px -6px rgba(0, 0, 0, 0.04);
+    --inner-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
   }
 
-  html {
-    scroll-behavior: smooth;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-  }
+  html { scroll-behavior: smooth; font-family: 'Plus Jakarta Sans', sans-serif; }
 
   body {
     background-color: var(--app-bg);
     color: var(--text-primary);
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(243, 112, 35, 0.03) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(57, 181, 74, 0.03) 0%, transparent 40%);
-    background-attachment: fixed;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
   }
 }
 
 @layer components {
-  /* Premium Glassmorphic Card */
-  .glass-premium {
-    background: rgba(8, 15, 10, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: var(--shadow-premium);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  /* =========================================
+     1. 3D CARDS (For Containers)
+     ========================================= */
+  .card-3d {
+    background-color: var(--card-bg);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 20px;
+    box-shadow: var(--shadow-3d);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .glass-premium-hover:hover {
-    background: rgba(12, 22, 15, 0.85);
-    border-color: rgba(57, 181, 74, 0.15);
+  .card-3d:hover {
     transform: translateY(-4px);
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(57, 181, 74, 0.05);
+    box-shadow: var(--shadow-3d-hover);
   }
 
-  /* Orange glowing premium card */
-  .glass-orange-hover:hover {
-    background: rgba(15, 20, 15, 0.85);
-    border-color: rgba(243, 112, 35, 0.2);
-    transform: translateY(-4px);
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8), 0 0 20px rgba(243, 112, 35, 0.05);
+  /* =========================================
+     2. 3D BUTTONS (Tactile Click Effect)
+     ========================================= */
+  .btn-3d {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    border-radius: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    /* This creates the 3D depth at the bottom */
+    border-bottom: 4px solid rgba(0, 0, 0, 0.15); 
+  }
+  
+  /* When clicked, it presses down */
+  .btn-3d:active {
+    transform: translateY(4px);
+    border-bottom-width: 0px;
+    margin-bottom: 4px; /* Prevents layout shift */
   }
 
-  /* Logo Gradient Text */
-  .gradient-text-orange-green {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-light) 40%, var(--primary-green-light) 65%, var(--primary-green) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Glowing Interactive Inputs */
-  .input-premium {
-    background: rgba(3, 7, 4, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    color: var(--text-primary);
-    transition: all 0.3s ease;
-  }
-
-  .input-premium:focus {
-    border-color: rgba(243, 112, 35, 0.4);
-    box-shadow: 0 0 0 2px rgba(243, 112, 35, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    background: rgba(8, 15, 10, 0.8);
-  }
-
-  .input-premium-green:focus {
-    border-color: rgba(57, 181, 74, 0.4);
-    box-shadow: 0 0 0 2px rgba(57, 181, 74, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    background: rgba(8, 15, 10, 0.8);
-  }
-
-  /* Premium Buttons */
+  /* Orange Gradient Button */
   .btn-gradient-orange {
-    background: linear-gradient(135deg, var(--primary-orange) 0%, #ff8a00 100%);
-    box-shadow: 0 4px 15px rgba(243, 112, 35, 0.25);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-light) 100%);
+    color: white;
+    border-bottom-color: #c95d1a; /* Darker orange for bottom depth */
+  }
+  .btn-gradient-orange:hover { filter: brightness(1.05); }
+
+  /* White/Secondary Button (For Back/Cancel buttons) */
+  .btn-white {
+    background: #ffffff;
+    color: var(--text-secondary);
+    border: 1px solid #e2e8f0;
+    border-bottom: 4px solid #cbd5e1;
+  }
+  .btn-white:hover { color: var(--primary-orange); background: #f8fafc; }
+  .btn-white:active { border-bottom-width: 0px; border-top: 1px solid #e2e8f0; }
+
+  /* =========================================
+     3. 3D INPUTS & SELECTS (Inset Shadow)
+     ========================================= */
+  .input-3d {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: var(--inner-shadow);
+    transition: all 0.3s ease;
+    color: var(--text-primary);
   }
 
-  .btn-gradient-orange:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(243, 112, 35, 0.4);
-    filter: brightness(1.1);
+  .input-3d:focus {
+    background: #ffffff;
+    border-color: var(--primary-orange);
+    outline: none;
+    /* Outer glowing ring + inner shadow */
+    box-shadow: 0 0 0 4px rgba(247, 148, 29, 0.15), var(--inner-shadow);
   }
 
-  .btn-gradient-green {
-    background: linear-gradient(135deg, var(--primary-green-light) 0%, var(--primary-green) 100%);
-    box-shadow: 0 4px 15px rgba(57, 181, 74, 0.25);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* =========================================
+     4. 3D IMAGES / AVATARS
+     ========================================= */
+  .img-3d {
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    transition: transform 0.3s ease;
   }
-
-  .btn-gradient-green:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(57, 181, 74, 0.4);
-    filter: brightness(1.1);
-  }
+  .img-3d:hover { transform: scale(1.05) rotate(2deg); }
 }
 
 @layer utilities {
-  /* Scrollbar Styles */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  /* Custom Scrollbar for Light Theme */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { 
+    background: #cbd5e1; 
+    border-radius: 99px; 
+    border: 2px solid var(--app-bg);
   }
-
-  ::-webkit-scrollbar-track {
-    background: var(--app-bg);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(243, 112, 35, 0.15);
-    border-radius: 99px;
-    transition: background 0.3s ease;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--primary-orange) 0%, var(--primary-green) 100%);
-  }
-
-  /* Custom glow keyframe animations */
-  @keyframes ambient-pulse {
-    0%, 100% {
-      opacity: 0.4;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.6;
-      transform: scale(1.05);
-    }
-  }
-
-  .animate-ambient-slow {
-    animation: ambient-pulse 8s ease-in-out infinite;
-  }
-
-  /* Floating animation */
-  @keyframes premium-float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-8px);
-    }
-  }
-
-  .animate-premium-float {
-    animation: premium-float 4s ease-in-out infinite;
-  }
-
-  /* Sidebar Custom Scrollbar */
-  .sidebar-scroll::-webkit-scrollbar {
-    width: 3px;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 12px 0;
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(
-      180deg,
-      var(--primary-orange) 0%,
-      var(--primary-green-light) 60%,
-      var(--primary-green) 100%
-    );
-    border-radius: 99px;
-    min-height: 40px;
-    box-shadow: 0 0 6px rgba(243, 112, 35, 0.4);
-  }
-
-  .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(
-      180deg,
-      #ff8a00 0%,
-      var(--primary-green-light) 100%
-    );
-    box-shadow: 0 0 10px rgba(243, 112, 35, 0.6);
-  }
-
-  /* Firefox sidebar scrollbar */
-  .sidebar-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary-orange) transparent;
-  }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 }
