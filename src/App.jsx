@@ -2,7 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 // import { ToastContainer } from 'react-toastify'
 import RouterPage from './components/RouterPage'
-import PageLoader from './components/Global/PageLoader'
+import PageLoader from './components/global/PageLoader'
 
 const App = () => {
   const loading = useSelector((state)=>state?.loader?.loading)

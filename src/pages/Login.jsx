@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdLocalGroceryStore } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { adminLoginApi } from "../api/admin.api";
+import { showLoader, hideLoader } from "../redux/slices/loaderSlice";
+import { showSuccess, showError } from "../utils/alertService";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -10,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,19 +23,27 @@ const Login = () => {
       password,
     };
 
-    const response = await adminLoginApi(payload);
+    try {
+      dispatch(showLoader());
+      const response = await adminLoginApi(payload);
 
-    if (response?.success) {
-      localStorage.setItem("adminEmail", email);
+      if (response?.success) {
+        localStorage.setItem("adminEmail", email);
 
-      // testing ke liye, kyunki API response me OTP aa raha hai
-      localStorage.setItem("adminOtp", response?.otp);
+        // testing ke liye, kyunki API response me OTP aa raha hai
+        localStorage.setItem("adminOtp", response?.otp);
 
-      alert(response?.message || "OTP sent successfully");
+        dispatch(hideLoader());
+        await showSuccess(response?.message || "OTP sent successfully");
 
-      navigate("/verify-otp");
-    } else {
-      alert(response?.message || "Login failed");
+        navigate("/verify-otp");
+      } else {
+        dispatch(hideLoader());
+        showError(response?.message || "Login failed");
+      }
+    } catch (error) {
+      dispatch(hideLoader());
+      showError(error?.message || "Something went wrong during login");
     }
   };
 

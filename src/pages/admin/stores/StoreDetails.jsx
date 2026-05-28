@@ -10,11 +10,15 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showError } from "../../../utils/alertService";
 import { getStoreByIdApi } from "../../../api/admin.api";
 
 const StoreDetails = () => {
   const navigate = useNavigate();
   const { storeId } = useParams();
+  const dispatch = useDispatch();
 
   const [store, setStore] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,6 +27,7 @@ const StoreDetails = () => {
   const fetchStoreDetails = async () => {
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const res = await getStoreByIdApi(storeId);
       console.log("STORE DETAILS RESPONSE 👉", res);
@@ -33,13 +38,15 @@ const StoreDetails = () => {
         setActiveImage(apiStore?.images?.[0] || "/logo.png");
       } else {
         setStore(null);
-        alert(res?.message || "Store details not found");
+        showError(res?.message || "Store details not found");
       }
     } catch (error) {
       console.log("Store details error:", error);
       setStore(null);
+      showError("Something went wrong while fetching store details");
     } finally {
       setLoading(false);
+      dispatch(hideLoader());
     }
   };
 

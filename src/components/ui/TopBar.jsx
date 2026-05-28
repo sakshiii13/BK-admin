@@ -13,6 +13,9 @@ import {
 import { GiHamburgerMenu } from "react-icons/gi";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../redux/slices/loaderSlice";
+import { showConfirm, showSuccess } from "../../utils/alertService";
 
 const formatSegment = (text) => {
   if (!text) return "Dashboard";
@@ -61,6 +64,7 @@ const TopBar = ({ onMenuClick }) => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -132,9 +136,26 @@ const TopBar = ({ onMenuClick }) => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAdminLogin");
-    navigate("/login");
+  const handleLogout = async () => {
+    const result = await showConfirm({
+      title: "Sign Out?",
+      text: "Are you sure you want to sign out of BK Grocery Admin?",
+      confirmButtonText: "Yes, Sign Out"
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      dispatch(showLoader());
+      localStorage.removeItem("isAdminLogin");
+      // Simulate brief loader for premium UX
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      dispatch(hideLoader());
+      navigate("/login");
+      showSuccess("Signed out successfully");
+    } catch (error) {
+      dispatch(hideLoader());
+    }
   };
 
   return (

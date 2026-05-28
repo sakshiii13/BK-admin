@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Login from "../pages/Login";
 import MainLayout from "../mainlayout/MainLayout";
 import { AdminRouters } from "../constants/routes";
@@ -24,6 +23,12 @@ import Inventory from "../pages/admin/stores/Inventory";
 import StoreDetails from "../pages/admin/stores/StoreDetails";
 import StoreCategories from "../pages/admin/stores/StoreCategories";
 
+import Ratings from "../pages/admin/ratings/Ratings";
+import AllRatings from "../pages/admin/ratings/AllRatings";
+import AverageRating from "../pages/admin/ratings/AverageRating";
+
+import StoreProducts from "../pages/admin/StoreProducts";
+
 const CommonPage = ({ title, desc }) => {
   return (
     <div className="min-h-screen bg-[var(--app-bg)] px-5 py-6 text-white">
@@ -35,7 +40,8 @@ const CommonPage = ({ title, desc }) => {
         <h1 className="mt-3 text-3xl font-bold text-white">{title}</h1>
 
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-          {desc || "This page is ready. Now you can connect your API and UI here."}
+          {desc ||
+            "This page is ready. Now you can connect your API and UI here."}
         </p>
       </div>
     </div>
@@ -66,17 +72,11 @@ const PageNotFound = () => (
 );
 
 const adminRoutes = [
-  // =========================
-  // DASHBOARD
-  // =========================
   {
     path: AdminRouters.DASHBOARD,
     element: <Dashboard />,
   },
 
-  // =========================
-  // USER MANAGEMENT
-  // =========================
   {
     path: AdminRouters.USERS,
     element: <AllUsers />,
@@ -94,9 +94,6 @@ const adminRoutes = [
     element: <AdminRoles />,
   },
 
-  // =========================
-  // PRODUCT MANAGEMENT
-  // =========================
   {
     path: AdminRouters.PRODUCTS,
     element: <Products />,
@@ -110,9 +107,6 @@ const adminRoutes = [
     element: <AddProduct />,
   },
 
-  // =========================
-  // CATEGORY MANAGEMENT
-  // =========================
   {
     path: AdminRouters.CATEGORIES,
     element: <Categories />,
@@ -126,38 +120,32 @@ const adminRoutes = [
     element: <Brands />,
   },
 
-  // =========================
-  // STORE MANAGEMENT
-  // =========================
-
-  // ✅ /stores => Stores list page
   {
     path: AdminRouters.STORES,
     element: <Stores />,
   },
-
-  // ✅ /stores/:storeId => Single store details page
   {
     path: AdminRouters.STORE_DETAILS,
     element: <StoreDetails />,
   },
-
-  // ✅ /inventory => Inventory page
   {
     path: AdminRouters.INVENTORY,
     element: <Inventory />,
   },
-
-  // ✅ /store-categories => Nearest Store / Store Category page
   {
     path: AdminRouters.STORE_CATEGORIES,
     element: <StoreCategories />,
   },
-
   {
     path: AdminRouters.STORE_SUB_CATEGORIES,
-    element: <CommonPage title="Store Sub Categories" />,
+    element: <SubCategories />,
   },
+
+  {
+    path: AdminRouters.STORE_ORDERS,
+    element: <StoreProducts />,
+  },
+
   {
     path: AdminRouters.STORE_PRODUCTS,
     element: <CommonPage title="Store Products" />,
@@ -167,13 +155,6 @@ const adminRoutes = [
     element: <CommonPage title="Product Details" />,
   },
 
-  // =========================
-  // ORDER MANAGEMENT
-  // =========================
-  {
-    path: AdminRouters.ORDERS,
-    element: <CommonPage title="Orders" />,
-  },
   {
     path: AdminRouters.ALL_ORDERS,
     element: <CommonPage title="All Orders" />,
@@ -199,9 +180,6 @@ const adminRoutes = [
     element: <CommonPage title="Order Status" />,
   },
 
-  // =========================
-  // TRANSACTIONS
-  // =========================
   {
     path: AdminRouters.TRANSACTIONS,
     element: <CommonPage title="Transactions" />,
@@ -215,9 +193,6 @@ const adminRoutes = [
     element: <CommonPage title="User Transactions" />,
   },
 
-  // =========================
-  // DRIVER MANAGEMENT
-  // =========================
   {
     path: AdminRouters.DRIVERS,
     element: <CommonPage title="Drivers" />,
@@ -231,25 +206,23 @@ const adminRoutes = [
     element: <CommonPage title="Add Driver" />,
   },
 
-  // =========================
-  // RATING MANAGEMENT
-  // =========================
   {
     path: AdminRouters.RATINGS,
-    element: <CommonPage title="Ratings" />,
+    element: <Ratings />,
   },
   {
     path: AdminRouters.ALL_RATINGS,
-    element: <CommonPage title="All Ratings" />,
+    element: <AllRatings />,
+  },
+  {
+    path: AdminRouters.AVERAGE_RATING,
+    element: <AverageRating />,
   },
   {
     path: AdminRouters.AVG_RATING,
-    element: <CommonPage title="Average Rating" />,
+    element: <AverageRating />,
   },
 
-  // =========================
-  // REPORTS / SUPPORT / SETTINGS
-  // =========================
   {
     path: AdminRouters.SALES_REPORT,
     element: <CommonPage title="Sales Report" />,

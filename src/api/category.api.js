@@ -22,7 +22,7 @@ export const createCategoryApi = async (formData) => {
   }
 };
 
-export const getAllCategoriesApi = async (page = 1, limit = 10) => {
+export const getAllCategoriesApi = async (page = 1, limit = 100) => {
   try {
     const response = await Axios.get(
       `/user/get-all-categories?page=${page}&limit=${limit}`

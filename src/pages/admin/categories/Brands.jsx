@@ -7,7 +7,9 @@ import {
   FaTimes,
   FaUpload,
 } from "react-icons/fa";
-import Swal from "sweetalert2";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError, showConfirm } from "../../../utils/alertService";
 
 import {
   createBrandApi,
@@ -17,6 +19,7 @@ import {
 
 const Brands = () => {
   const fileRef = useRef(null);
+  const dispatch = useDispatch();
 
   const [brands, setBrands] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -30,81 +33,10 @@ const Brands = () => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const showSuccess = (message) => {
-    Swal.fire({
-      html: `
-        <div style="padding:12px 6px;">
-          <div style="
-            width:92px;height:92px;margin:0 auto 18px;border-radius:30px;
-            background:linear-gradient(135deg,#f97316,#fb923c);
-            display:flex;align-items:center;justify-content:center;
-            box-shadow:0 18px 45px rgba(249,115,22,0.45);
-          ">
-            <span style="font-size:44px;color:white;font-weight:900;">✓</span>
-          </div>
-
-          <h2 style="color:white;font-size:30px;font-weight:900;margin-bottom:10px;">
-            Success!
-          </h2>
-
-          <p style="color:#cbd5e1;font-size:15px;line-height:24px;">
-            ${message}
-          </p>
-        </div>
-      `,
-      showConfirmButton: true,
-      confirmButtonText: "Awesome ✨",
-      background:
-        "linear-gradient(145deg, rgba(16,24,38,0.98), rgba(10,15,28,0.98))",
-      backdrop: "rgba(0,0,0,0.75)",
-      customClass: {
-        popup: "rounded-[32px] border border-white/10 shadow-2xl",
-        confirmButton:
-          "rounded-2xl bg-orange-500 px-8 py-3 text-sm font-bold text-white shadow-lg hover:bg-orange-400",
-      },
-      buttonsStyling: false,
-    });
-  };
-
-  const showError = (message) => {
-    Swal.fire({
-      html: `
-        <div style="padding:12px 6px;">
-          <div style="
-            width:92px;height:92px;margin:0 auto 18px;border-radius:30px;
-            background:linear-gradient(135deg,#ef4444,#f87171);
-            display:flex;align-items:center;justify-content:center;
-            box-shadow:0 18px 45px rgba(239,68,68,0.45);
-          ">
-            <span style="font-size:44px;color:white;font-weight:900;">!</span>
-          </div>
-
-          <h2 style="color:white;font-size:30px;font-weight:900;margin-bottom:10px;">
-            Oops!
-          </h2>
-
-          <p style="color:#cbd5e1;font-size:15px;line-height:24px;">
-            ${message}
-          </p>
-        </div>
-      `,
-      showConfirmButton: true,
-      confirmButtonText: "Try Again",
-      background:
-        "linear-gradient(145deg, rgba(16,24,38,0.98), rgba(10,15,28,0.98))",
-      backdrop: "rgba(0,0,0,0.75)",
-      customClass: {
-        popup: "rounded-[32px] border border-white/10 shadow-2xl",
-        confirmButton:
-          "rounded-2xl bg-red-500 px-8 py-3 text-sm font-bold text-white shadow-lg hover:bg-red-400",
-      },
-      buttonsStyling: false,
-    });
-  };
-
   const fetchBrands = async () => {
     try {
       setFetchLoading(true);
+      dispatch(showLoader());
 
       const response = await getAllBrandsApi({
         page: 1,
@@ -123,6 +55,7 @@ const Brands = () => {
       showError(error?.message || "Something went wrong while fetching brands");
     } finally {
       setFetchLoading(false);
+      dispatch(hideLoader());
     }
   };
 
@@ -190,6 +123,7 @@ const Brands = () => {
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const formData = new FormData();
       formData.append("name", name.trim());
@@ -206,7 +140,8 @@ const Brands = () => {
         : await createBrandApi(formData);
 
       if (response?.success) {
-        showSuccess(
+        dispatch(hideLoader());
+        await showSuccess(
           response?.message ||
             (editBrand
               ? "Brand updated successfully"
@@ -216,10 +151,12 @@ const Brands = () => {
         closeModal();
         fetchBrands();
       } else {
+        dispatch(hideLoader());
         showError(response?.message || "Failed to save brand");
       }
     } catch (error) {
       console.log("SAVE BRAND ERROR 👉", error);
+      dispatch(hideLoader());
       showError(error?.message || "Something went wrong while saving brand");
     } finally {
       setLoading(false);
@@ -227,47 +164,24 @@ const Brands = () => {
   };
 
   const handleDelete = async (id) => {
-    const result = await Swal.fire({
-      html: `
-        <div style="padding:12px 6px;">
-          <div style="
-            width:92px;height:92px;margin:0 auto 18px;border-radius:30px;
-            background:linear-gradient(135deg,#ef4444,#f97316);
-            display:flex;align-items:center;justify-content:center;
-            box-shadow:0 18px 45px rgba(239,68,68,0.45);
-          ">
-            <span style="font-size:44px;color:white;font-weight:900;">?</span>
-          </div>
-
-          <h2 style="color:white;font-size:30px;font-weight:900;margin-bottom:10px;">
-            Delete Brand?
-          </h2>
-
-          <p style="color:#cbd5e1;font-size:15px;line-height:24px;">
-            This action cannot be undone.
-          </p>
-        </div>
-      `,
-      background:
-        "linear-gradient(145deg, rgba(16,24,38,0.98), rgba(10,15,28,0.98))",
-      backdrop: "rgba(0,0,0,0.75)",
-      showCancelButton: true,
-      confirmButtonText: "Yes, Delete",
-      cancelButtonText: "Cancel",
-      customClass: {
-        popup: "rounded-[32px] border border-white/10 shadow-2xl",
-        confirmButton:
-          "rounded-2xl bg-red-500 px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-red-400",
-        cancelButton:
-          "ml-3 rounded-2xl bg-slate-600 px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-slate-500",
-      },
-      buttonsStyling: false,
+    const result = await showConfirm({
+      title: "Delete Brand?",
+      text: "Are you sure you want to delete this brand?",
+      confirmButtonText: "Yes, Delete"
     });
 
     if (!result.isConfirmed) return;
 
-    setBrands((prev) => prev.filter((item) => item?._id !== id));
-    showSuccess("Brand deleted successfully");
+    try {
+      dispatch(showLoader());
+      // Simulate quick action loader
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setBrands((prev) => prev.filter((item) => item?._id !== id));
+      dispatch(hideLoader());
+      showSuccess("Brand deleted successfully");
+    } catch (err) {
+      dispatch(hideLoader());
+    }
   };
 
   return (

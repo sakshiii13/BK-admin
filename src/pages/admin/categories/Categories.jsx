@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaPlus, FaEdit, FaTrash, FaTimes, FaUpload } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError, showConfirm } from "../../../utils/alertService";
 
 import {
   createCategoryApi,
@@ -9,6 +12,7 @@ import {
 
 const Categories = () => {
   const fileRef = useRef(null);
+  const dispatch = useDispatch();
 
   const [categories, setCategories] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -50,6 +54,7 @@ const Categories = () => {
   const fetchCategories = async () => {
     try {
       setFetchLoading(true);
+      dispatch(showLoader());
 
       const response = await getAllCategoriesApi(1, 10);
       console.log("CATEGORY RESPONSE 👉", response);
@@ -58,13 +63,14 @@ const Categories = () => {
         setCategories(normalizeCategories(response));
       } else {
         setCategories([]);
-        alert(response?.message || "Failed to fetch categories");
+        showError(response?.message || "Failed to fetch categories");
       }
     } catch (error) {
       console.log("FETCH CATEGORY ERROR 👉", error);
-      alert(error?.message || "Something went wrong while fetching categories");
+      showError(error?.message || "Something went wrong while fetching categories");
     } finally {
       setFetchLoading(false);
+      dispatch(hideLoader());
     }
   };
 
@@ -115,7 +121,7 @@ const Categories = () => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select image only");
+      showError("Please select image only");
       return;
     }
 
@@ -130,17 +136,18 @@ const Categories = () => {
     e.preventDefault();
 
     if (!categoryName.trim()) {
-      alert("Category name is required");
+      showError("Category name is required");
       return;
     }
 
     if (!editCategory && !image) {
-      alert("Please upload category image");
+      showError("Please upload category image");
       return;
     }
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const formData = new FormData();
 
@@ -161,28 +168,43 @@ const Categories = () => {
       console.log("SAVE CATEGORY RESPONSE 👉", response);
 
       if (response?.success) {
-        alert(response?.message || "Category saved successfully");
+        dispatch(hideLoader());
+        await showSuccess(response?.message || "Category saved successfully");
         closeModal();
         fetchCategories();
       } else {
-        alert(response?.message || "Failed to save category");
+        dispatch(hideLoader());
+        showError(response?.message || "Failed to save category");
       }
     } catch (error) {
       console.log("SAVE CATEGORY ERROR 👉", error);
-      alert(error?.message || "Something went wrong while saving category");
+      dispatch(hideLoader());
+      showError(error?.message || "Something went wrong while saving category");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this category?"
-    );
+  const handleDelete = async (id) => {
+    const confirmDelete = await showConfirm({
+      title: "Delete Category?",
+      text: "Are you sure you want to delete this category?",
+      confirmButtonText: "Yes, Delete"
+    });
 
-    if (!confirmDelete) return;
+    if (!confirmDelete.isConfirmed) return;
 
-    setCategories((prev) => prev.filter((item) => (item?._id || item?.id) !== id));
+    try {
+      dispatch(showLoader());
+      // Simulate quick action loader
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setCategories((prev) => prev.filter((item) => (item?._id || item?.id) !== id));
+      dispatch(hideLoader());
+      showSuccess("Category deleted successfully");
+    } catch (err) {
+      dispatch(hideLoader());
+      showError("Failed to delete category");
+    }
   };
 
   return (

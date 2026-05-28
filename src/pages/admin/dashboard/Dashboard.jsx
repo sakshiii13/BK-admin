@@ -13,28 +13,34 @@ import {
  
 } from "react-icons/md";
 import { GiShoppingBag } from "react-icons/gi";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showError } from "../../../utils/alertService";
 
 import { getAdminDashboardApi } from "../../../api/admin.api";
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchDashboard = async () => {
     try {
       setLoading(true);
+      dispatch(showLoader());
       const res = await getAdminDashboardApi();
       console.log("ADMIN DASHBOARD RESPONSE 👉", res);
       if (res?.success) {
         setDashboardData(res?.data || null);
       } else {
-        alert(res?.message || "Dashboard data not found");
+        showError(res?.message || "Dashboard data not found");
       }
     } catch (error) {
       console.log("Dashboard error:", error);
-      alert("Something went wrong while fetching dashboard");
+      showError("Something went wrong while fetching dashboard");
     } finally {
       setLoading(false);
+      dispatch(hideLoader());
     }
   };
 

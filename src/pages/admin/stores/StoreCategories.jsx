@@ -8,6 +8,9 @@ import {
   FaStore,
   FaLocationArrow,
 } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showError } from "../../../utils/alertService";
 
 import { findNearestStoreApi } from "../../../api/admin.api";
 
@@ -17,18 +20,20 @@ const defaultLocation = {
 };
 
 const StoreCategories = () => {
+  const dispatch = useDispatch();
   const [location, setLocation] = useState(defaultLocation);
   const [nearestStore, setNearestStore] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchNearestStore = async (customLocation = location) => {
     if (!customLocation.lat || !customLocation.lng) {
-      alert("Please enter latitude and longitude");
+      showError("Please enter latitude and longitude");
       return;
     }
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const res = await findNearestStoreApi({
         lat: customLocation.lat,
@@ -41,12 +46,14 @@ const StoreCategories = () => {
         setNearestStore(res?.data || null);
       } else {
         setNearestStore(null);
-        alert(res?.message || "Nearest store not found");
+        showError(res?.message || "Nearest store not found");
       }
     } catch (error) {
       console.log("Nearest store error:", error);
+      showError("Something went wrong while searching for nearest store");
     } finally {
       setLoading(false);
+      dispatch(hideLoader());
     }
   };
 
@@ -70,7 +77,7 @@ const StoreCategories = () => {
 
   const handleUseMyLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported in this browser");
+      showError("Geolocation is not supported in this browser");
       return;
     }
 
@@ -86,7 +93,7 @@ const StoreCategories = () => {
       },
       (error) => {
         console.log("Location error:", error);
-        alert("Location permission denied or unavailable");
+        showError("Location permission denied or unavailable");
       }
     );
   };

@@ -6,6 +6,9 @@ import {
   FaTimes,
   FaSearch,
 } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError } from "../../../utils/alertService";
 
 import {
   createInventoryApi,
@@ -23,6 +26,7 @@ const emptyForm = {
 };
 
 const Inventory = () => {
+  const dispatch = useDispatch();
   const [stores, setStores] = useState([]);
   const [selectedStoreId, setSelectedStoreId] = useState("");
   const [inventory, setInventory] = useState([]);
@@ -54,6 +58,7 @@ const Inventory = () => {
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const res = await getInventoryByStoreIdApi(storeId);
 
@@ -63,12 +68,14 @@ const Inventory = () => {
       } else {
         setInventory([]);
         setPagination(null);
-        alert(res?.message || "Inventory not found");
+        showError(res?.message || "Inventory not found");
       }
     } catch (error) {
       console.log("Inventory fetch error:", error);
+      showError("Something went wrong while fetching inventory");
     } finally {
       setLoading(false);
+      dispatch(hideLoader());
     }
   };
 
@@ -164,21 +171,26 @@ const Inventory = () => {
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const res = await createInventoryApi(payload);
 
       console.log("CREATE INVENTORY RESPONSE 👉", res);
 
       if (res?.success) {
-        alert("Inventory created successfully");
+        dispatch(hideLoader());
+        await showSuccess("Inventory created successfully");
         closePopup();
         setSelectedStoreId(formData.store);
         fetchInventory(formData.store);
       } else {
-        alert(res?.message || "Inventory create failed");
+        dispatch(hideLoader());
+        showError(res?.message || "Inventory create failed");
       }
     } catch (error) {
       console.log("Create inventory error:", error);
+      dispatch(hideLoader());
+      showError("Something went wrong while creating inventory");
     } finally {
       setLoading(false);
     }

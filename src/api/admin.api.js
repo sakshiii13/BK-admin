@@ -79,7 +79,7 @@ export const adminRegisterApi = async (payload) => {
 
 export const adminLoginApi = async (payload) => {
   try {
-    const response = await Axios.post("/admin/login", payload);
+    const response = await Axios.post("admin/login", payload);
     return response.data;
   } catch (error) {
     return handleApiError(error, "Login failed");
@@ -276,4 +276,38 @@ export const getProductDetailsOfStoreApi = async (productId) => {
   } catch (error) {
     return handleApiError(error, "Get product details failed");
   }
+};
+
+// ================= APP RATINGS =================
+
+export const getAppRatingsApi = async () => {
+  try {
+    const response = await Axios.get("/admin/app-ratings");
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch app ratings");
+  }
+};
+
+export const getAppRatingAverageApi = async () => {
+  try {
+    const response = await Axios.get("/admin/app-rating-average");
+    return response.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch app rating average");
+  }
+};
+
+
+export const getStoreOrdersApi = async (storeId) => {
+  const response = await Axios.get(`/store/orders/${storeId}`);
+  return response.data;
+};
+
+export const packStoreOrderApi = async (storeId, orderId) => {
+  const response = await Axios.patch(
+    `/store/orders/${storeId}/${orderId}/pack`
+  );
+
+  return response.data;
 };

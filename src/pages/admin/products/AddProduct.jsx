@@ -1,9 +1,13 @@
 import React, { useRef, useState } from "react";
 import { FaSave, FaArrowLeft, FaUpload, FaTimes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError } from "../../../utils/alertService";
 
 const AddProduct = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const fileInputRef = useRef(null);
 
   const [productName, setProductName] = useState("");
@@ -58,7 +62,7 @@ const AddProduct = () => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select image only");
+      showError("Please select image only");
       return;
     }
 
@@ -78,37 +82,48 @@ const AddProduct = () => {
     fileInputRef.current.value = "";
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newProduct = {
-      id: Date.now(),
-      image: imagePreview || "/logo.png",
-      name: productName,
-      description,
-      category,
-      subCategory,
-      brand,
-      variant,
-      price: `₹${salePrice || regularPrice}`,
-      stock: Number(stock),
-      status:
-        Number(stock) === 0
-          ? "Out of Stock"
-          : Number(stock) <= 25
-          ? "Low Stock"
-          : "In Stock",
-    };
+    try {
+      dispatch(showLoader());
 
-    const oldProducts = JSON.parse(localStorage.getItem("products")) || [];
+      const newProduct = {
+        id: Date.now(),
+        image: imagePreview || "/logo.png",
+        name: productName,
+        description,
+        category,
+        subCategory,
+        brand,
+        variant,
+        price: `₹${salePrice || regularPrice}`,
+        stock: Number(stock),
+        status:
+          Number(stock) === 0
+            ? "Out of Stock"
+            : Number(stock) <= 25
+            ? "Low Stock"
+            : "In Stock",
+      };
 
-    localStorage.setItem(
-      "products",
-      JSON.stringify([newProduct, ...oldProducts])
-    );
+      const oldProducts = JSON.parse(localStorage.getItem("products")) || [];
 
-    alert("Product added successfully");
-    navigate("/products");
+      localStorage.setItem(
+        "products",
+        JSON.stringify([newProduct, ...oldProducts])
+      );
+
+      // Simulate publishing delay for premium visual feedback
+      await new Promise(resolve => setTimeout(resolve, 800));
+      dispatch(hideLoader());
+
+      await showSuccess("Product published successfully ✨");
+      navigate("/products");
+    } catch (err) {
+      dispatch(hideLoader());
+      showError(err?.message || "Failed to publish product");
+    }
   };
 
   return (

@@ -11,10 +11,10 @@ export const MainContent = {
 
 export const backendConfig = {
   // local backend
-  base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
-  origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
+  // base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
+  // origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
 
   // phone / network testing ke liye
-  // base: "http://192.168.29.96:5000/api",
-  // origin: "http://192.168.29.96:5000",
+  base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
+  origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
 };

@@ -2,20 +2,33 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   FaPlus,
   FaEdit,
-  FaTrash,
   FaTimes,
   FaUpload,
+  FaPowerOff,
 } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError, showConfirm } from "../../../utils/alertService";
 
-import Axios from "../../../api/Axios";
+import {
+  createSubCategoryApi,
+  getAllCategoriesApi,
+  getAllSubCategoriesApi,
+  updateSubCategoryApi,
+  toggleSubCategoryStatusApi,
+} from "../../../api/category.api";
 
 const SubCategories = () => {
   const fileRef = useRef(null);
+  const dispatch = useDispatch();
 
   const [subcats, setSubcats] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
 
@@ -28,40 +41,44 @@ const SubCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await Axios.get(
-        "/user/get-all-categories?page=1&limit=100"
-      );
+      dispatch(showLoader());
+      const response = await getAllCategoriesApi(1, 100);
 
-      if (response?.data?.success) {
-        setCategories(response?.data?.data || []);
+      if (response?.success) {
+        setCategories(response?.data || []);
+      } else {
+        showError(response?.message || "Failed to fetch categories");
       }
     } catch (error) {
-      console.log("FETCH CATEGORY ERROR 👉", error);
+      showError(error?.message || "Something went wrong while fetching categories");
+    } finally {
+      dispatch(hideLoader());
     }
   };
 
   const fetchSubCategories = async () => {
     try {
       setFetchLoading(true);
+      dispatch(showLoader());
 
-      const response = await Axios.get(
-        "/user/get-all-subcategories?page=1&limit=10"
-      );
+      const response = await getAllSubCategoriesApi({
+        page: 1,
+        limit: 10,
+      });
 
-      console.log("SUB CATEGORY RESPONSE 👉", response.data);
+      console.log("SUB CATEGORY RESPONSE 👉", response);
 
-      if (response?.data?.success) {
-        setSubcats(response?.data?.data || []);
+      if (response?.success) {
+        setSubcats(response?.data || []);
       } else {
         setSubcats([]);
-        alert(response?.data?.message || "Failed to fetch sub categories");
+        showError(response?.message || "Failed to fetch sub categories");
       }
     } catch (error) {
-      console.log("FETCH SUB CATEGORY ERROR 👉", error);
-      setSubcats([]);
-      alert(error?.response?.data?.message || "Failed to fetch sub categories");
+      showError(error?.message || "Something went wrong while fetching subcategories");
     } finally {
       setFetchLoading(false);
+      dispatch(hideLoader());
     }
   };
 
@@ -76,10 +93,17 @@ const SubCategories = () => {
     setCategory("");
     setImage(null);
     setPreview(null);
+    setIsEditMode(false);
+    setEditId(null);
 
     if (fileRef.current) {
       fileRef.current.value = "";
     }
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setShowModal(true);
   };
 
   const closeModal = () => {
@@ -93,7 +117,7 @@ const SubCategories = () => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select image only");
+      showError("Please select image only");
       return;
     }
 
@@ -106,52 +130,105 @@ const SubCategories = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleCreateSubCategory = async (e) => {
+  const handleEdit = (item) => {
+    setIsEditMode(true);
+    setEditId(item?._id);
+
+    setName(item?.name || "");
+    setDescription(item?.description || "");
+
+    const categoryId =
+      typeof item?.category === "object" ? item?.category?._id : item?.category;
+
+    setCategory(categoryId || "");
+    setImage(null);
+    setPreview(item?.image || null);
+
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !description.trim() || !category || !image) {
-      alert("All fields are required");
+    if (!name.trim() || !description.trim() || !category) {
+      showError("Name, description and category are required");
+      return;
+    }
+
+    if (!isEditMode && !image) {
+      showError("Image is required");
       return;
     }
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const formData = new FormData();
       formData.append("name", name.trim());
       formData.append("description", description.trim());
       formData.append("category", category);
-      formData.append("image", image);
 
-      const response = await Axios.post("/admin/subcategory-create", formData);
+      if (image) {
+        formData.append("image", image);
+      }
 
-      console.log("CREATE SUB CATEGORY RESPONSE 👉", response.data);
+      let response;
 
-      if (response?.data?.success) {
-        alert(response?.data?.message || "Sub category created successfully");
+      if (isEditMode) {
+        response = await updateSubCategoryApi(editId, formData);
+      } else {
+        response = await createSubCategoryApi(formData);
+      }
+
+      console.log("SUB CATEGORY SAVE RESPONSE 👉", response);
+
+      if (response?.success) {
+        dispatch(hideLoader());
+        await showSuccess(
+          response?.message ||
+            `Sub category ${isEditMode ? "updated" : "created"} successfully`
+        );
+
         closeModal();
         fetchSubCategories();
       } else {
-        alert(response?.data?.message || "Failed to create sub category");
+        dispatch(hideLoader());
+        showError(response?.message || "Something went wrong");
       }
     } catch (error) {
-      console.log("CREATE SUB CATEGORY ERROR 👉", error);
-      alert(
-        error?.response?.data?.message || "Failed to create sub category"
-      );
+      dispatch(hideLoader());
+      showError(error?.message || "Failed to save sub category");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this sub category?"
-    );
+  const handleToggleStatus = async (id) => {
+    const confirmToggle = await showConfirm({
+      title: "Change Status?",
+      text: "Are you sure you want to change this sub category status?",
+      confirmButtonText: "Yes, Change"
+    });
 
-    if (!confirmDelete) return;
+    if (!confirmToggle.isConfirmed) return;
 
-    setSubcats((prev) => prev.filter((item) => item?._id !== id));
+    try {
+      dispatch(showLoader());
+      const response = await toggleSubCategoryStatusApi(id);
+
+      if (response?.success) {
+        dispatch(hideLoader());
+        await showSuccess(response?.message || "Status updated successfully");
+        fetchSubCategories();
+      } else {
+        dispatch(hideLoader());
+        showError(response?.message || "Failed to update status");
+      }
+    } catch (error) {
+      dispatch(hideLoader());
+      showError(error?.message || "Something went wrong");
+    }
   };
 
   return (
@@ -166,7 +243,7 @@ const SubCategories = () => {
 
         <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 font-medium text-white shadow-lg transition-all hover:scale-[1.02]"
         >
           <FaPlus /> Add Sub Category
@@ -253,17 +330,24 @@ const SubCategories = () => {
                     <div className="flex gap-3">
                       <button
                         type="button"
+                        onClick={() => handleEdit(item)}
                         className="text-blue-400 hover:text-blue-300"
+                        title="Edit"
                       >
                         <FaEdit />
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => handleDelete(item?._id)}
-                        className="text-red-400 hover:text-red-300"
+                        onClick={() => handleToggleStatus(item?._id)}
+                        className={
+                          item?.isActive === false
+                            ? "text-green-400 hover:text-green-300"
+                            : "text-red-400 hover:text-red-300"
+                        }
+                        title="Toggle status"
                       >
-                        <FaTrash />
+                        <FaPowerOff />
                       </button>
                     </div>
                   </td>
@@ -280,10 +364,12 @@ const SubCategories = () => {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">
-                  Add Sub Category
+                  {isEditMode ? "Update Sub Category" : "Add Sub Category"}
                 </h2>
                 <p className="mt-1 text-sm text-gray-400">
-                  Create new sub category
+                  {isEditMode
+                    ? "Update existing sub category"
+                    : "Create new sub category"}
                 </p>
               </div>
 
@@ -296,7 +382,7 @@ const SubCategories = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubCategory} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm text-gray-300">
                   Name
@@ -305,7 +391,7 @@ const SubCategories = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="lip stick"
+                  placeholder="Lip stick"
                   className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white outline-none"
                 />
               </div>
@@ -318,7 +404,7 @@ const SubCategories = () => {
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="sub make up category"
+                  placeholder="Sub makeup category"
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none"
                 />
               </div>
@@ -363,7 +449,7 @@ const SubCategories = () => {
 
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 p-5"
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 p-5 transition hover:border-orange-400/60 hover:bg-white/5"
                 >
                   {preview ? (
                     <img
@@ -387,7 +473,13 @@ const SubCategories = () => {
                 disabled={loading}
                 className="h-12 w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 font-bold text-white disabled:opacity-60"
               >
-                {loading ? "Creating..." : "Create Sub Category"}
+                {loading
+                  ? isEditMode
+                    ? "Updating..."
+                    : "Creating..."
+                  : isEditMode
+                  ? "Update Sub Category"
+                  : "Create Sub Category"}
               </button>
             </form>
           </div>

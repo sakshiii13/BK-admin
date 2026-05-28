@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showConfirm, showSuccess } from "../../../utils/alertService";
 
 import TableComponent from "../../../components/global/TableComponent";
 
@@ -33,6 +36,7 @@ const defaultProducts = [
 
 const Products = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [products, setProducts] = useState([]);
 
   const loadProducts = () => {
@@ -44,12 +48,31 @@ const Products = () => {
     loadProducts();
   }, []);
 
-  const handleDelete = (id) => {
-    const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
-    const updatedProducts = savedProducts.filter((item) => item.id !== id);
+  const handleDelete = async (id) => {
+    const result = await showConfirm({
+      title: "Delete Product?",
+      text: "Are you sure you want to delete this product from catalog?",
+      confirmButtonText: "Yes, Delete"
+    });
 
-    localStorage.setItem("products", JSON.stringify(updatedProducts));
-    loadProducts();
+    if (!result.isConfirmed) return;
+
+    try {
+      dispatch(showLoader());
+      // Simulate quick action loader
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const savedProducts = JSON.parse(localStorage.getItem("products")) || [];
+      const updatedProducts = savedProducts.filter((item) => item.id !== id);
+
+      localStorage.setItem("products", JSON.stringify(updatedProducts));
+      loadProducts();
+      
+      dispatch(hideLoader());
+      showSuccess("Product deleted successfully");
+    } catch (err) {
+      dispatch(hideLoader());
+    }
   };
 
   const columns = [

@@ -13,6 +13,9 @@
   import { useNavigate } from "react-router-dom";
   import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
   import L from "leaflet";
+  import { useDispatch } from "react-redux";
+  import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+  import { showSuccess, showError } from "../../../utils/alertService";
 
   import {
     createStoreApi,
@@ -48,6 +51,7 @@
 
   const Stores = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const [stores, setStores] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -59,18 +63,21 @@
     const fetchStores = async () => {
       try {
         setLoading(true);
+        dispatch(showLoader());
 
         const res = await getAllStoresApi();
 
         if (res?.success) {
           setStores(res?.data || []);
         } else {
-          alert(res?.message || "Stores not found");
+          showError(res?.message || "Stores not found");
         }
       } catch (error) {
         console.log("Fetch stores error:", error);
+        showError("Something went wrong while fetching stores");
       } finally {
         setLoading(false);
+        dispatch(hideLoader());
       }
     };
 
@@ -151,7 +158,7 @@
       e.preventDefault();
 
       if (!formData.lat || !formData.lng) {
-        alert("Please select store location from map");
+        showError("Please select store location from map");
         return;
       }
 
@@ -181,13 +188,15 @@
 
       try {
         setLoading(true);
+        dispatch(showLoader());
 
         const res = isEdit
           ? await updateStoreApi(selectedStoreId, payload)
           : await createStoreApi(payload);
 
         if (res?.success) {
-          alert(
+          dispatch(hideLoader());
+          await showSuccess(
             isEdit
               ? "Store updated successfully"
               : "Store created successfully"
@@ -196,10 +205,13 @@
           closePopup();
           fetchStores();
         } else {
-          alert(res?.message || "Something went wrong");
+          dispatch(hideLoader());
+          showError(res?.message || "Something went wrong");
         }
       } catch (error) {
         console.log("Submit store error:", error);
+        dispatch(hideLoader());
+        showError("Something went wrong while saving store");
       } finally {
         setLoading(false);
       }

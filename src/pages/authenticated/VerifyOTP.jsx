@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { FaShieldAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { verifyAdminOtpApi, saveAdminAuth } from "../../api/admin.api";
+import { showLoader, hideLoader } from "../../redux/slices/loaderSlice";
+import { showSuccess, showError } from "../../utils/alertService";
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
@@ -15,13 +19,14 @@ const VerifyOTP = () => {
     const email = localStorage.getItem("adminEmail");
 
     if (!email) {
-      alert("Email not found. Please login again.");
+      showError("Email not found. Please login again.");
       navigate("/login");
       return;
     }
 
     try {
       setLoading(true);
+      dispatch(showLoader());
 
       const payload = {
         email,
@@ -35,21 +40,25 @@ const VerifyOTP = () => {
         const token = saveAdminAuth(response);
 
         if (!token) {
-          alert("OTP verified but token not received from backend.");
+          dispatch(hideLoader());
+          showError("OTP verified but token not received from backend.");
           return;
         }
 
         localStorage.setItem("isAdminLogin", "true");
         localStorage.removeItem("adminOtp");
 
-        alert(response?.message || "OTP verified successfully");
+        dispatch(hideLoader());
+        await showSuccess(response?.message || "OTP verified successfully");
         navigate("/dashboard");
       } else {
-        alert(response?.message || "Invalid OTP");
+        dispatch(hideLoader());
+        showError(response?.message || "Invalid OTP");
       }
     } catch (error) {
       console.log("VERIFY OTP ERROR 👉", error);
-      alert("Something went wrong while verifying OTP");
+      dispatch(hideLoader());
+      showError("Something went wrong while verifying OTP");
     } finally {
       setLoading(false);
     }
