@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaShieldAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { verifyAdminOtpApi, saveAdminAuth } from "../../api/admin.api";
 import { showLoader, hideLoader } from "../../redux/slices/loaderSlice";
-import { showSuccess, showError } from "../../utils/alertService";
+import { showSuccess, showError, forceClearAlerts } from "../../utils/alertService"; // 🔥 Import kiya helper
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState("");
@@ -12,6 +12,11 @@ const VerifyOTP = () => {
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // 🚨 ABSOLUTE CLEANUP GUARD: This will kill the lingering modal instantly on mount
+  useEffect(() => {
+    forceClearAlerts();
+  }, []);
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
@@ -49,8 +54,12 @@ const VerifyOTP = () => {
         localStorage.removeItem("adminOtp");
 
         dispatch(hideLoader());
-        await showSuccess(response?.message || "OTP verified successfully");
-        navigate("/dashboard");
+
+        showSuccess(response?.message || "OTP verified successfully").then(() => {
+          forceClearAlerts(); // Kill active success alert
+          navigate("/dashboard");
+        });
+
       } else {
         dispatch(hideLoader());
         showError(response?.message || "Invalid OTP");
@@ -65,46 +74,51 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#030604] flex items-center justify-center px-4 relative overflow-hidden font-sans">
-      {/* Ambient background glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[var(--primary-green)]/10 rounded-full blur-[120px] animate-ambient-slow" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-[var(--primary-orange)]/10 rounded-full blur-[120px] animate-ambient-slow" style={{ animationDelay: '-4s' }} />
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50/30 flex items-center justify-center px-4 relative overflow-hidden font-sans">
+      
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-500/5 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[120px]" />
 
-      <div className="relative w-full max-w-md bg-white/[0.02] backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/[0.04] p-8 sm:p-10">
+      <div className="relative w-full max-w-md bg-white rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.1)] border border-slate-200/80 p-8 sm:p-10">
+        
         <div className="text-center mb-8">
-          <div className="h-16 flex items-center justify-center mb-6">
-            <img src="/logo.png" alt="logo" className="h-14 object-contain animate-premium-float" />
+          <div className="h-16 flex items-center justify-center mb-5">
+            <img 
+              src="/logo.png" 
+              alt="logo" 
+              className="h-14 object-contain transition-transform hover:scale-105 duration-300" 
+            />
           </div>
 
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center text-white shadow-md shadow-orange-500/10">
             <FaShieldAlt size={22} />
           </div>
 
-          <h2 className="mt-5 text-2xl font-bold text-white tracking-wide">
+          <h2 className="mt-5 text-[24px] font-extrabold text-slate-800 tracking-tight">
             Verify Security OTP
           </h2>
 
-          <p className="text-slate-500 mt-2 text-xs">
+          <p className="text-slate-400 mt-1.5 text-xs font-medium">
             Enter 6-digit code sent to{" "}
-            <span className="font-semibold text-slate-300 block mt-0.5">
-              {localStorage.getItem("adminEmail")}
+            <span className="font-bold text-slate-600 block mt-0.5">
+              {localStorage.getItem("adminEmail") || "registered device"}
             </span>
           </p>
         </div>
 
         <form onSubmit={handleVerifyOtp} className="space-y-6">
           <div>
-            <label className="text-xs font-bold text-slate-400 mb-2 block uppercase tracking-wider text-center">
+            <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider text-center">
               Verification Code
             </label>
 
             <input
               type="text"
-              placeholder="000 000"
+              placeholder="000000"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               maxLength={6}
-              className="w-full h-12 rounded-xl bg-white/[0.02] border border-white/5 px-4 text-center text-lg tracking-[8px] font-bold text-white outline-none focus:border-[var(--primary-orange)]/50 focus:bg-white/[0.04] transition-all"
+              className="w-full h-12 rounded-xl bg-slate-50/60 border border-slate-200 px-4 text-center text-lg tracking-[8px] font-black text-slate-800 outline-none focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-500/5 transition-all shadow-sm"
               required
             />
           </div>
@@ -112,7 +126,7 @@ const VerifyOTP = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 rounded-xl btn-gradient-orange text-white text-sm font-bold tracking-wide cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.01]"
+            className="btn-3d btn-gradient-orange w-full h-12 rounded-xl text-white text-sm font-extrabold tracking-wide cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-md"
           >
             {loading ? "Verifying Credentials..." : "Access Dashboard"}
           </button>
@@ -120,16 +134,16 @@ const VerifyOTP = () => {
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="w-full text-xs font-semibold text-slate-500 hover:text-[var(--primary-orange)] transition-colors cursor-pointer"
+            className="w-full text-xs font-bold text-slate-400 hover:text-orange-500 transition-colors cursor-pointer text-center block mt-2"
           >
             Back to Login
           </button>
 
           {localStorage.getItem("adminOtp") && (
-            <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl text-center">
-              <p className="text-xs text-slate-400">
-                Testing OTP:{" "}
-                <span className="font-extrabold text-[var(--primary-orange-light)] tracking-widest text-sm">
+            <div className="mt-4 p-3.5 bg-orange-50 border border-orange-200/60 rounded-xl text-center shadow-inner-sm">
+              <p className="text-xs text-slate-500 font-bold tracking-wide">
+                🛠️ Testing OTP:{" "}
+                <span className="font-black text-orange-600 bg-orange-100/80 px-2.5 py-0.5 rounded-lg tracking-widest text-sm shadow-sm border border-orange-200/40 ml-1">
                   {localStorage.getItem("adminOtp")}
                 </span>
               </p>

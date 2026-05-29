@@ -1,7 +1,6 @@
 // src/components/sidebar/SideBar.jsx
 
 import React, { useEffect, useState } from "react";
-
 import {
   MdDashboard,
   MdInventory2,
@@ -14,22 +13,17 @@ import {
   MdShoppingCart,
   MdPayments,
   MdLocalShipping,
-  MdOutlineSettings,
+  MdStarRate,
+  MdBarChart,
   MdSupportAgent,
   MdNotifications,
+  MdSettings,
   MdMenu,
 } from "react-icons/md";
-
 import { useDispatch, useSelector } from "react-redux";
-
 import { useLocation, useNavigate } from "react-router-dom";
-
 import { Routers } from "../../constants/routes";
-
-import {
-  closeSideMenu,
-  openSideMenu,
-} from "../../redux/slices/sideBarMenuSlice";
+import { closeSideMenu } from "../../redux/slices/sideBarMenuSlice";
 
 const logo = "/logo.png";
 
@@ -38,34 +32,26 @@ const SideBar = () => {
   // REDUX
   // =========================================
   const dispatch = useDispatch();
-
-  const sideToggle = useSelector(
-    (state) => state?.sideMenu?.open
-  );
+  const sideToggle = useSelector((state) => state?.sideMenu?.open);
 
   // =========================================
   // REACT ROUTER
   // =========================================
   const navigate = useNavigate();
-
   const { pathname } = useLocation();
 
   // =========================================
-  // MOBILE CHECK
+  // STATES
   // =========================================
-  const isSmallScreen = () =>
-    window.innerWidth <= 1024;
+  const [collapsed, setCollapsed] = useState(false);
 
   // =========================================
-  // COLLAPSE STATE
-  // false = full sidebar
-  // true = icon only sidebar
+  // RESPONSIVE CHECK
   // =========================================
-  const [collapsed, setCollapsed] =
-    useState(false);
+  const isSmallScreen = () => window.innerWidth <= 1024;
 
   // =========================================
-  // DROPDOWN STATE
+  // DEFAULT MENUS
   // =========================================
   const defaultMenus = {
     productManagement: false,
@@ -75,118 +61,121 @@ const SideBar = () => {
     orderManagement: false,
     transactionManagement: false,
     driverManagement: false,
+    ratingManagement: false,
+    reportsManagement: false,
   };
 
-  const [openMenus, setOpenMenus] =
-    useState(defaultMenus);
+  const [openMenus, setOpenMenus] = useState(defaultMenus);
 
   // =========================================
-  // WINDOW RESIZE
+  // AUTO OPEN ACTIVE MENU (ONLY ON INITIAL LOAD)
+  // =========================================
+  useEffect(() => {
+    setOpenMenus({
+      productManagement: pathname.startsWith("/products"),
+      categoryManagement:
+        pathname.startsWith("/categories") ||
+        pathname.startsWith("/sub-categories") ||
+        pathname.startsWith("/brands"),
+      storeManagement:
+        pathname.startsWith("/stores") ||
+        pathname.startsWith("/store/orders") ||
+        pathname.startsWith("/store/out-for-delivery") ||
+        pathname.startsWith("/store-products") ||
+        pathname.startsWith("/store-categories") ||
+        pathname.startsWith("/store-sub-categories") ||
+        pathname.startsWith("/inventory"),
+      userManagement: pathname.startsWith("/users"),
+      orderManagement: pathname.startsWith("/orders"),
+      transactionManagement: pathname.startsWith("/payments"),
+      driverManagement: pathname.startsWith("/drivers"),
+      ratingManagement: pathname.startsWith("/ratings"),
+      reportsManagement: pathname.startsWith("/reports"),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // =========================================
+  // CLOSE SIDEBAR ON SMALL SCREEN
   // =========================================
   useEffect(() => {
     const handleResize = () => {
       if (isSmallScreen()) {
         dispatch(closeSideMenu());
-      } else {
-        dispatch(openSideMenu());
       }
     };
 
     handleResize();
-
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [dispatch]);
 
   // =========================================
-  // TOGGLE DROPDOWN
+  // TOGGLE MENU
   // =========================================
   const toggleMenu = (key) => {
     setOpenMenus((prev) => ({
-      ...defaultMenus,
+      ...prev,
       [key]: !prev[key],
     }));
   };
 
   // =========================================
-  // NAVIGATION
+  // NAVIGATE
   // =========================================
   const handleNavigate = (route) => {
     if (!route) return;
-
     navigate(route);
-
     if (isSmallScreen()) {
       dispatch(closeSideMenu());
     }
   };
 
   // =========================================
-  // SIDEBAR OPEN/CLOSE
+  // NAV ITEM (3D EFFECT)
   // =========================================
-  const handleSidebarToggle = () => {
-    if (sideToggle) {
-      dispatch(closeSideMenu());
-    } else {
-      dispatch(openSideMenu());
-    }
-  };
-
-  // =========================================
-  // COLLAPSE BUTTON
-  // =========================================
-  const handleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
-
-  // =========================================
-  // NAV ITEM
-  // =========================================
-  const NavItem = ({
-    icon,
-    label,
-    router,
-  }) => {
-    const isActive = pathname === router;
+  const NavItem = ({ icon, label, router }) => {
+    const isActive = pathname === router || pathname.startsWith(`${router}/`);
 
     return (
       <div
         onClick={() => handleNavigate(router)}
-        className={`group flex items-center ${
-          collapsed
-            ? "justify-center"
-            : "gap-3.5"
-        } py-3 px-4 mx-3 rounded-xl cursor-pointer transition-all duration-200 border
-        
-        ${
-          isActive
-            ? "bg-gradient-to-r from-orange-50 to-orange-100/40 text-orange-600 border-orange-200/80"
-            : "text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-50"
-        }`}
-      >
-        {/* ICON */}
-        <span
-          className={`text-[22px]
+        className={`
+          relative group flex items-center select-none
+          ${collapsed ? "justify-center px-2 py-3 mx-3" : "gap-3 px-4 py-3 mx-4"}
+          rounded-2xl cursor-pointer transition-all duration-300 ease-out
           ${
             isActive
-              ? "text-orange-500"
-              : "text-slate-400"
-          }`}
+              ? "bg-gradient-to-br from-white to-slate-50 border border-white/60 shadow-[0_10px_20px_-5px_rgba(249,115,22,0.15),0_4px_6px_-2px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)] -translate-y-[2px]"
+              : "border border-transparent hover:bg-white/40 hover:border-white/20 hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] hover:-translate-y-[1px]"
+          }
+          active:translate-y-0 active:shadow-sm
+        `}
+      >
+        {isActive && (
+          <div className="absolute left-0 top-[20%] h-[60%] w-[5px] rounded-r-full bg-gradient-to-b from-orange-400 to-orange-600 shadow-[1px_0_8px_rgba(249,115,22,0.6)]" />
+        )}
+
+        <span
+          className={`
+            relative z-10 text-[22px] p-1 rounded-xl transition-all duration-300
+            ${
+              isActive
+                ? "text-orange-500 drop-shadow-[0_3px_6px_rgba(249,115,22,0.3)] scale-110"
+                : "text-slate-400 group-hover:text-orange-500 group-hover:scale-110"
+            }
+          `}
         >
           {icon}
         </span>
 
-        {/* LABEL */}
         {!collapsed && (
-          <span className="text-[14px] font-bold tracking-wide">
+          <span
+            className={`
+              relative z-10 text-[14px] font-bold tracking-wide transition-all duration-300
+              ${isActive ? "text-slate-800" : "text-slate-500 group-hover:text-slate-800"}
+            `}
+          >
             {label}
           </span>
         )}
@@ -195,114 +184,104 @@ const SideBar = () => {
   };
 
   // =========================================
-  // DROPDOWN MENU
+  // DROPDOWN MENU (3D EFFECT)
   // =========================================
-  const DropdownMenu = ({
-    icon,
-    label,
-    isOpen,
-    onToggle,
-    items,
-  }) => {
-    const isChildActive = items.some(
-      (item) => pathname === item.route
-    );
+  const DropdownMenu = ({ icon, label, isOpen, onToggle, items }) => {
+    const isChildActive = items.some((item) => {
+      if (!item.route) return false;
+      return pathname === item.route || pathname.startsWith(`${item.route}/`);
+    });
 
     return (
-      <div className="mx-3">
-        {/* PARENT */}
+      <div className={`transition-all duration-300 ${collapsed ? "mx-3" : "mx-4"}`}>
         <div
           onClick={onToggle}
-          className={`group flex items-center ${
-            collapsed
-              ? "justify-center"
-              : "justify-between"
-          } py-3 px-4 rounded-xl cursor-pointer transition-all duration-200 border
-          
-          ${
-            isChildActive
-              ? "bg-slate-50 text-slate-800 border-slate-200"
-              : "text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-50"
-          }`}
+          className={`
+            relative group flex items-center justify-between select-none
+            ${collapsed ? "px-2 py-3 justify-center" : "px-4 py-3"}
+            rounded-2xl cursor-pointer transition-all duration-300 ease-out
+            ${
+              isChildActive
+                ? "bg-gradient-to-br from-white to-slate-50 border border-white/80 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]"
+                : "border border-transparent hover:bg-white/40 hover:border-white/20 hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] hover:-translate-y-[1px]"
+            }
+            active:translate-y-0
+          `}
         >
-          <div
-            className={`flex items-center ${
-              collapsed
-                ? ""
-                : "gap-3.5"
-            }`}
-          >
+          {isChildActive && (
+            <div className="absolute left-0 top-[20%] h-[60%] w-[4px] rounded-r-full bg-orange-400 shadow-[1px_0_6px_rgba(249,115,22,0.4)]" />
+          )}
+
+          <div className={`relative z-10 flex items-center ${collapsed ? "" : "gap-3"}`}>
             <span
-              className={`text-[22px]
-              ${
-                isChildActive
-                  ? "text-orange-500"
-                  : "text-slate-400"
-              }`}
+              className={`
+                text-[22px] transition-all duration-300
+                ${
+                  isChildActive
+                    ? "text-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.2)] scale-110"
+                    : "text-slate-400 group-hover:text-orange-500 group-hover:scale-110"
+                }
+              `}
             >
               {icon}
             </span>
 
             {!collapsed && (
-              <span className="text-[14px] font-bold tracking-wide">
+              <span
+                className={`
+                  text-[14px] font-bold tracking-wide transition-all duration-300
+                  ${isChildActive ? "text-slate-800" : "text-slate-500 group-hover:text-slate-800"}
+                `}
+              >
                 {label}
               </span>
             )}
           </div>
 
-          {/* ARROW */}
           {!collapsed && (
             <MdChevronLeft
-              className={`transition-transform duration-300
-                
-              ${
-                isOpen
-                  ? "-rotate-90 text-orange-500"
-                  : "text-slate-400"
-              }`}
-              size={20}
+              className={`
+                relative z-10 transition-all duration-300 ease-out
+                ${isOpen ? "-rotate-90 text-orange-500 scale-110" : "text-slate-400 group-hover:text-slate-700"}
+              `}
+              size={18}
             />
           )}
         </div>
 
-        {/* SUB MENU */}
         {!collapsed && (
           <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out pl-6 ml-5 border-l-2 border-slate-100
-            
-            ${
+            className={`overflow-hidden transition-all duration-300 ease-in-out pl-4 rounded-b-2xl ${
               isOpen
-                ? "max-h-[500px] mt-1.5 space-y-1 py-1"
+                ? "max-h-[500px] mt-1 mb-2 py-1 bg-slate-900/5 shadow-[inset_0_2px_8px_rgba(0,0,0,0.04)] border border-slate-200/40"
                 : "max-h-0"
             }`}
           >
             {items.map((item, index) => {
-              const isSubItemActive =
-                pathname === item.route;
+              const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
 
               return (
                 <div
                   key={index}
-                  onClick={() =>
-                    handleNavigate(
-                      item.route
-                    )
-                  }
-                  className={`flex items-center gap-2 py-2.5 px-3.5 rounded-xl cursor-pointer transition-all duration-150
-                    
+                  onClick={() => handleNavigate(item.route)}
+                  className={`
+                    mr-2 flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer 
+                    transition-all duration-200 group/sub select-none
                     ${
-                      isSubItemActive
-                        ? "text-green-600 font-bold bg-green-50"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
+                      isActive
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold shadow-[0_4px_12px_rgba(249,115,22,0.25)] scale-[1.02]"
+                        : "hover:bg-white text-slate-500 hover:text-slate-800 font-medium hover:shadow-sm"
+                    }
+                  `}
                 >
                   <MdKeyboardArrowRight
                     size={16}
+                    className={`
+                      transition-all duration-200
+                      ${isActive ? "text-white rotate-90" : "text-slate-400 group-hover/sub:text-orange-500 group-hover/sub:translate-x-1"}
+                    `}
                   />
-
-                  <span className="text-[13px] font-bold">
-                    {item.label}
-                  </span>
+                  <span className="text-[13px] tracking-wide">{item.label}</span>
                 </div>
               );
             })}
@@ -313,364 +292,208 @@ const SideBar = () => {
   };
 
   return (
-    <>
-      {/* =========================================
-          MOBILE TOPBAR
-      ========================================= */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-[60] h-[70px] bg-white border-b border-slate-200 flex items-center justify-between px-4 shadow-sm">
-        <button
-          onClick={handleSidebarToggle}
-          className="h-11 w-11 rounded-xl border border-slate-200 flex items-center justify-center bg-slate-50"
-        >
-          <MdMenu size={24} />
-        </button>
-
-        <img
-          src={logo}
-          alt="logo"
-          className="w-[200px] object-contain"
-        />
-      </div>
-
-      {/* =========================================
-          BACKDROP
-      ========================================= */}
-      {sideToggle && (
-        <div
-          onClick={() =>
-            dispatch(closeSideMenu())
-          }
-          className="lg:hidden fixed inset-0 bg-black/40 z-40"
-        />
-      )}
-
-      {/* =========================================
-          SIDEBAR
-      ========================================= */}
+    <div
+      className={`
+        fixed lg:sticky top-0 left-0 z-50 h-screen select-none
+        ${collapsed ? "w-[100px]" : "w-[300px]"}
+        bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200/90
+        backdrop-blur-xl border-r border-white/60
+        transition-all duration-300 ease-in-out
+        flex flex-col justify-between
+        shadow-[5px_0_30px_rgba(15,23,42,0.04),inset_-1px_0_0_rgba(255,255,255,0.6)]
+        ${sideToggle ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+    >
+      {/* ========================================= */}
+      {/* BRANDING HEADER ZONE (OPTIMIZED LOGO) */}
+      {/* ========================================= */}
       <div
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen bg-white border-r border-slate-200 shadow-sm
-        
-        transition-all duration-300 ease-in-out flex flex-col
-        
-        ${
-          collapsed
-            ? "w-[90px]"
-            : "w-[280px]"
-        }
-        
-        ${
-          sideToggle
-            ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`
+          relative flex items-center h-[85px] w-full transition-all duration-300
+          ${collapsed ? "justify-center px-2" : "justify-between px-5"}
+          bg-white/80 backdrop-blur-md border-b border-gradient-to-r from-slate-200/60 via-slate-100 to-transparent
+        `}
       >
-        {/* =========================================
-            HEADER
-        ========================================= */}
-        <div
-          className={`px-4 h-[76px] border-b border-slate-100 bg-slate-50/30 flex items-center
-        
-          ${
-            collapsed
-              ? "justify-center"
-              : "justify-between"
-          }`}
-        >
-          {/* LOGO */}
-          {!collapsed && (
-            <img
-              src={logo}
-              alt="logo"
-              className="w-[200px] object-contain cursor-pointer"
-              onClick={() =>
-                handleNavigate(
-                  Routers.DASHBOARD
-                )
-              }
-            />
-          )}
+        {/* LOGO BACKDROP SOFT 3D SHADOW GLOW */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-28 bg-orange-500/10 rounded-full blur-xl pointer-events-none" />
 
-          {/* SMALL LOGO */}
-          {collapsed && (
-            <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xl">
-              BK
-            </div>
-          )}
-
-          {/* COLLAPSE BUTTON */}
-          {!isSmallScreen() && (
-            <button
-              onClick={handleCollapse}
-              className={`h-10 w-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:text-orange-500
-                
-                ${
-                  collapsed
-                    ? "absolute top-5 -right-5 shadow-md"
-                    : ""
-                }`}
-            >
-              <MdOutlineKeyboardDoubleArrowLeft
-                size={22}
-                className={`transition-transform duration-300
-                    
-                ${
-                  collapsed
-                    ? "rotate-180"
-                    : ""
-                }`}
-              />
-            </button>
-          )}
+        {/* LOGO CONTAINER W/ SYSTEMIZED PADDING */}
+        <div className={`relative z-10 flex items-center justify-center ${collapsed ? "w-full h-12" : "h-14"}`}>
+          <img
+            src={logo}
+            alt="logo"
+            onClick={() => handleNavigate(Routers.DASHBOARD)}
+            className={`
+              max-h-full object-contain cursor-pointer transition-all duration-500 ease-out
+              filter drop-shadow-[0_4px_10px_rgba(15,23,42,0.08)] hover:scale-105 active:scale-95
+              ${collapsed ? "w-[114px] p-0.5" : "w-[135px] py-1"}
+            `}
+          />
         </div>
 
-        {/* =========================================
-            MENU AREA
-        ========================================= */}
-        <div className="flex-1 overflow-y-auto py-6 space-y-1.5">
-          <NavItem
-            icon={<MdDashboard />}
-            label="Dashboard"
-            router={Routers.DASHBOARD}
-          />
+        {/* COLLAPSE/EXPAND TRIGGER TOGGLE (3D FLOATING) */}
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className="
+              relative z-10 h-10 w-10 flex items-center justify-center
+              rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50
+              text-slate-500 shadow-[0_4px_10px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]
+              transition-all duration-300 hover:from-orange-500 hover:to-orange-600 hover:text-white
+              hover:border-orange-600 hover:shadow-[0_6px_15px_rgba(249,115,22,0.3)]
+              active:scale-95 active:translate-y-0
+            "
+          >
+            <MdOutlineKeyboardDoubleArrowLeft size={20} />
+          </button>
+        )}
 
-          <DropdownMenu
-            icon={<MdInventory2 />}
-            label="Product Management"
-            isOpen={
-              openMenus.productManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "productManagement"
-              )
-            }
-            items={[
-              {
-                label: "Products",
-                route: Routers.PRODUCTS,
-              },
-              {
-                label: "All Products",
-                route:
-                  Routers.ALL_PRODUCTS,
-              },
-              {
-                label: "Add Product",
-                route:
-                  Routers.ADD_PRODUCT,
-              },
-            ]}
-          />
+        {collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            className="
+              absolute -right-4 top-1/2 -translate-y-1/2 z-20
+              h-9 w-9 rounded-xl bg-gradient-to-b from-orange-500 to-orange-600 text-white
+              flex items-center justify-center shadow-[0_6px_15px_rgba(249,115,22,0.35)]
+              transition-all duration-300 hover:scale-110 active:scale-95
+            "
+          >
+            <MdMenu size={18} />
+          </button>
+        )}
+      </div>
 
-          <DropdownMenu
-            icon={<MdCategory />}
-            label="Category Management"
-            isOpen={
-              openMenus.categoryManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "categoryManagement"
-              )
-            }
-            items={[
-              {
-                label: "Categories",
-                route:
-                  Routers.CATEGORIES,
-              },
-              {
-                label: "Sub Categories",
-                route:
-                  Routers.SUB_CATEGORIES,
-              },
-              {
-                label: "Brands",
-                route: Routers.BRANDS,
-              },
-            ]}
-          />
+      {/* INNER MENU CONTAINER */}
+      <div className="flex-1 overflow-y-auto py-6 space-y-2.5 sidebar-scroll">
+        {/* DASHBOARD */}
+        <NavItem icon={<MdDashboard />} label="Dashboard" router={Routers.DASHBOARD} />
 
-          <DropdownMenu
-            icon={<MdStore />}
-            label="Store Management"
-            isOpen={
-              openMenus.storeManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "storeManagement"
-              )
-            }
-            items={[
-              {
-                label: "Stores",
-                route: Routers.STORES,
-              },
-              {
-                label: "Inventory",
-                route:
-                  Routers.INVENTORY,
-              },
-              {
-                label:
-                  "Store Categories",
-                route:
-                  Routers.STORE_CATEGORIES,
-              },
-              {
-                label:
-                  "Store Sub Categories",
-                route:
-                  Routers.STORE_SUB_CATEGORIES,
-              },
-              {
-                label:
-                  "Store Products",
-                route:
-                  Routers.STORE_PRODUCTS,
-              },
-            ]}
-          />
+        {/* PRODUCT MANAGEMENT */}
+        <DropdownMenu
+          icon={<MdInventory2 />}
+          label="Product Management"
+          isOpen={openMenus.productManagement}
+          onToggle={() => toggleMenu("productManagement")}
+          items={[
+            { label: "Products", route: Routers.PRODUCTS },
+            { label: "All Products", route: Routers.ALL_PRODUCTS },
+            { label: "Add Product", route: Routers.ADD_PRODUCT },
+          ]}
+        />
 
-          <DropdownMenu
-            icon={<MdPeople />}
-            label="User Management"
-            isOpen={
-              openMenus.userManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "userManagement"
-              )
-            }
-            items={[
-              {
-                label: "Users",
-                route: Routers.USERS,
-              },
-              {
-                label: "All Users",
-                route:
-                  Routers.ALL_USERS,
-              },
-              {
-                label: "Add User",
-                route:
-                  Routers.ADD_USER,
-              },
-              {
-                label: "Admin Roles",
-                route:
-                  Routers.ADMIN_ROLES,
-              },
-            ]}
-          />
+        {/* CATEGORY MANAGEMENT */}
+        <DropdownMenu
+          icon={<MdCategory />}
+          label="Category Management"
+          isOpen={openMenus.categoryManagement}
+          onToggle={() => toggleMenu("categoryManagement")}
+          items={[
+            { label: "Categories", route: Routers.CATEGORIES },
+            { label: "Sub Categories", route: Routers.SUB_CATEGORIES },
+            { label: "Brands", route: Routers.BRANDS },
+          ]}
+        />
 
-          <DropdownMenu
-            icon={<MdShoppingCart />}
-            label="Order Management"
-            isOpen={
-              openMenus.orderManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "orderManagement"
-              )
-            }
-            items={[
-              {
-                label: "Orders",
-                route: Routers.ORDERS,
-              },
-              {
-                label: "Pending",
-                route:
-                  Routers.PENDING_ORDERS,
-              },
-              {
-                label: "Shipping",
-                route:
-                  Routers.SHIPPING,
-              },
-            ]}
-          />
+        {/* STORE MANAGEMENT */}
+        <DropdownMenu
+          icon={<MdStore />}
+          label="Store Management"
+          isOpen={openMenus.storeManagement}
+          onToggle={() => toggleMenu("storeManagement")}
+          items={[
+            { label: "Stores", route: Routers.STORES },
+            { label: "Inventory", route: Routers.INVENTORY },
+            { label: "Store Categories", route: Routers.STORE_CATEGORIES },
+            { label: "Store Sub Categories", route: Routers.STORE_SUB_CATEGORIES },
+            { label: "Store Products", route: Routers.STORE_PRODUCTS },
+            { label: "Store Orders", route: Routers.STORE_ORDERS },
+            { label: "Out For Delivery", route: Routers.OUT_FOR_DELIVERY },
+          ]}
+        />
 
-          <DropdownMenu
-            icon={<MdPayments />}
-            label="Payments"
-            isOpen={
-              openMenus.transactionManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "transactionManagement"
-              )
-            }
-            items={[
-              {
-                label: "Transactions",
-                route:
-                  Routers.TRANSACTIONS,
-              },
-              {
-                label: "Wallets",
-                route: Routers.WALLETS,
-              },
-            ]}
-          />
+        {/* USER MANAGEMENT */}
+        <DropdownMenu
+          icon={<MdPeople />}
+          label="User Management"
+          isOpen={openMenus.userManagement}
+          onToggle={() => toggleMenu("userManagement")}
+          items={[
+            { label: "Users", route: Routers.USERS },
+            { label: "All Users", route: Routers.ALL_USERS },
+          ]}
+        />
 
-          <DropdownMenu
-            icon={<MdLocalShipping />}
-            label="Driver Management"
-            isOpen={
-              openMenus.driverManagement
-            }
-            onToggle={() =>
-              toggleMenu(
-                "driverManagement"
-              )
-            }
-            items={[
-              {
-                label: "Drivers",
-                route: Routers.DRIVERS,
-              },
-              {
-                label: "Add Driver",
-                route:
-                  Routers.ADD_DRIVER,
-              },
-            ]}
-          />
+        {/* ORDER MANAGEMENT */}
+        <DropdownMenu
+          icon={<MdShoppingCart />}
+          label="Order Management"
+          isOpen={openMenus.orderManagement}
+          onToggle={() => toggleMenu("orderManagement")}
+          items={[
+            { label: "Orders", route: Routers.ORDERS },
+            { label: "All Orders", route: Routers.ALL_ORDERS },
+            { label: "Pending Orders", route: Routers.PENDING_ORDERS },
+            { label: "Packed Orders", route: Routers.PACKED_ORDERS },
+            { label: "Shipping", route: Routers.SHIPPING },
+          ]}
+        />
 
-          {/* EXTRA */}
-          <div className="pt-5 mt-5 border-t border-slate-100 space-y-1.5">
-            <NavItem
-              icon={<MdSupportAgent />}
-              label="Support"
-              router={Routers.SUPPORT}
-            />
+        {/* PAYMENTS */}
+        <DropdownMenu
+          icon={<MdPayments />}
+          label="Payments"
+          isOpen={openMenus.transactionManagement}
+          onToggle={() => toggleMenu("transactionManagement")}
+          items={[
+            { label: "Transactions", route: Routers.TRANSACTIONS },
+            { label: "Wallets", route: Routers.WALLETS },
+          ]}
+        />
 
-            <NavItem
-              icon={<MdNotifications />}
-              label="Notifications"
-              router={
-                Routers.NOTIFICATIONS
-              }
-            />
+        {/* DRIVER */}
+        <DropdownMenu
+          icon={<MdLocalShipping />}
+          label="Driver Management"
+          isOpen={openMenus.driverManagement}
+          onToggle={() => toggleMenu("driverManagement")}
+          items={[
+            { label: "Drivers", route: Routers.DRIVERS },
+            { label: "Add Driver", route: Routers.ADD_DRIVER },
+          ]}
+        />
 
-            <NavItem
-              icon={
-                <MdOutlineSettings />
-              }
-              label="Settings"
-              router={Routers.SETTINGS}
-            />
-          </div>
+        {/* RATINGS */}
+        <DropdownMenu
+          icon={<MdStarRate />}
+          label="Rating Management"
+          isOpen={openMenus.ratingManagement}
+          onToggle={() => toggleMenu("ratingManagement")}
+          items={[
+            { label: "Ratings", route: Routers.RATINGS },
+            { label: "All Ratings", route: Routers.ALL_RATINGS },
+          ]}
+        />
+
+        {/* REPORTS */}
+        <DropdownMenu
+          icon={<MdBarChart />}
+          label="Reports"
+          isOpen={openMenus.reportsManagement}
+          onToggle={() => toggleMenu("reportsManagement")}
+          items={[
+            { label: "Sales Report", route: Routers.SALES_REPORT },
+            { label: "User Analytics", route: Routers.USER_ANALYTICS },
+          ]}
+        />
+
+        {/* BOTTOM FIXED ZONE */}
+        <div className="pt-5 mt-5 border-t border-slate-200/60 space-y-2.5">
+          <NavItem icon={<MdSupportAgent />} label="Support" router={Routers.SUPPORT} />
+          <NavItem icon={<MdNotifications />} label="Notifications" router={Routers.NOTIFICATIONS} />
+          <NavItem icon={<MdSettings />} label="Settings" router={Routers.SETTINGS} />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

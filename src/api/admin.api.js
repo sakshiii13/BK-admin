@@ -1,5 +1,7 @@
 import Axios from "./Axios";
 
+// ================= COMMON HELPERS =================
+
 const getTokenFromResponse = (data) => {
   return (
     data?.token ||
@@ -17,21 +19,12 @@ const getTokenFromResponse = (data) => {
 };
 
 const getAdminFromResponse = (data) => {
-  return (
-    data?.admin ||
-    data?.user ||
-    data?.data?.admin ||
-    data?.data?.user ||
-    null
-  );
+  return data?.admin || data?.user || data?.data?.admin || data?.data?.user || null;
 };
 
 export const saveAdminAuth = (data) => {
   const token = getTokenFromResponse(data);
   const admin = getAdminFromResponse(data);
-
-  console.log("AUTH RESPONSE 👉", data);
-  console.log("TOKEN SAVE 👉", token ? "YES" : "NO");
 
   if (token) {
     localStorage.setItem("adminToken", token);
@@ -48,30 +41,21 @@ export const saveAdminAuth = (data) => {
 const handleApiError = (error, fallbackMessage) => {
   console.log("ADMIN API ERROR 👉", error?.response?.data || error);
 
-  return error?.response?.data || {
+  return {
     success: false,
-    message: error?.message || fallbackMessage,
+    message:
+      error?.response?.data?.message ||
+      error?.message ||
+      fallbackMessage,
   };
-};
-
-
-// ================= ADMIN DASHBOARD =================
-
-export const getAdminDashboardApi = async () => {
-  try {
-    const response = await Axios.get("/admin/dashboard");
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get admin dashboard failed");
-  }
 };
 
 // ================= AUTH =================
 
 export const adminRegisterApi = async (payload) => {
   try {
-    const response = await Axios.post("/admin/register", payload);
-    return response.data;
+    const res = await Axios.post("/admin/register", payload);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Register failed");
   }
@@ -79,8 +63,8 @@ export const adminRegisterApi = async (payload) => {
 
 export const adminLoginApi = async (payload) => {
   try {
-    const response = await Axios.post("admin/login", payload);
-    return response.data;
+    const res = await Axios.post("/admin/login", payload);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Login failed");
   }
@@ -88,11 +72,22 @@ export const adminLoginApi = async (payload) => {
 
 export const verifyAdminOtpApi = async (payload) => {
   try {
-    const response = await Axios.post("/admin/verify-otp", payload);
-    saveAdminAuth(response.data);
-    return response.data;
+    const res = await Axios.post("/admin/verify-otp", payload);
+    saveAdminAuth(res.data);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "OTP verification failed");
+  }
+};
+
+// ================= DASHBOARD =================
+
+export const getAdminDashboardApi = async () => {
+  try {
+    const res = await Axios.get("/admin/dashboard");
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Get admin dashboard failed");
   }
 };
 
@@ -100,8 +95,8 @@ export const verifyAdminOtpApi = async (payload) => {
 
 export const createStoreApi = async (payload) => {
   try {
-    const response = await Axios.post("/admin/store-create", payload);
-    return response.data;
+    const res = await Axios.post("/admin/store-create", payload);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Create store failed");
   }
@@ -109,10 +104,10 @@ export const createStoreApi = async (payload) => {
 
 export const getAllStoresApi = async (page = 1, limit = 10) => {
   try {
-    const response = await Axios.get(
-      `/admin/get-all-stores?page=${page}&limit=${limit}`
-    );
-    return response.data;
+    const res = await Axios.get("/admin/get-all-stores", {
+      params: { page, limit },
+    });
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Failed to fetch stores");
   }
@@ -120,11 +115,8 @@ export const getAllStoresApi = async (page = 1, limit = 10) => {
 
 export const updateStoreApi = async (storeId, payload) => {
   try {
-    const response = await Axios.put(
-      `/admin/update-store/${storeId}`,
-      payload
-    );
-    return response.data;
+    const res = await Axios.put(`/admin/update-store/${storeId}`, payload);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Update store failed");
   }
@@ -132,19 +124,10 @@ export const updateStoreApi = async (storeId, payload) => {
 
 export const getStoreByIdApi = async (storeId) => {
   try {
-    const response = await Axios.get(`/user/store/${storeId}`);
-    return response.data;
+    const res = await Axios.get(`/user/store/${storeId}`);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Get store by id failed");
-  }
-};
-
-export const findNearestStoreApi = async ({ lat, lng }) => {
-  try {
-    const response = await Axios.get(`/store/nearest?lat=${lat}&lng=${lng}`);
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Find nearest store failed");
   }
 };
 
@@ -152,8 +135,8 @@ export const findNearestStoreApi = async ({ lat, lng }) => {
 
 export const createCategoryApi = async (data) => {
   try {
-    const response = await Axios.post("/admin/category-create", data);
-    return response.data;
+    const res = await Axios.post("/admin/category-create", data);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Failed to create category");
   }
@@ -161,172 +144,169 @@ export const createCategoryApi = async (data) => {
 
 export const getAllCategoriesApi = async (page = 1, limit = 10) => {
   try {
-    const response = await Axios.get(
-      `/user/get-all-categories?page=${page}&limit=${limit}`
-    );
-    return response.data;
+    const res = await Axios.get("/user/get-all-categories", {
+      params: { page, limit },
+    });
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Failed to fetch categories");
   }
 };
 
-// GET CATEGORY BY ID
-export const getCategoryByIdApi = async (categoryId) => {
+export const updateCategoryApi = async (categoryId, data) => {
   try {
-    const response = await Axios.get(`/user/category/${categoryId}`);
-    return response.data;
+    const res = await Axios.put(
+      `/admin/update-category/${categoryId}`,
+      data
+    );
+
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Get category by id failed");
+    return handleApiError(error, "Failed to update category");
   }
 };
 
-// UPDATE CATEGORY
-export const updateCategoryApi = async (categoryId, payload) => {
+
+// ================= LOCATION =================
+export const findNearestStoreApi = async (payload) => {
   try {
-    const response = await Axios.put(
-      `/admin/update-category/${categoryId}`,
+    const res = await Axios.post(
+      "/store/find-nearest",
       payload
     );
 
-    return response.data;
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Update category failed");
+    return handleApiError(
+      error,
+      "Failed to find nearest store"
+    );
   }
 };
+
+// ================= USERS =================
+
+export const getAllUsersApi = async (page = 1, limit = 10) => {
+  try {
+    const res = await Axios.get("/admin/get-all-users", {
+      params: { page, limit },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch users");
+  }
+};
+
 // ================= INVENTORY =================
 
 export const createInventoryApi = async (payload) => {
   try {
-    const response = await Axios.post("/admin/create-inventory", payload);
-    return response.data;
+    const res = await Axios.post("/admin/create-inventory", payload);
+    return res.data;
   } catch (error) {
     return handleApiError(error, "Create inventory failed");
   }
 };
-
 export const getInventoryByStoreIdApi = async (
   storeId,
   page = 1,
-  limit = 10
+  limit = 20
 ) => {
   try {
-    const response = await Axios.get(
-      `/user/store-inventory/${storeId}?page=${page}&limit=${limit}`
+    const res = await Axios.get(
+      `/admin/inventory/${storeId}`,
+      {
+        params: { page, limit },
+      }
     );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get store inventory failed");
-  }
-};
 
-export const getHomeProductsApi = async () => {
-  try {
-    const response = await Axios.get("/store-inventory/get-home-products");
-    return response.data;
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Get home products failed");
-  }
-};
-
-export const getStoreCategoryApi = async (storeId) => {
-  try {
-    const response = await Axios.get(
-      `/store-inventory/get-store-category/${storeId}`
+    return handleApiError(
+      error,
+      "Failed to fetch inventory"
     );
-    return response.data;
-  } catch (error) {
-    return handleApiError(error, "Get store category failed");
   }
 };
 
-export const getStoreSubCategoryByCategoryApi = async (
+// ================= ORDERS =================
+
+export const getStoreOrdersApi = async (storeId) => {
+  try {
+    if (!storeId) throw new Error("storeId is required");
+
+    const res = await Axios.get(`/store/orders/${storeId}`);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Get store orders failed");
+  }
+};
+
+export const getOutForDeliveryOrdersApi = async (
   storeId,
-  categoryId
+  status = "OUT_FOR_DELIVERY"
 ) => {
   try {
-    const response = await Axios.get(
-      `/store-inventory/get-store-subCategory-by-category/${storeId}/${categoryId}`
-    );
+    if (!storeId) throw new Error("storeId is required");
+
+    const response = await Axios.get(`/store/orders/${storeId}`, {
+      params: { status },
+    });
+
     return response.data;
   } catch (error) {
-    return handleApiError(error, "Get sub category failed");
+    console.error("OUT_FOR_DELIVERY_API_ERROR 👉", error);
+
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong",
+      data: [],
+    };
   }
 };
 
-export const getStoreProductBySubCategoryApi = async (
-  storeId,
-  subCategoryId
-) => {
+export const packStoreOrderApi = async (storeId, orderId) => {
   try {
-    const response = await Axios.get(
-      `/store-inventory/get-store-product-by-subCategory/${storeId}/${subCategoryId}`
+    const res = await Axios.patch(
+      `/store/orders/${storeId}/${orderId}/pack`
     );
-    return response.data;
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Get store product failed");
+    return handleApiError(error, "Pack order failed");
   }
 };
 
-export const getProductDetailsOfStoreApi = async (productId) => {
+export const assignDriverApi = async (storeId, orderId, driverId) => {
   try {
-    const response = await Axios.get(
-      `/store-inventory/get-product-details-of-store/${productId}`
+    const res = await Axios.patch(
+      `/store/orders/${storeId}/${orderId}/assign-driver`,
+      { driverId }
     );
-    return response.data;
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Get product details failed");
+    return handleApiError(error, "Assign driver failed");
   }
 };
 
-// ================= APP RATINGS =================
+// ================= RATINGS =================
 
 export const getAppRatingsApi = async () => {
   try {
-    const response = await Axios.get("/admin/app-ratings");
-    return response.data;
+    const res = await Axios.get("/admin/app-ratings");
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Failed to fetch app ratings");
+    return handleApiError(error, "Failed to fetch ratings");
   }
 };
 
 export const getAppRatingAverageApi = async () => {
   try {
-    const response = await Axios.get("/admin/app-rating-average");
-    return response.data;
+    const res = await Axios.get("/admin/app-rating-average");
+    return res.data;
   } catch (error) {
-    return handleApiError(error, "Failed to fetch app rating average");
+    return handleApiError(error, "Failed to fetch rating average");
   }
-};
-
-
-export const getStoreOrdersApi = async (storeId) => {
-  const response = await Axios.get(`/store/orders/${storeId}`);
-  return response.data;
-};
-
-export const packStoreOrderApi = async (storeId, orderId) => {
-  const response = await Axios.patch(
-    `/store/orders/${storeId}/${orderId}/pack`
-  );
-
-  return response.data;
-};
-
-// ==========================================
-// ASSIGN DRIVER API
-// ==========================================
-
-export const assignDriverApi = async (
-  storeId,
-  orderId,
-  driverId
-) => {
-  const response = await Axios.patch(
-    `/store/orders/${storeId}/${orderId}/assign-driver`,
-    {
-      driverId,
-    }
-  );
-
-  return response.data;
 };

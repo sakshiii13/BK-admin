@@ -14,7 +14,9 @@ export const backendConfig = {
   // base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
   // origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
 
+  base: "https://api.bkgrocery.starchainlabs.online/api",
+  origin: "https://api.bkgrocery.starchainlabs.online/",
   // phone / network testing ke liye
-  base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
-  origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
+  // base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
+  // origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
 };

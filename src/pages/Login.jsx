@@ -1,5 +1,3 @@
-// src/pages/auth/Login.jsx
-
 import React, { useState } from "react";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdLocalGroceryStore } from "react-icons/md";
@@ -7,12 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { adminLoginApi } from "../api/admin.api";
 import { showLoader, hideLoader } from "../redux/slices/loaderSlice";
-import { showSuccess, showError } from "../utils/alertService";
+import { showOtpSentAlert, showError } from "../utils/alertService"; 
+import Swal from "sweetalert2";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [receivedOtp, setReceivedOtp] = useState(""); 
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -31,14 +31,17 @@ const Login = () => {
 
       if (response?.success) {
         localStorage.setItem("adminEmail", email);
-
-        // testing ke liye, kyunki API response me OTP aa raha hai
         localStorage.setItem("adminOtp", response?.otp);
+        setReceivedOtp(response?.otp); 
 
         dispatch(hideLoader());
-        await showSuccess(response?.message || "OTP sent successfully");
 
-        navigate("/verify-otp");
+        // 🔥 CRITICAL FIX: explicit promise resolution logic
+        showOtpSentAlert().then(() => {
+          Swal.close(); // Force kill modal overlay context before unmounting
+          navigate("/verify-otp"); // Now change page flawlessly
+        });
+
       } else {
         dispatch(hideLoader());
         showError(response?.message || "Login failed");
@@ -52,16 +55,12 @@ const Login = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50/30 flex items-center justify-center px-4 relative overflow-hidden font-sans">
       
-      {/* Soft Ambient Aesthetics (Light Mode Mode) */}
       <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-green-500/5 rounded-full blur-[130px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-[130px]" />
 
-      {/* Main Container Card with 3D Elevation */}
       <div className="relative w-full max-w-[1000px] min-h-[620px] bg-white rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.1)] overflow-hidden grid lg:grid-cols-2 border border-slate-200/80">
         
-        {/* Left Side Branding - Energetic Premium Contrast Anchor */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 relative overflow-hidden">
-          {/* Decorative abstract mesh circle */}
           <div className="absolute -right-20 -top-20 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
           <div className="absolute left-[-10%] bottom-[-10%] w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
           
@@ -83,7 +82,6 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Lower Dynamic Badge inside Branding */}
           <div className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-5 border border-white/10 relative group shadow-inner transition-all duration-300">
             <p className="text-white font-bold text-base tracking-wide flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -95,11 +93,9 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Right Side Form Panel (Clean Tactile Light UI) */}
         <div className="flex items-center justify-center p-8 sm:p-14 bg-white">
           <div className="w-full max-w-sm">
             
-            {/* Header Content */}
             <div className="text-center mb-9">
               <div className="h-16 flex items-center justify-center mb-3">
                 <img 
@@ -118,10 +114,8 @@ const Login = () => {
               </p>
             </div>
 
-            {/* Input Form Fields */}
             <form onSubmit={handleSubmit} className="space-y-5">
               
-              {/* Email Block */}
               <div>
                 <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">
                   Email Address
@@ -141,7 +135,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Password Block */}
               <div>
                 <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">
                   Password
@@ -169,7 +162,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Enhanced 3D Submit Button */}
               <button
                 type="submit"
                 className="btn-3d btn-gradient-orange w-full h-12 rounded-xl text-white text-sm font-extrabold tracking-wide cursor-pointer transition-all flex items-center justify-center shadow-md mt-2"
@@ -177,13 +169,12 @@ const Login = () => {
                 Send Verification OTP
               </button>
 
-              {/* Clean Light-Themed Testing OTP Box */}
-              {localStorage.getItem("adminOtp") && (
-                <div className="mt-4 p-3.5 bg-orange-50 border border-orange-200/60 rounded-xl text-center shadow-inner-sm animate-fade-in">
+              {receivedOtp && (
+                <div className="mt-4 p-3.5 bg-orange-50 border border-orange-200/60 rounded-xl text-center shadow-inner-sm transform transition-all animate-bounce-short">
                   <p className="text-xs text-slate-500 font-bold tracking-wide">
                     🛠️ Testing OTP Mode active:{" "}
                     <span className="font-black text-orange-600 bg-orange-100/80 px-2.5 py-0.5 rounded-lg tracking-widest text-sm shadow-sm border border-orange-200/40 ml-1">
-                      {localStorage.getItem("adminOtp")}
+                      {receivedOtp}
                     </span>
                   </p>
                 </div>

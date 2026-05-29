@@ -4,99 +4,94 @@ import { FaSave, FaArrowLeft } from "react-icons/fa";
 const AddUser = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <button className="h-10 w-10 rounded-xl bg-[var(--card-bg)] border border-[var(--border-soft)] text-gray-400 flex items-center justify-center hover:text-white hover:border-orange-500/50 transition-all shadow-[var(--shadow-inset)]">
+
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-8">
+        <button className="h-11 w-11 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all flex items-center justify-center">
           <FaArrowLeft />
         </button>
+
         <div>
-          <h1 className="text-2xl font-bold text-white">Add New User</h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Create a new customer or admin account
+          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">
+            Add New User
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Create and manage user accounts
           </p>
         </div>
       </div>
 
-      <div className="glass rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-lime-500"></div>
+      {/* CARD */}
+      <div className="card-3d bg-white rounded-3xl overflow-hidden">
 
-        <form className="space-y-6">
+        {/* TOP BAR */}
+        <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-orange-400 to-lime-400"></div>
+
+        <form className="p-7 md:p-9 space-y-6">
+
+          {/* GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
-                First Name
-              </label>
-              <input
-                type="text"
-                placeholder="John"
-                className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
-                Last Name
-              </label>
-              <input
-                type="text"
-                placeholder="Doe"
-                className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="john@example.com"
-                className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                placeholder="+1 234 567 890"
-                className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
+
+            {/* FIELD */}
+            {[
+              { label: "First Name", placeholder: "John", type: "text" },
+              { label: "Last Name", placeholder: "Doe", type: "text" },
+              { label: "Email Address", placeholder: "john@example.com", type: "email" },
+              { label: "Phone Number", placeholder: "+91 9876543210", type: "tel" },
+              { label: "Password", placeholder: "••••••••", type: "password" },
+            ].map((f, i) => (
+              <div key={i}>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  {f.label}
+                </label>
+
+                <input
+                  type={f.type}
+                  placeholder={f.placeholder}
+                  className="mt-2 w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 shadow-inner
+                  focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none
+                  transition-all hover:shadow-md"
+                />
+              </div>
+            ))}
+
+            {/* ROLE */}
+            <div>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Role
               </label>
-              <select className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 transition-all appearance-none">
+
+              <select className="mt-2 w-full h-11 px-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-800
+              focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all">
                 <option>Customer</option>
                 <option>Premium User</option>
                 <option>Admin</option>
                 <option>Store Manager</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-300">
-                Password
-              </label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full bg-[var(--card-bg)] border border-[var(--border-soft)] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500/50 transition-all"
-              />
-            </div>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex justify-end gap-3">
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+
             <button
               type="button"
-              className="px-6 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-all font-medium"
+              className="h-11 px-6 rounded-xl bg-white border border-slate-200 text-slate-600
+              hover:bg-slate-50 hover:shadow-md active:scale-95 transition-all"
             >
               Cancel
             </button>
+
             <button
               type="submit"
-              className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 text-white px-8 py-3 rounded-xl transition-all shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-[1.02] font-medium"
+              className="h-11 px-7 rounded-xl bg-gradient-to-r from-orange-500 to-orange-400
+              text-white font-semibold shadow-md shadow-orange-200
+              hover:shadow-lg hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2"
             >
-              <FaSave /> Create User
+              <FaSave />
+              Create User
             </button>
+
           </div>
         </form>
       </div>

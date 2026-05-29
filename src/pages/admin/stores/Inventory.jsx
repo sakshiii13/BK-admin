@@ -5,6 +5,7 @@ import {
   FaPlus,
   FaTimes,
   FaSearch,
+  FaDownload,
 } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
@@ -36,23 +37,40 @@ const Inventory = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
 
+  // ================= FETCH STORES WITH DEBUGGING =================
   const fetchStores = async () => {
-    const res = await getAllStoresApi();
+    try {
+      console.log("Fetching all stores...");
+      const res = await getAllStoresApi();
+      console.log("getAllStoresApi Response Data:", res); // console me check karo isko
 
-    if (res?.success) {
-      const apiStores = res?.data || [];
-      setStores(apiStores);
+      if (res?.success) {
+        // Kuch APIs me data direct res.data me hota hai, kuch me res.data.stores me. 
+        // Isliye donon cases ko handle kar rahe hain:
+        const apiStores = res?.data?.stores || res?.data || [];
+        console.log("Parsed Stores Array:", apiStores);
+        
+        setStores(apiStores);
 
-      if (apiStores.length > 0) {
-        setSelectedStoreId(apiStores[0]?._id);
-        setFormData((prev) => ({
-          ...prev,
-          store: apiStores[0]?._id,
-        }));
+        if (apiStores.length > 0) {
+          setSelectedStoreId(apiStores[0]?._id);
+          setFormData((prev) => ({
+            ...prev,
+            store: apiStores[0]?._id,
+          }));
+        } else {
+          console.warn("API succeeded but returned an empty array for stores.");
+        }
+      } else {
+        showError(res?.message || "Failed to load stores from server");
       }
+    } catch (error) {
+      console.error("Critical error in fetchStores API call:", error);
+      showError("Could not connect to stores service");
     }
   };
 
+  // ================= FETCH INVENTORY =================
   const fetchInventory = async (storeId) => {
     if (!storeId) return;
 
@@ -60,7 +78,9 @@ const Inventory = () => {
       setLoading(true);
       dispatch(showLoader());
 
+      console.log(`Fetching inventory for storeId: ${storeId}`);
       const res = await getInventoryByStoreIdApi(storeId);
+      console.log("getInventoryByStoreIdApi Response:", res);
 
       if (res?.success) {
         setInventory(res?.data || []);
@@ -68,10 +88,11 @@ const Inventory = () => {
       } else {
         setInventory([]);
         setPagination(null);
-        showError(res?.message || "Inventory not found");
+        // Pehle is error box ko check karo agar alert pop ho raha hai toh
+        showError(res?.message || "Inventory data not found");
       }
     } catch (error) {
-      console.log("Inventory fetch error:", error);
+      console.error("Inventory fetch error:", error);
       showError("Something went wrong while fetching inventory");
     } finally {
       setLoading(false);
@@ -95,7 +116,6 @@ const Inventory = () => {
 
   const filteredInventory = useMemo(() => {
     const q = search.toLowerCase().trim();
-
     if (!q) return inventory;
 
     return inventory.filter((item) => {
@@ -144,7 +164,6 @@ const Inventory = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -167,15 +186,11 @@ const Inventory = () => {
       ],
     };
 
-    console.log("FINAL PAYLOAD 👉", payload);
-
     try {
       setLoading(true);
       dispatch(showLoader());
 
       const res = await createInventoryApi(payload);
-
-      console.log("CREATE INVENTORY RESPONSE 👉", res);
 
       if (res?.success) {
         dispatch(hideLoader());
@@ -191,7 +206,7 @@ const Inventory = () => {
       console.log("Create inventory error:", error);
       dispatch(hideLoader());
       showError("Something went wrong while creating inventory");
-    } finally {
+    } {
       setLoading(false);
     }
   };
@@ -200,46 +215,45 @@ const Inventory = () => {
     if (!item?.isAvailable || Number(item?.availableStock || 0) === 0) {
       return "Out of Stock";
     }
-
     if (
       Number(item?.availableStock || 0) <=
       Number(item?.lowStockThreshold || 0)
     ) {
       return "Low Stock";
     }
-
     return "Healthy";
   };
 
   return (
-    <div className="p-6 text-white">
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="p-6 space-y-6">
+      {/* ================= HEADER ================= */}
+      <div className="card-3d p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between bg-white">
         <div>
-          <h1 className="text-2xl font-bold text-white">Inventory Tracking</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            Monitor stock levels across all stores
+          <h1 className="text-2xl font-black text-slate-800">Inventory Tracking</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Monitor stock levels across all stores seamlessly
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button className="rounded-xl border border-[var(--border-soft)] bg-[var(--card-bg)] px-4 py-2 text-gray-300 transition-all hover:border-orange-500/50 hover:text-white">
-            Export Report
+          <button className="btn-3d btn-white px-5 py-2.5 text-sm flex items-center gap-2">
+            <FaDownload className="text-slate-400" /> Export Report
           </button>
 
           <button
             onClick={openAddPopup}
-            className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 font-bold text-black transition hover:bg-orange-400"
+            className="btn-3d btn-gradient-orange px-5 py-2.5 text-sm flex items-center gap-2 text-white font-bold"
           >
-            <FaPlus />
-            Add Inventory
+            <FaPlus /> Add Inventory
           </button>
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-300">
-            Select Store
+      {/* ================= CONTROLS (STORE & SEARCH) ================= */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="card-3d p-5 bg-white">
+          <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-500">
+            Select Active Store
           </label>
 
           <select
@@ -251,130 +265,116 @@ const Inventory = () => {
                 store: e.target.value,
               }));
             }}
-            className="w-full rounded-xl border border-white/10 bg-[var(--card-bg)] px-4 py-3 text-white outline-none"
+            className="input-3d w-full px-4 py-3 text-sm h-12 bg-white text-slate-800 font-medium focus:outline-none"
           >
-            <option className="bg-slate-900" value="">
-              Select Store
-            </option>
-
-            {stores.map((store) => (
-              <option
-                className="bg-slate-900"
-                key={store?._id}
-                value={store?._id}
-              >
-                {store?.name} - {store?.address}
-              </option>
-            ))}
+            <option value="">Select Store</option>
+            {stores && stores.length > 0 ? (
+              stores.map((store) => (
+                <option key={store?._id} value={store?._id}>
+                  {store?.name} {store?.address ? `— ${store.address}` : ""}
+                </option>
+              ))
+            ) : (
+              <option disabled value="">⚠️ No stores found or loading...</option>
+            )}
           </select>
 
           {selectedStore && (
-            <p className="mt-2 text-sm text-gray-400">
-              Showing inventory for:{" "}
-              <span className="font-semibold text-orange-400">
+            <p className="mt-2 text-xs text-slate-500">
+              Showing analytics for:{" "}
+              <span className="font-bold text-orange-500">
                 {selectedStore?.name}
               </span>
             </p>
           )}
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-300">
+        <div className="card-3d p-5 flex flex-col justify-center bg-white">
+          <label className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-500">
             Search Inventory
           </label>
 
-          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-[var(--card-bg)] px-4 py-3">
-            <FaSearch className="text-orange-400" />
+          <div className="relative flex items-center">
+            <FaSearch className="absolute left-4 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search product, SKU, category, brand..."
-              className="w-full bg-transparent text-white outline-none placeholder:text-gray-500"
+              placeholder="Search product name, SKU, category, brand..."
+              className="input-3d w-full pl-11 pr-4 py-3 text-sm h-12 bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none"
             />
           </div>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-        <div className="glass flex items-center gap-4 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/20 text-xl text-orange-400">
+      {/* ================= METRICS CARDS ================= */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div className="card-3d p-5 flex items-center gap-4 border-l-4 border-l-orange-500 bg-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-xl text-orange-500">
             <FaBoxes />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Total Stock</p>
-            <p className="text-2xl font-bold text-white">{totalStock}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Stock</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{totalStock}</p>
           </div>
         </div>
 
-        <div className="glass flex items-center gap-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/20 text-xl text-yellow-400">
+        <div className="card-3d p-5 flex items-center gap-4 border-l-4 border-l-amber-500 bg-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-xl text-amber-500">
             <FaExclamationTriangle />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Low Stock Items</p>
-            <p className="text-2xl font-bold text-white">{lowStockCount}</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Low Stock Items</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">{lowStockCount}</p>
           </div>
         </div>
 
-        <div className="glass flex items-center gap-4 rounded-2xl border border-green-500/30 bg-green-500/5 p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20 text-xl text-green-400">
+        <div className="card-3d p-5 flex items-center gap-4 border-l-4 border-l-green-500 bg-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-500/10 text-xl text-green-500">
             <FaBoxes />
           </div>
           <div>
-            <p className="text-sm text-gray-400">Total Items</p>
-            <p className="text-2xl font-bold text-white">
-              {pagination?.total || inventory.length}
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Items</p>
+            <p className="text-2xl font-black text-slate-800 mt-0.5">
+              {pagination?.total || filteredInventory.length}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="glass overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+      {/* ================= DATATABLE ================= */}
+      <div className="card-3d overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-white/10 bg-[var(--card-bg)]/50">
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Product
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Store
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  SKU / Variant
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Price
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Current Stock
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Available
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Reserved
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Status
-                </th>
-                <th className="p-4 text-sm font-semibold text-gray-400">
-                  Note
-                </th>
+              <tr className="border-b border-slate-200 bg-slate-50/70">
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Product</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Store</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">SKU / Variant</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Price</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Current Stock</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Available</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Reserved</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</th>
+                <th className="p-4 text-xs font-extrabold uppercase tracking-wider text-slate-400">Note</th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan="9" className="p-8 text-center text-gray-400">
-                    Loading inventory...
+                  <td colSpan="9" className="p-12 text-center text-slate-400 font-medium">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce"></div>
+                      <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                      <div className="h-2 w-2 bg-orange-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                      <span>Loading production inventory...</span>
+                    </div>
                   </td>
                 </tr>
               ) : filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="p-8 text-center text-gray-400">
-                    No inventory found.
+                  <td colSpan="9" className="p-12 text-center text-slate-400 italic">
+                    No active inventory logs found for this filter.
                   </td>
                 </tr>
               ) : (
@@ -384,10 +384,7 @@ const Inventory = () => {
                   const status = getStatus(item);
 
                   return (
-                    <tr
-                      key={item?._id}
-                      className="border-b border-white/5 transition-colors hover:bg-white/5"
-                    >
+                    <tr key={item?._id} className="transition-colors hover:bg-slate-50/50">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <img
@@ -398,74 +395,54 @@ const Inventory = () => {
                               "/logo.png"
                             }
                             alt={product?.name}
-                            className="h-12 w-12 rounded-xl object-cover"
+                            className="img-3d h-12 w-12 object-cover bg-slate-100"
                           />
-
                           <div>
-                            <p className="font-medium text-white">
-                              {product?.name || "-"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {product?.brand?.name || "-"}
-                            </p>
+                            <p className="font-bold text-slate-800">{product?.name || "-"}</p>
+                            <p className="text-xs text-slate-400 font-medium">{product?.brand?.name || "-"}</p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="p-4 text-gray-300">
-                        {item?.store?.name || "-"}
-                      </td>
+                      <td className="p-4 text-slate-600 font-medium">{item?.store?.name || "-"}</td>
 
                       <td className="p-4">
-                        <p className="font-semibold text-white">
-                          {variant?.sku || "-"}
-                        </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-bold text-slate-800">{variant?.sku || "-"}</p>
+                        <p className="text-xs text-slate-400">
                           {variant?.weight || "-"} {variant?.unit || ""}
                         </p>
                       </td>
 
                       <td className="p-4">
-                        <p className="font-bold text-green-400">
-                          ₹{variant?.sellingPrice || "-"}
-                        </p>
-                        <p className="text-xs text-gray-500 line-through">
-                          ₹{variant?.mrp || "-"}
-                        </p>
+                        <p className="font-extrabold text-green-600">₹{variant?.sellingPrice || "-"}</p>
+                        <p className="text-xs text-slate-400 line-through">₹{variant?.mrp || "-"}</p>
                       </td>
 
-                      <td className="p-4 font-bold text-white">
+                      <td className="p-4 font-bold text-slate-800">
                         {item?.stock}{" "}
-                        <span className="text-xs font-normal text-gray-500">
+                        <span className="text-xs font-normal text-slate-400">
                           / Min {item?.lowStockThreshold}
                         </span>
                       </td>
 
-                      <td className="p-4 font-bold text-green-400">
-                        {item?.availableStock}
-                      </td>
-
-                      <td className="p-4 font-bold text-yellow-400">
-                        {item?.reservedStock}
-                      </td>
+                      <td className="p-4 font-bold text-green-600">{item?.availableStock}</td>
+                      <td className="p-4 font-bold text-amber-500">{item?.reservedStock}</td>
 
                       <td className="p-4">
                         <span
-                          className={`rounded-md border px-2.5 py-1 text-xs ${
+                          className={`rounded-full px-3 py-1 text-xs font-extrabold tracking-wide uppercase ${
                             status === "Healthy"
-                              ? "border-green-500/20 bg-green-500/10 text-green-400"
+                              ? "bg-green-50 text-green-600"
                               : status === "Low Stock"
-                              ? "border-yellow-500/20 bg-yellow-500/10 text-yellow-400"
-                              : "border-red-500/20 bg-red-500/10 text-red-400"
+                              ? "bg-amber-50 text-amber-500"
+                              : "bg-red-50 text-red-500"
                           }`}
                         >
                           {status}
                         </span>
                       </td>
 
-                      <td className="p-4 text-gray-400">
-                        {item?.note || "-"}
-                      </td>
+                      <td className="p-4 text-slate-400 text-xs italic">{item?.note || "-"}</td>
                     </tr>
                   );
                 })
@@ -475,53 +452,42 @@ const Inventory = () => {
         </div>
       </div>
 
+      {/* ================= 3D MODAL POPUP ================= */}
       {showPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl rounded-[32px] border border-orange-500/20 bg-[#111827] p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl card-3d p-6 !rounded-[24px] !bg-white border-none shadow-2xl">
+            <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">
-                  Create Inventory
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-500">
+                  Action Panel
                 </p>
-
-                <h2 className="mt-2 text-2xl font-bold">Add Store Inventory</h2>
+                <h2 className="mt-1 text-xl font-black text-slate-800">Add Store Inventory</h2>
               </div>
 
               <button
                 type="button"
                 onClick={closePopup}
-                className="rounded-full bg-white/10 p-3 transition hover:bg-red-500"
+                className="rounded-full bg-slate-100 p-2.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500"
               >
                 <FaTimes />
               </button>
             </div>
 
-            <form
-              onSubmit={handleCreateInventory}
-              className="grid grid-cols-1 gap-4 md:grid-cols-2"
-            >
+            <form onSubmit={handleCreateInventory} className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
-                  Store
+                <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Target Store
                 </label>
-
                 <select
                   name="store"
                   value={formData.store}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none"
+                  className="input-3d w-full px-4 py-2.5 text-sm h-11 bg-white"
                 >
-                  <option className="bg-slate-900" value="">
-                    Select Store
-                  </option>
-
+                  <option value="">Select Store</option>
                   {stores.map((store) => (
-                    <option
-                      className="bg-slate-900"
-                      key={store?._id}
-                      value={store?._id}
-                    >
+                    <option key={store?._id} value={store?._id}>
                       {store?.name}
                     </option>
                   ))}
@@ -529,16 +495,16 @@ const Inventory = () => {
               </div>
 
               <Input
-                label="Variant ID"
+                label="Variant Object ID"
                 name="variant"
                 value={formData.variant}
                 onChange={handleChange}
-                placeholder="Paste variant _id"
+                placeholder="Paste item variant database string _id"
                 required
               />
 
               <Input
-                label="Stock"
+                label="Opening Stock"
                 name="stock"
                 type="number"
                 value={formData.stock}
@@ -547,7 +513,7 @@ const Inventory = () => {
               />
 
               <Input
-                label="Low Stock Threshold"
+                label="Low Stock Alert Threshold"
                 name="lowStockThreshold"
                 type="number"
                 value={formData.lowStockThreshold}
@@ -556,7 +522,7 @@ const Inventory = () => {
               />
 
               <Input
-                label="Max Order Quantity"
+                label="Max Allowed Per Order"
                 name="maxOrderQuantity"
                 type="number"
                 value={formData.maxOrderQuantity}
@@ -565,25 +531,24 @@ const Inventory = () => {
               />
 
               <div className="md:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
-                  Note
+                <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Internal Operations Note
                 </label>
-
                 <textarea
                   name="note"
-                  rows="3"
+                  rows="2"
                   value={formData.note}
                   onChange={handleChange}
-                  placeholder="Fast moving item / Limited stock"
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-gray-500"
+                  placeholder="E.g., Special promo batches, fast-moving batch..."
+                  className="input-3d w-full px-4 py-2.5 text-sm placeholder:text-slate-400/70 bg-white"
                 />
               </div>
 
-              <div className="md:col-span-2 flex justify-end gap-3 pt-3">
+              <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
                 <button
                   type="button"
                   onClick={closePopup}
-                  className="rounded-2xl bg-white/10 px-6 py-3 font-bold text-gray-300 transition hover:bg-white/20"
+                  className="btn-3d btn-white px-5 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -591,9 +556,9 @@ const Inventory = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-2xl bg-orange-500 px-6 py-3 font-bold text-black transition hover:bg-orange-400 disabled:opacity-60"
+                  className="btn-3d btn-gradient-orange px-6 py-2 text-sm disabled:opacity-60 text-white font-bold"
                 >
-                  {loading ? "Please wait..." : "Create Inventory"}
+                  {loading ? "Registering..." : "Create Asset"}
                 </button>
               </div>
             </form>
@@ -607,13 +572,12 @@ const Inventory = () => {
 const Input = ({ label, ...props }) => {
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-300">
+      <label className="mb-1.5 block text-xs font-bold text-slate-500 uppercase tracking-wider">
         {label}
       </label>
-
       <input
         {...props}
-        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-gray-500"
+        className="input-3d w-full px-4 py-2.5 text-sm placeholder:text-slate-400/60 h-11 bg-white text-slate-800"
       />
     </div>
   );

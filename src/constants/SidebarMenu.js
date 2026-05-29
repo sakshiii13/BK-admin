@@ -43,16 +43,7 @@ export const sidebarMenu = {
           path: AdminRouters.ALL_USERS,
           icon: MdOutlineRadioButtonUnchecked,
         },
-        {
-          title: "Add User",
-          path: AdminRouters.ADD_USER,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Admin Roles",
-          path: AdminRouters.ADMIN_ROLES,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
+       
       ],
     },
 

@@ -1,144 +1,227 @@
-import React from "react";
-import { FaEdit, FaTrash, FaPlus, FaSearch } from "react-icons/fa";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaSearch, FaSyncAlt } from "react-icons/fa";
+import Axios from "../../../api/Axios";
 
 const AllUsers = () => {
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      role: "Customer",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "Premium",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      role: "Customer",
-      status: "Inactive",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  // ================= API =================
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await Axios.get("/admin/get-all-users");
+
+      if (res?.data?.success) {
+        setUsers(res?.data?.data || []);
+      }
+    } catch (err) {
+      console.log(err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // ================= FILTER =================
+  const filtered = useMemo(() => {
+    if (!search) return users;
+    return users.filter((u) =>
+      `${u.firstName} ${u.lastName} ${u.email} ${u.number} ${u.role}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
+  }, [search, users]);
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-white/[0.01] via-transparent to-transparent p-5 rounded-3xl border border-white/[0.03]">
+
+      {/* ================= HEADER ================= */}
+      <div className="card-3d p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+
+        {/* TITLE */}
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">All Users</h1>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Manage all registered users in the system database
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+            All Users
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage your platform users in one place
           </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-none">
+
+        {/* SEARCH + REFRESH */}
+        <div className="flex gap-3 w-full lg:w-auto">
+
+          <div className="relative w-full lg:w-80">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
             <input
-              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search users..."
-              className="w-full sm:w-64 h-11 bg-white/[0.02] border border-white/5 text-white rounded-xl pl-10 pr-4 text-xs outline-none focus:border-[var(--primary-orange)]/50 focus:bg-white/[0.04] transition-all"
+              className="input-3d h-11 w-full pl-11 text-sm"
             />
-            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs" />
           </div>
-          <button className="flex items-center gap-2 h-11 bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] hover:from-[var(--primary-orange-dark)] text-white px-4 rounded-xl transition-all shadow-md shadow-orange-500/20 font-bold text-xs shrink-0 cursor-pointer">
-            <FaPlus /> Add User
-          </button>
+
+          <button
+  onClick={fetchUsers}
+  disabled={loading}
+  className="group relative h-11 px-5 flex items-center gap-2 rounded-xl 
+             bg-white border border-slate-200 
+             shadow-[0_6px_18px_rgba(0,0,0,0.06)] 
+             hover:shadow-[0_10px_25px_rgba(247,148,29,0.25)] 
+             transition-all duration-300 active:scale-95"
+>
+
+  {/* ICON WRAPPER */}
+  <span className="relative flex items-center justify-center">
+    <FaSyncAlt
+      className={`text-sm text-slate-600 group-hover:text-orange-500 transition-all duration-300
+        ${loading ? "animate-spin" : ""}`}
+    />
+  </span>
+
+  {/* TEXT */}
+  <span className="text-xs font-bold text-slate-700 group-hover:text-orange-500 transition-all">
+    {loading ? "Refreshing..." : "Refresh"}
+  </span>
+
+  {/* TOP GLOW LINE */}
+  <span className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-orange-400 via-orange-500 to-orange-300 opacity-0 group-hover:opacity-100 transition-all rounded-t-xl" />
+
+</button>
+
         </div>
       </div>
 
-      <div className="glass-premium rounded-3xl overflow-hidden border border-white/[0.03] shadow-2xl bg-black/20">
+      {/* ================= STATS BAR ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div className="card-3d p-5">
+          <p className="text-xs text-slate-500">Total Users</p>
+          <h2 className="text-2xl font-extrabold text-slate-800 mt-1">
+            {users.length}
+          </h2>
+        </div>
+
+        <div className="card-3d p-5">
+          <p className="text-xs text-slate-500">Active Users</p>
+          <h2 className="text-2xl font-extrabold text-green-600 mt-1">
+            {users.filter(u => !u.disable).length}
+          </h2>
+        </div>
+
+        <div className="card-3d p-5">
+          <p className="text-xs text-slate-500">Drivers</p>
+          <h2 className="text-2xl font-extrabold text-orange-500 mt-1">
+            {users.filter(u => u.role === "DRIVER").length}
+          </h2>
+        </div>
+
+      </div>
+
+      {/* ================= TABLE ================= */}
+      <div className="card-3d overflow-hidden">
+
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-white/[0.01] border-b border-white/[0.03]">
-                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
-                  Name
-                </th>
-                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
-                  Email
-                </th>
-                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
-                  Role
-                </th>
-                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
-                  Status
-                </th>
-                <th className="p-5 text-xs font-bold uppercase tracking-wider text-[var(--primary-orange-light)]">
-                  Actions
-                </th>
+          <table className="w-full min-w-[950px]">
+
+            {/* HEADER */}
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase">User</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Contact</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Role</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Status</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.02]">
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="transition-colors hover:bg-white/[0.01]"
-                >
-                  <td className="p-5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--primary-orange)] to-[var(--primary-green-light)] text-white flex items-center justify-center font-black text-sm shadow-md">
-                        {user.name.charAt(0)}
-                      </div>
-                      <span className="text-white font-bold text-xs tracking-wide">
-                        {user.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-5 text-slate-300 font-medium text-xs">{user.email}</td>
-                  <td className="p-5">
-                    <span className="bg-white/[0.03] text-slate-400 px-3 py-1 rounded-full text-[10px] font-bold border border-white/5 uppercase tracking-wider">
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="p-5">
-                    <span
-                      className={`inline-block px-3 py-0.5 rounded-full text-[10px] font-bold border ${
-                        user.status === "Active" 
-                          ? "bg-[rgba(57,181,74,0.06)] border-[rgba(57,181,74,0.15)] text-[var(--primary-green-light)]" 
-                          : "bg-red-500/5 border-red-500/15 text-red-400"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="p-5">
-                    <div className="flex gap-2">
-                      <button className="h-8 w-8 rounded-lg bg-blue-500/5 text-blue-400 flex items-center justify-center hover:bg-blue-500/20 transition-colors border border-blue-500/10 cursor-pointer">
-                        <FaEdit size={12} />
-                      </button>
-                      <button className="h-8 w-8 rounded-lg bg-red-500/5 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors border border-red-500/10 cursor-pointer">
-                        <FaTrash size={12} />
-                      </button>
-                    </div>
+
+            {/* BODY */}
+            <tbody className="divide-y divide-slate-100">
+
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="p-10 text-center text-slate-500">
+                    Loading users...
                   </td>
                 </tr>
-              ))}
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-10 text-center text-slate-500">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((u) => (
+                  <tr
+                    key={u._id}
+                    className="hover:bg-white transition-all duration-200 hover:shadow-sm"
+                  >
+
+                    {/* USER */}
+                    <td className="p-5">
+                      <div className="flex items-center gap-3">
+
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 text-white flex items-center justify-center font-bold shadow-md">
+                          {u.firstName?.charAt(0)}
+                        </div>
+
+                        <div>
+                          <p className="font-bold text-slate-800 text-sm">
+                            {u.firstName} {u.lastName}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            ID: {u._id?.slice(-6)}
+                          </p>
+                        </div>
+
+                      </div>
+                    </td>
+
+                    {/* CONTACT */}
+                    <td className="p-5">
+                      <p className="text-sm text-slate-700">{u.email}</p>
+                      <p className="text-xs text-slate-400">{u.number || "-"}</p>
+                    </td>
+
+                    {/* ROLE */}
+                    <td className="p-5">
+                      <span className="px-3 py-1 text-xs rounded-full bg-blue-50 text-blue-600 font-semibold">
+                        {u.role}
+                      </span>
+                    </td>
+
+                    {/* STATUS */}
+                    <td className="p-5">
+                      <span
+                        className={`px-3 py-1 text-xs rounded-full font-semibold ${
+                          u.disable
+                            ? "bg-red-50 text-red-500"
+                            : "bg-green-50 text-green-600"
+                        }`}
+                      >
+                        {u.disable ? "Disabled" : "Active"}
+                      </span>
+                    </td>
+
+                    {/* JOINED */}
+                    <td className="p-5 text-xs text-slate-500">
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+
+                  </tr>
+                ))
+              )}
+
             </tbody>
           </table>
         </div>
-        <div className="p-5 border-t border-white/[0.03] bg-white/[0.01] flex items-center justify-between text-xs text-slate-500 font-medium">
-          <p>
-            Showing <span className="font-extrabold text-[var(--primary-orange-light)]">3</span> of <span className="font-extrabold text-white">150</span> users
-          </p>
-          <div className="flex gap-1.5">
-            <button className="px-3 py-1.5 rounded-lg bg-white/[0.02] text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
-              Prev
-            </button>
-            <button className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white font-bold shadow-md shadow-orange-500/15 border border-orange-500/10 cursor-pointer">
-              1
-            </button>
-            <button className="px-3.5 py-1.5 rounded-lg bg-white/[0.02] text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
-              2
-            </button>
-            <button className="px-3 py-1.5 rounded-lg bg-white/[0.02] text-slate-300 hover:bg-white/[0.04] transition-all border border-white/5 cursor-pointer">
-              Next
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

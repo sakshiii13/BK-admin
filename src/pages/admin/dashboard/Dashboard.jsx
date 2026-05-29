@@ -15,6 +15,7 @@ import {
 } from "react-icons/md";
 
 import { GiShoppingBag } from "react-icons/gi";
+
 import { useDispatch } from "react-redux";
 
 import {
@@ -27,16 +28,19 @@ import { showError } from "../../../utils/alertService";
 import { getAdminDashboardApi } from "../../../api/admin.api";
 
 const Dashboard = () => {
+  // =========================================
+  // REDUX
+  // =========================================
   const dispatch = useDispatch();
 
   // =========================================
-  // STATE
+  // STATES
   // =========================================
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   // =========================================
-  // DASHBOARD API CALL
+  // FETCH DASHBOARD DATA
   // =========================================
   const fetchDashboard = async () => {
     try {
@@ -56,7 +60,7 @@ const Dashboard = () => {
     } catch (error) {
       console.log("DASHBOARD ERROR 👉", error);
 
-      showError("Something went wrong while fetching dashboard");
+      showError("Something went wrong");
     } finally {
       setLoading(false);
 
@@ -72,7 +76,7 @@ const Dashboard = () => {
   }, []);
 
   // =========================================
-  // SAFE DATA EXTRACTION
+  // SAFE DATA
   // =========================================
   const overview = dashboardData?.overview || {};
   const orderStats = dashboardData?.orderStats || [];
@@ -81,7 +85,7 @@ const Dashboard = () => {
   const topProducts = dashboardData?.topProducts || [];
 
   // =========================================
-  // CURRENCY FORMAT
+  // FORMAT CURRENCY
   // =========================================
   const formatCurrency = (amount) => {
     return `₹${Number(amount || 0).toLocaleString("en-IN")}`;
@@ -99,7 +103,7 @@ const Dashboard = () => {
 
   // =========================================
   // MAX REVENUE
-  // progress bar width calculate karne ke liye
+  // progress width ke liye
   // =========================================
   const maxStoreRevenue = useMemo(() => {
     return Math.max(
@@ -111,7 +115,8 @@ const Dashboard = () => {
   }, [storeWiseRevenue]);
 
   // =========================================
-  // TOP STATS
+  // STATS ARRAY
+  // reusable cards
   // =========================================
   const stats = [
     {
@@ -121,8 +126,8 @@ const Dashboard = () => {
         overview?.monthlyRevenue
       )}`,
       icon: <MdAttachMoney />,
-      gradient: "from-orange-500 to-amber-500",
-      glow: "shadow-orange-200",
+      bg: "bg-orange-50",
+      text: "text-orange-500",
     },
 
     {
@@ -132,8 +137,8 @@ const Dashboard = () => {
         overview?.weeklyRevenue
       )}`,
       icon: <MdShoppingCart />,
-      gradient: "from-green-500 to-emerald-500",
-      glow: "shadow-green-200",
+      bg: "bg-slate-100",
+      text: "text-slate-700",
     },
 
     {
@@ -141,8 +146,8 @@ const Dashboard = () => {
       value: overview?.totalUsers || 0,
       sub: "Registered customers",
       icon: <MdPeople />,
-      gradient: "from-lime-500 to-green-500",
-      glow: "shadow-lime-200",
+      bg: "bg-orange-50",
+      text: "text-orange-500",
     },
 
     {
@@ -152,51 +157,48 @@ const Dashboard = () => {
       }`,
       sub: "Store network",
       icon: <MdStorefront />,
-      gradient: "from-yellow-500 to-orange-500",
-      glow: "shadow-yellow-200",
+      bg: "bg-slate-100",
+      text: "text-slate-700",
     },
   ];
 
   return (
-    <div className="min-h-screen p-6 bg-[#f4f7f6] space-y-7">
+    <div className="min-h-screen bg-[#f5f6f8] p-6 space-y-7">
 
       {/* =========================================
           HERO SECTION
       ========================================= */}
-      <div className="relative overflow-hidden rounded-[36px] border border-white/60 bg-white/80 backdrop-blur-xl shadow-[0_15px_40px_rgba(0,0,0,0.06)] p-8">
+      <div className="bg-white rounded-[34px] border border-[#ececec] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-        {/* decorative blur */}
-        <div className="absolute -top-20 -right-20 w-72 h-72 bg-orange-200 rounded-full blur-3xl opacity-40"></div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
+          {/* LEFT */}
           <div>
+
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center text-2xl shadow-lg">
+
+              <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl">
                 <GiShoppingBag />
               </div>
 
               <div>
-                <p className="text-xs font-black tracking-[0.3em] uppercase text-orange-500">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
                   BK Grocery
                 </p>
 
-                <p className="text-sm text-slate-500">
+                {/* <p className="text-sm text-slate-500">
                   Premium Admin Dashboard
-                </p>
+                </p> */}
               </div>
             </div>
 
             <h1 className="mt-6 text-4xl font-black tracking-tight text-slate-900 leading-tight">
-              Smart Business <br />
-              <span className="bg-gradient-to-r from-orange-500 to-green-500 bg-clip-text text-transparent">
-                Control Center
-              </span>
+              Smart Business Dashboard
             </h1>
 
             <p className="mt-4 max-w-2xl text-slate-500 leading-7">
-              Manage orders, revenue, stores, products and
-              drivers with a premium real-time dashboard UI.
+              Monitor revenue, stores, orders, products and
+              drivers from one clean premium dashboard.
             </p>
 
             <p className="mt-5 text-xs font-semibold text-slate-400">
@@ -204,18 +206,18 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* refresh button */}
+          {/* BUTTON */}
           <button
             onClick={fetchDashboard}
             disabled={loading}
-            className="btn-3d btn-gradient-orange h-14 px-7 rounded-2xl text-sm gap-2"
+            className="h-12 px-6 rounded-2xl bg-orange-500 text-white font-semibold shadow-[0_8px_20px_rgba(249,115,22,0.20)] hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
           >
             <MdRefresh
               className={loading ? "animate-spin" : ""}
-              size={20}
+              size={18}
             />
 
-            {loading ? "Refreshing..." : "Refresh Dashboard"}
+            {loading ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </div>
@@ -223,23 +225,18 @@ const Dashboard = () => {
       {/* =========================================
           STAT CARDS
       ========================================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
         {stats.map((item, index) => (
           <div
             key={index}
-            className={`group relative overflow-hidden rounded-[30px] bg-white border border-white/60 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:-translate-y-2 transition-all duration-500`}
+            className="bg-white rounded-[28px] border border-[#ececec] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300"
           >
 
-            {/* glow */}
-            <div
-              className={`absolute top-0 right-0 h-40 w-40 bg-gradient-to-br ${item.gradient} opacity-10 blur-3xl`}
-            ></div>
-
-            <div className="relative z-10 flex justify-between items-start">
+            <div className="flex items-start justify-between">
 
               <div>
-                <p className="text-[11px] uppercase tracking-[0.3em] font-black text-slate-400">
+                <p className="text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
                   {item.title}
                 </p>
 
@@ -253,20 +250,20 @@ const Dashboard = () => {
               </div>
 
               <div
-                className={`h-16 w-16 rounded-3xl bg-gradient-to-br ${item.gradient} text-white flex items-center justify-center text-3xl shadow-2xl group-hover:scale-110 transition-all duration-500`}
+                className={`h-14 w-14 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center text-2xl`}
               >
                 {item.icon}
               </div>
             </div>
 
-            <div className="relative z-10 mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
+            <div className="mt-7 flex items-center justify-between border-t border-slate-100 pt-4">
 
-              <div className="flex items-center gap-1 text-xs font-bold text-green-600">
+              <div className="flex items-center gap-1 text-xs font-bold text-orange-500">
                 <MdTrendingUp />
-                Live Analytics
+                Analytics
               </div>
 
-              <div className="flex items-center gap-1 text-xs font-bold text-slate-400">
+              <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
                 +12%
                 <MdArrowOutward />
               </div>
@@ -276,57 +273,44 @@ const Dashboard = () => {
       </div>
 
       {/* =========================================
-          MINI CARDS
+          MINI REVENUE CARDS
       ========================================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
 
         <MiniCard
           title="Daily Revenue"
           value={formatCurrency(overview?.dailyRevenue)}
-          gradient="from-orange-500 to-amber-500"
         />
 
         <MiniCard
           title="Weekly Revenue"
           value={formatCurrency(overview?.weeklyRevenue)}
-          gradient="from-green-500 to-emerald-500"
         />
 
         <MiniCard
           title="Monthly Revenue"
           value={formatCurrency(overview?.monthlyRevenue)}
-          gradient="from-lime-500 to-green-500"
         />
 
         <MiniCard
           title="Yearly Revenue"
           value={formatCurrency(overview?.yearlyRevenue)}
-          gradient="from-yellow-500 to-orange-500"
         />
       </div>
 
       {/* =========================================
-          ORDER STATUS + PAYMENT
+          ORDER + PAYMENT
       ========================================= */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-        {/* order flow */}
+        {/* ORDER FLOW */}
         <Panel
-          title="Order Status Flow"
-          sub="Real-time order analytics"
+          title="Order Status"
+          sub="Real-time order flow"
           icon={<MdBarChart />}
-          gradient="from-orange-500 to-amber-500"
           className="xl:col-span-2"
         >
-
           {orderStats.map((item, index) => {
-
-            const colors = [
-              "from-orange-500 to-amber-500",
-              "from-green-500 to-emerald-500",
-              "from-lime-500 to-green-500",
-              "from-yellow-500 to-orange-500",
-            ];
 
             const percent =
               ((item?.total || 0) /
@@ -336,23 +320,23 @@ const Dashboard = () => {
             return (
               <div
                 key={index}
-                className="mb-5 rounded-3xl border border-slate-100 bg-slate-50 p-5 shadow-inner"
+                className="mb-5 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
               >
                 <div className="mb-3 flex justify-between">
+
                   <p className="font-bold text-slate-700">
                     {item?._id}
                   </p>
 
-                  <p className="text-sm font-bold text-slate-500">
+                  <p className="text-sm font-bold text-slate-400">
                     {item?.total} Orders
                   </p>
                 </div>
 
-                <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+
                   <div
-                    className={`h-full rounded-full bg-gradient-to-r ${
-                      colors[index % colors.length]
-                    }`}
+                    className="h-full rounded-full bg-orange-500"
                     style={{
                       width: `${percent}%`,
                     }}
@@ -363,19 +347,18 @@ const Dashboard = () => {
           })}
         </Panel>
 
-        {/* payment */}
+        {/* PAYMENT */}
         <Panel
-          title="Payment Split"
+          title="Payments"
           sub="COD vs Online"
           icon={<MdPayments />}
-          gradient="from-green-500 to-emerald-500"
         >
           {paymentStats.map((item, index) => (
             <div
               key={index}
-              className="mb-4 rounded-3xl border border-slate-100 p-5 bg-slate-50 hover:shadow-md transition-all"
+              className="mb-4 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
 
                 <div>
                   <p className="font-bold text-slate-700">
@@ -387,7 +370,7 @@ const Dashboard = () => {
                   </p>
                 </div>
 
-                <h2 className="text-2xl font-black text-green-600">
+                <h2 className="text-2xl font-black text-slate-900">
                   {formatCurrency(item?.totalAmount)}
                 </h2>
               </div>
@@ -401,20 +384,20 @@ const Dashboard = () => {
       ========================================= */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-        {/* store revenue */}
+        {/* STORES */}
         <Panel
-          title="Store Wise Revenue"
+          title="Store Revenue"
           sub="Store performance"
           icon={<MdStorefront />}
-          gradient="from-lime-500 to-green-500"
           className="xl:col-span-2"
         >
           {storeWiseRevenue.map((store, index) => (
             <div
               key={index}
-              className="mb-5 rounded-3xl border border-slate-100 bg-slate-50 p-5"
+              className="mb-5 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
             >
               <div className="mb-3 flex justify-between">
+
                 <p className="font-bold text-slate-700">
                   {store?.storeName}
                 </p>
@@ -424,9 +407,10 @@ const Dashboard = () => {
                 </p>
               </div>
 
-              <div className="h-3 w-full bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                  className="h-full rounded-full bg-orange-500"
                   style={{
                     width: `${
                       (store?.totalRevenue /
@@ -440,29 +424,30 @@ const Dashboard = () => {
           ))}
         </Panel>
 
-        {/* top products */}
+        {/* TOP PRODUCTS */}
         <Panel
           title="Top Products"
-          sub="Best sellers"
+          sub="Best selling products"
           icon={<MdStars />}
-          gradient="from-yellow-500 to-orange-500"
         >
           {topProducts.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 mb-4 rounded-3xl border border-slate-100 bg-slate-50 p-4 hover:scale-[1.02] transition-all duration-300"
+              className="flex items-center gap-4 mb-4 rounded-3xl border border-slate-100 bg-[#fafafa] p-4 hover:bg-white transition-all"
             >
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center font-black text-lg shadow-lg">
+
+              <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center font-black">
                 #{index + 1}
               </div>
 
               <div className="flex-1">
+
                 <p className="font-bold text-slate-800">
                   {item?.productName}
                 </p>
 
                 <p className="text-sm text-slate-400 mt-1">
-                  {item?.totalSold} Sold
+                  {item?.totalSold} sold
                 </p>
               </div>
             </div>
@@ -481,40 +466,31 @@ const Panel = ({
   title,
   sub,
   icon,
-  gradient,
   className = "",
 }) => {
   return (
     <div
-      className={`relative overflow-hidden rounded-[32px] bg-white border border-white/60 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] ${className}`}
+      className={`bg-white rounded-[30px] border border-[#ececec] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] ${className}`}
     >
-      <div
-        className={`absolute -top-10 -right-10 h-40 w-40 bg-gradient-to-br ${gradient} opacity-10 blur-3xl`}
-      ></div>
 
-      <div className="relative z-10">
+      <div className="mb-6 flex items-center justify-between">
 
-        <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-black text-slate-900">
+            {title}
+          </h2>
 
-          <div>
-            <h2 className="text-xl font-black text-slate-900">
-              {title}
-            </h2>
-
-            <p className="text-sm text-slate-500 mt-1">
-              {sub}
-            </p>
-          </div>
-
-          <div
-            className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center text-2xl shadow-lg`}
-          >
-            {icon}
-          </div>
+          <p className="text-sm text-slate-500 mt-1">
+            {sub}
+          </p>
         </div>
 
-        {children}
+        <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl">
+          {icon}
+        </div>
       </div>
+
+      {children}
     </div>
   );
 };
@@ -525,26 +501,17 @@ const Panel = ({
 const MiniCard = ({
   title,
   value,
-  gradient,
 }) => {
   return (
-    <div className="relative overflow-hidden rounded-[28px] bg-white border border-white/60 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-300">
+    <div className="bg-white rounded-[26px] border border-[#ececec] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-      <div
-        className={`absolute -top-10 -right-10 h-28 w-28 bg-gradient-to-br ${gradient} opacity-10 blur-2xl`}
-      ></div>
+      <p className="text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
+        {title}
+      </p>
 
-      <div className="relative z-10">
-        <p className="text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
-          {title}
-        </p>
-
-        <h2
-          className={`mt-4 text-3xl font-black bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}
-        >
-          {value}
-        </h2>
-      </div>
+      <h2 className="mt-4 text-3xl font-black text-slate-900">
+        {value}
+      </h2>
     </div>
   );
 };
