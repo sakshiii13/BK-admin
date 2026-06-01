@@ -105,10 +105,10 @@ const AllUsers = () => {
   ];
 
   return (
-    <div className="p-6 min-h-screen bg-[var(--app-bg)]">
+    <div className="p-4 md:p-6 min-h-screen bg-[var(--app-bg)]">
       {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">
+        <h1 className="text-2xl md:text-3xl font-bold text-[var(--text-primary)]">
           All Users
         </h1>
 

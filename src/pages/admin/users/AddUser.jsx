@@ -3,7 +3,7 @@ import { FaSave, FaArrowLeft } from "react-icons/fa";
 
 const AddUser = () => {
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
 
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-8">
@@ -27,7 +27,7 @@ const AddUser = () => {
         {/* TOP BAR */}
         <div className="h-1 w-full bg-gradient-to-r from-orange-500 via-orange-400 to-lime-400"></div>
 
-        <form className="p-7 md:p-9 space-y-6">
+        <form className="p-5 md:p-9 space-y-6">
 
           {/* GRID */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

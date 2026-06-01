@@ -90,7 +90,7 @@ const SideBar = () => {
       transactionManagement: pathname.startsWith("/payments"),
       driverManagement: pathname.startsWith("/drivers"),
       ratingManagement: pathname.startsWith("/ratings"),
-      reportsManagement: pathname.startsWith("/reports"),
+      // reportsManagement: pathname.startsWith("/reports"),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -405,9 +405,9 @@ const SideBar = () => {
             { label: "Inventory", route: Routers.INVENTORY },
             { label: "Store Categories", route: Routers.STORE_CATEGORIES },
             { label: "Store Sub Categories", route: Routers.STORE_SUB_CATEGORIES },
-            { label: "Store Products", route: Routers.STORE_PRODUCTS },
+            // { label: "Store Products", route: Routers.STORE_PRODUCTS },
             { label: "Store Orders", route: Routers.STORE_ORDERS },
-            { label: "Out For Delivery", route: Routers.OUT_FOR_DELIVERY },
+            // { label: "Out For Delivery", route: Routers.OUT_FOR_DELIVERY },
           ]}
         />
 
@@ -418,7 +418,7 @@ const SideBar = () => {
           isOpen={openMenus.userManagement}
           onToggle={() => toggleMenu("userManagement")}
           items={[
-            { label: "Users", route: Routers.USERS },
+            // { label: "Users", route: Routers.USERS },
             { label: "All Users", route: Routers.ALL_USERS },
           ]}
         />
@@ -430,11 +430,11 @@ const SideBar = () => {
           isOpen={openMenus.orderManagement}
           onToggle={() => toggleMenu("orderManagement")}
           items={[
-            { label: "Orders", route: Routers.ORDERS },
+            // { label: "Orders", route: Routers.ORDERS },
             { label: "All Orders", route: Routers.ALL_ORDERS },
-            { label: "Pending Orders", route: Routers.PENDING_ORDERS },
+            // { label: "Pending Orders", route: Routers.PENDING_ORDERS },
             { label: "Packed Orders", route: Routers.PACKED_ORDERS },
-            { label: "Shipping", route: Routers.SHIPPING },
+            // { label: "Shipping", route: Routers.SHIPPING },
           ]}
         />
 
@@ -446,7 +446,7 @@ const SideBar = () => {
           onToggle={() => toggleMenu("transactionManagement")}
           items={[
             { label: "Transactions", route: Routers.TRANSACTIONS },
-            { label: "Wallets", route: Routers.WALLETS },
+           
           ]}
         />
 
@@ -457,7 +457,7 @@ const SideBar = () => {
           isOpen={openMenus.driverManagement}
           onToggle={() => toggleMenu("driverManagement")}
           items={[
-            { label: "Drivers", route: Routers.DRIVERS },
+            // { label: "Drivers", route: Routers.DRIVERS },
             { label: "Add Driver", route: Routers.ADD_DRIVER },
           ]}
         />
@@ -474,7 +474,7 @@ const SideBar = () => {
           ]}
         />
 
-        {/* REPORTS */}
+        {/* REPORTS
         <DropdownMenu
           icon={<MdBarChart />}
           label="Reports"
@@ -484,13 +484,13 @@ const SideBar = () => {
             { label: "Sales Report", route: Routers.SALES_REPORT },
             { label: "User Analytics", route: Routers.USER_ANALYTICS },
           ]}
-        />
+        /> */}
 
         {/* BOTTOM FIXED ZONE */}
         <div className="pt-5 mt-5 border-t border-slate-200/60 space-y-2.5">
           <NavItem icon={<MdSupportAgent />} label="Support" router={Routers.SUPPORT} />
-          <NavItem icon={<MdNotifications />} label="Notifications" router={Routers.NOTIFICATIONS} />
-          <NavItem icon={<MdSettings />} label="Settings" router={Routers.SETTINGS} />
+          {/* <NavItem icon={<MdNotifications />} label="Notifications" router={Routers.NOTIFICATIONS} /> */}
+          {/* <NavItem icon={<MdSettings />} label="Settings" router={Routers.SETTINGS} /> */}
         </div>
       </div>
     </div>

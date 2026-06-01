@@ -5,6 +5,7 @@ import {
   FaSearch,
   FaSyncAlt,
 } from "react-icons/fa";
+import Axios from "../../../api/axiosInstance";
 
 const AllOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -18,13 +19,8 @@ const AllOrders = () => {
       setLoading(true);
       setApiError(""); // Clear previous errors
 
-      const res = await fetch("http://localhost:5000/api/admin/all-orders");
-      
-      if (!res.ok) {
-        throw new Error(`HTTP Error! Status: ${res.status}`);
-      }
-
-      const data = await res.json();
+      const res = await Axios.get("/admin/all-orders");
+      const data = res?.data;
       console.log("👉 FULL API RESPONSE:", data);
 
       // Backend response se data extract kar rahe hain
@@ -39,7 +35,8 @@ const AllOrders = () => {
       }
     } catch (error) {
       console.error("❌ Orders fetch error:", error);
-      setApiError(error.message || "Failed to fetch orders");
+      const msg = error?.response?.data?.message || error?.message || "Failed to fetch orders";
+      setApiError(msg);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -65,7 +62,7 @@ const AllOrders = () => {
   }, [search, orders]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
 
       {/* ================= HEADER ================= */}
       <div className="card-3d p-5 flex flex-col md:flex-row justify-between gap-4 md:items-center">
@@ -74,15 +71,15 @@ const AllOrders = () => {
           <p className="text-xs text-slate-500">Manage and track all customer orders</p>
         </div>
 
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-3 items-center w-full md:w-auto">
           {/* SEARCH */}
-          <div className="relative">
+          <div className="relative flex-1 md:flex-none">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search orders..."
-              className="input-3d h-10 pl-10 pr-3 text-sm w-64"
+              className="input-3d h-10 pl-10 pr-3 text-sm w-full md:w-64"
             />
           </div>
 

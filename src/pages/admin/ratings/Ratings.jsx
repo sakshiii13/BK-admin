@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaStar, FaUsers, FaRegSmile, FaChartLine } from "react-icons/fa";
+import { FaStar, FaUsers, FaRegSmile, FaChartLine, FaChartBar } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
 import { getAppRatingsApi, getAppRatingAverageApi } from "../../../api/admin.api";
@@ -49,98 +49,161 @@ const Ratings = () => {
 
   const latestReviews = ratings.slice(0, 5);
 
+  const ratingRows = [5, 4, 3, 2, 1].map((star) => {
+    const count = ratings.filter((item) => Number(item?.rating) === star).length;
+    const percentage = totalRatings ? Math.round((count / totalRatings) * 100) : 0;
+
+    return {
+      star,
+      count,
+      percentage,
+    };
+  });
+
   const cardClass =
     "rounded-[28px] border border-white/10 bg-[#07100b] p-5 shadow-xl";
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] px-5 py-6 text-white">
-      <div className="mb-6 rounded-[28px] border border-[var(--border-soft)] bg-[var(--card-bg)] p-6 shadow-xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-400">
-          Rating Management
-        </p>
-        <h1 className="mt-3 text-3xl font-bold">Ratings Dashboard</h1>
-        <p className="mt-2 text-sm text-slate-300">
-          Quick overview of app ratings, customer reviews and feedback.
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-50 px-5 py-8 text-slate-900">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-500">
+            Rating Management
+          </p>
+          <h1 className="mt-4 text-4xl font-extrabold text-slate-900">Ratings Dashboard</h1>
+          <p className="mt-3 max-w-2xl text-sm text-slate-500">
+            Quick overview of app ratings, customer reviews and feedback so you can monitor satisfaction and star distribution at a glance.
+          </p>
+        </div>
 
-      {loading ? (
-        <div className="p-8 text-center text-slate-400">Loading ratings...</div>
-      ) : (
-        <>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <div className={cardClass}>
-              <FaStar className="text-3xl text-yellow-400" />
-              <p className="mt-4 text-sm text-slate-400">Average Rating</p>
-              <h2 className="mt-1 text-3xl font-bold">
-                {Number(averageRating || 0).toFixed(1)}
-              </h2>
-            </div>
-
-            <div className={cardClass}>
-              <FaUsers className="text-3xl text-orange-400" />
-              <p className="mt-4 text-sm text-slate-400">Total Reviews</p>
-              <h2 className="mt-1 text-3xl font-bold">{totalRatings}</h2>
-            </div>
-
-            <div className={cardClass}>
-              <FaRegSmile className="text-3xl text-green-400" />
-              <p className="mt-4 text-sm text-slate-400">Positive Reviews</p>
-              <h2 className="mt-1 text-3xl font-bold">{positiveReviews}</h2>
-            </div>
-
-            <div className={cardClass}>
-              <FaChartLine className="text-3xl text-blue-400" />
-              <p className="mt-4 text-sm text-slate-400">Satisfaction</p>
-              <h2 className="mt-1 text-3xl font-bold">
-                {totalRatings
-                  ? Math.round((positiveReviews / totalRatings) * 100)
-                  : 0}
-                %
-              </h2>
-            </div>
+        {loading ? (
+          <div className="rounded-[32px] border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-xl">
+            Loading ratings...
           </div>
+        ) : (
+          <>
+            <div className="grid gap-5 xl:grid-cols-4 lg:grid-cols-2">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-yellow-100 text-yellow-600">
+                    <FaStar className="text-2xl" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.22em] text-slate-500">Average</span>
+                </div>
+                <div className="mt-6">
+                  <h2 className="text-5xl font-bold text-slate-900">{Number(averageRating || 0).toFixed(1)}</h2>
+                  <p className="mt-2 text-sm text-slate-500">out of 5</p>
+                </div>
+              </div>
 
-          <div className="mt-6 rounded-[28px] border border-white/10 bg-[#07100b] p-5 shadow-xl">
-            <h2 className="mb-4 text-xl font-bold">Latest Reviews</h2>
+              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-orange-100 text-orange-600">
+                    <FaUsers className="text-2xl" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.22em] text-slate-500">Total reviews</span>
+                </div>
+                <div className="mt-6">
+                  <h2 className="text-5xl font-bold text-slate-900">{totalRatings}</h2>
+                  <p className="mt-2 text-sm text-slate-500">customer ratings received</p>
+                </div>
+              </div>
 
-            {latestReviews.length === 0 ? (
-              <p className="py-6 text-center text-slate-400">No ratings found</p>
-            ) : (
-              <div className="space-y-3">
-                {latestReviews.map((item) => (
-                  <div
-                    key={item?._id}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="font-bold">
-                          {item?.user?.name || "Unknown User"}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {item?.user?.email || "No email"}
-                        </p>
+              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-emerald-100 text-emerald-600">
+                    <FaRegSmile className="text-2xl" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.22em] text-slate-500">Positive</span>
+                </div>
+                <div className="mt-6">
+                  <h2 className="text-5xl font-bold text-slate-900">{positiveReviews}</h2>
+                  <p className="mt-2 text-sm text-slate-500">reviews with 4 stars or more</p>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-blue-100 text-blue-600">
+                    <FaChartLine className="text-2xl" />
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.22em] text-slate-500">Satisfaction</span>
+                </div>
+                <div className="mt-6">
+                  <h2 className="text-5xl font-bold text-slate-900">
+                    {totalRatings
+                      ? Math.round((positiveReviews / totalRatings) * 100)
+                      : 0}
+                    %
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-500">positive feedback ratio</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-5 lg:grid-cols-[1.4fr_0.85fr]">
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <div className="mb-5 flex items-center gap-3">
+                  <FaChartBar className="text-xl text-orange-500" />
+                  <h2 className="text-xl font-bold text-slate-900">Rating Distribution</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {ratingRows.map((row) => (
+                    <div key={row.star} className="grid grid-cols-[80px_minmax(0,1fr)_90px] items-center gap-4">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <span>{row.star}</span>
+                        <FaStar className="text-yellow-400" />
                       </div>
-
-                      <div className="flex items-center gap-1 text-yellow-400">
-                        <FaStar />
-                        <span className="text-sm text-white">
-                          {item?.rating || 0}/5
-                        </span>
+                      <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-orange-500 to-yellow-400"
+                          style={{ width: `${row.percentage}%` }}
+                        />
+                      </div>
+                      <div className="text-right text-sm text-slate-500">
+                        {row.count} • {row.percentage}%
                       </div>
                     </div>
-
-                    <p className="mt-3 text-sm text-slate-300">
-                      {item?.review || "No review added"}
-                    </p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
-        </>
-      )}
+
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-5 text-xl font-bold text-slate-900">Latest Reviews</h2>
+                {latestReviews.length === 0 ? (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+                    No ratings found
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {latestReviews.map((item) => {
+                      const userName = item?.user
+                        ? `${item.user.firstName || ""} ${item.user.lastName || ""}`.trim()
+                        : "Unknown User";
+
+                      return (
+                        <div key={item?._id} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-semibold text-slate-900">{userName}</p>
+                              <p className="text-sm text-slate-500">{item?.user?.email || "No email"}</p>
+                            </div>
+                            <div className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
+                              {item?.rating || 0}/5
+                            </div>
+                          </div>
+                          <p className="mt-4 text-sm leading-6 text-slate-600">{item?.review || "No review added"}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

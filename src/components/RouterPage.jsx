@@ -58,11 +58,11 @@ import Stores from "../pages/admin/stores/Stores";
 import Inventory from "../pages/admin/stores/Inventory";
 import StoreDetails from "../pages/admin/stores/StoreDetails";
 import StoreCategories from "../pages/admin/stores/StoreCategories";
+import Transactions from "../pages/admin/payments/Transactions";
+import Drivers from "../pages/admin/drivers/Drivers";
+import AddDriver from "../pages/admin/drivers/AddDriver";
 
-// =========================================
-// STORE ORDERS
-// =========================================
-import StoreProducts from "../pages/admin/orders/StoreProducts";
+
 
 // =========================================
 // OUT FOR DELIVERY
@@ -75,7 +75,12 @@ import OutForDeliveryOrders from "../pages/admin/orders/OutForDeliveryOrders";
 import Ratings from "../pages/admin/ratings/Ratings";
 import AllRatings from "../pages/admin/ratings/AllRatings";
 import AverageRating from "../pages/admin/ratings/AverageRating";
+
+//orders
 import AllOrders from "../pages/admin/orders/AllOrders";
+import Orders from "../pages/admin/orders/Oreders";
+import PackedOrders from "../pages/admin/orders/PackedOrders";
+import StoreProduct from "../pages/admin/stores/StoreProduct";
 
 // =========================================
 // COMMON PAGE
@@ -178,6 +183,10 @@ const adminRoutes = [
     path: AdminRouters.ADD_PRODUCT,
     element: <AddProduct />,
   },
+  {
+    path: AdminRouters.EDIT_PRODUCT,
+    element: <AddProduct />,
+  },
 
   // =========================================
   // CATEGORIES
@@ -201,6 +210,11 @@ const adminRoutes = [
   {
     path: AdminRouters.STORES,
     element: <Stores />,
+  },
+
+  {
+    path: AdminRouters.STORE_PRODUCTS,
+    element: <StoreProduct />,
   },
   {
     path: AdminRouters.STORE_DETAILS,
@@ -227,11 +241,11 @@ const adminRoutes = [
   // =========================================
   {
     path: AdminRouters.STORE_ORDERS,
-    element: <StoreProducts />,
+    element: <Orders />,
   },
   {
     path: AdminRouters.STORE_ORDERS + "/:storeId",
-    element: <StoreProducts />
+    element: <Orders />
   },
 
   {
@@ -296,7 +310,7 @@ const adminRoutes = [
   {
     path: AdminRouters.PACKED_ORDERS,
     element: (
-      <CommonPage title="Packed Orders" />
+      <PackedOrders />
     ),
   },
 
@@ -319,9 +333,7 @@ const adminRoutes = [
   // =========================================
   {
     path: AdminRouters.TRANSACTIONS,
-    element: (
-      <CommonPage title="Transactions" />
-    ),
+    element: <Transactions />,
   },
 
   {
@@ -343,9 +355,7 @@ const adminRoutes = [
   // =========================================
   {
     path: AdminRouters.DRIVERS,
-    element: (
-      <CommonPage title="Drivers" />
-    ),
+    element: <Drivers />,
   },
 
   {
@@ -354,12 +364,15 @@ const adminRoutes = [
       <CommonPage title="All Drivers" />
     ),
   },
-
+{
+    path: AdminRouters.ADD_DRIVER_TO_ORDER,  
+    element: <AddDriver />
+      
+    
+    },
   {
     path: AdminRouters.ADD_DRIVER,
-    element: (
-      <CommonPage title="Add Driver" />
-    ),
+    element: <Drivers />,
   },
 
   // =========================================

@@ -26,7 +26,7 @@ const AverageRating = () => {
       const averageRes = await getAppRatingAverageApi();
 
       setRatings(getArrayData(ratingRes));
-      setAverageData(averageRes?.data || averageRes || null);
+      setAverageData(averageRes?.data ?? averageRes ?? null);
     } catch (error) {
       console.log("Average rating fetch error:", error);
     } finally {
@@ -40,10 +40,10 @@ const AverageRating = () => {
   }, []);
 
   const totalRatings =
-    averageData?.totalRatings || averageData?.total || ratings.length || 0;
+    averageData?.totalRatings ?? averageData?.total ?? ratings.length ?? 0;
 
   const averageRating =
-    averageData?.averageRating || averageData?.average || averageData?.rating || 0;
+    averageData?.averageRating ?? averageData?.average ?? averageData?.rating ?? 0;
 
   const getRatingCount = (star) => {
     return ratings.filter((item) => Number(item?.rating) === star).length;

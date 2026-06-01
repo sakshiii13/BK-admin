@@ -39,14 +39,14 @@ const AllUsers = () => {
   }, [search, users]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
 
       {/* ================= HEADER ================= */}
       <div className="card-3d p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 
         {/* TITLE */}
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
             All Users
           </h1>
           <p className="text-sm text-slate-500 mt-1">

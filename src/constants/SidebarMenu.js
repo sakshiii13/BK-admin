@@ -1,26 +1,18 @@
 import {
   MdDashboard,
   MdPeople,
-  MdPersonAddAlt1,
-  MdAdminPanelSettings,
   MdInventory2,
-  MdAddBox,
   MdCategory,
   MdShoppingCart,
-  MdPendingActions,
   MdLocalShipping,
   MdPayments,
-  MdAccountBalanceWallet,
   MdBarChart,
-  MdAnalytics,
   MdSupportAgent,
   MdNotifications,
   MdSettings,
   MdLogout,
   MdOutlineRadioButtonUnchecked,
   MdStore,
-  MdWarehouse,
-  MdBrandingWatermark,
   MdStarRate,
 } from "react-icons/md";
 
@@ -110,50 +102,61 @@ export const sidebarMenu = {
           path: AdminRouters.STORE_SUB_CATEGORIES,
           icon: MdOutlineRadioButtonUnchecked,
         },
-        {
-          title: "Store Products",
-          path: AdminRouters.STORE_PRODUCTS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
+        // {
+        //   title: "Store Products",
+        //   path: AdminRouters.STORE_PRODUCTS,
+        //   icon: MdOutlineRadioButtonUnchecked,
+        // },
       ],
     },
 
+   {
+  title: "Order Management",
+  icon: MdShoppingCart,
+  children: [
     {
-      title: "Order Management",
-      icon: MdShoppingCart,
-      children: [
-        {
-          title: "All Orders",
-          path: AdminRouters.ALL_ORDERS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Pending Orders",
-          path: AdminRouters.PENDING_ORDERS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Packed Orders",
-          path: AdminRouters.PACKED_ORDERS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Shipping",
-          path: AdminRouters.SHIPPING,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Assign Driver",
-          path: AdminRouters.ASSIGN_DRIVER,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "Order Status",
-          path: AdminRouters.ORDER_STATUS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-      ],
+      title: "Orders",
+      path: AdminRouters.STORE_ORDERS,
+      icon: MdOutlineRadioButtonUnchecked,
     },
+
+    {
+      title: "All Orders",
+      path: AdminRouters.ALL_ORDERS,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+
+    {
+      title: "Pending Orders",
+      path: AdminRouters.PENDING_ORDERS,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+
+    {
+      title: "Packed Orders",
+      path: AdminRouters.PACKED_ORDERS,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+
+    {
+      title: "Shipping",
+      path: AdminRouters.SHIPPING,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+
+    {
+      title: "Assign Driver",
+      path: AdminRouters.ASSIGN_DRIVER,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+
+    {
+      title: "Order Status",
+      path: AdminRouters.ORDER_STATUS,
+      icon: MdOutlineRadioButtonUnchecked,
+    },
+  ],
+},
 
     {
       title: "Transaction Management",
@@ -164,11 +167,7 @@ export const sidebarMenu = {
           path: AdminRouters.TRANSACTIONS,
           icon: MdOutlineRadioButtonUnchecked,
         },
-        {
-          title: "Wallets",
-          path: AdminRouters.WALLETS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
+        
         {
           title: "User Transactions",
           path: AdminRouters.USER_TRANSACTIONS,
@@ -203,30 +202,30 @@ export const sidebarMenu = {
           path: AdminRouters.ALL_RATINGS,
           icon: MdOutlineRadioButtonUnchecked,
         },
-        {
-          title: "Average Rating",
-          path: AdminRouters.AVG_RATING,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
+        // {
+        //   title: "Average Rating",
+        //   path: AdminRouters.AVG_RATING,
+        //   icon: MdOutlineRadioButtonUnchecked,
+        // },
       ],
     },
 
-    {
-      title: "Reports",
-      icon: MdBarChart,
-      children: [
-        {
-          title: "Sales Report",
-          path: AdminRouters.SALES_REPORT,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-        {
-          title: "User Analytics",
-          path: AdminRouters.USER_ANALYTICS,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
-      ],
-    },
+    // {
+    //   title: "Reports",
+    //   icon: MdBarChart,
+    //   children: [
+    //     {
+    //       title: "Sales Report",
+    //       path: AdminRouters.SALES_REPORT,
+    //       icon: MdOutlineRadioButtonUnchecked,
+    //     },
+    //     {
+    //       title: "User Analytics",
+    //       path: AdminRouters.USER_ANALYTICS,
+    //       icon: MdOutlineRadioButtonUnchecked,
+    //     },
+    //   ],
+    // },
 
     {
       title: "Support",

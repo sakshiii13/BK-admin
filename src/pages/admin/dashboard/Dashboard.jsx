@@ -163,12 +163,12 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f6f8] p-6 space-y-7">
+    <div className="p-4 md:p-6 min-h-screen bg-[#f5f6f8] space-y-7">
 
       {/* =========================================
           HERO SECTION
       ========================================= */}
-      <div className="bg-white rounded-[34px] border border-[#ececec] p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="bg-white rounded-[34px] border border-[#ececec] p-5 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
@@ -503,13 +503,13 @@ const MiniCard = ({
   value,
 }) => {
   return (
-    <div className="bg-white rounded-[26px] border border-[#ececec] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+    <div className="bg-white rounded-[26px] border border-[#ececec] p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
 
-      <p className="text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
+      <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
         {title}
       </p>
 
-      <h2 className="mt-4 text-3xl font-black text-slate-900">
+      <h2 className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 truncate" title={value}>
         {value}
       </h2>
     </div>

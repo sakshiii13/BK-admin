@@ -28,6 +28,7 @@ export const AdminRouters = {
   PRODUCTS: "/dashboard/products",
   ALL_PRODUCTS: "/dashboard/products/all",
   ADD_PRODUCT: "/dashboard/products/add",
+  EDIT_PRODUCT: "/dashboard/products/edit/:productId",
 
   // =========================================
   // CATEGORIES
@@ -40,6 +41,8 @@ export const AdminRouters = {
   // STORES
   // =========================================
   STORES: "/dashboard/stores",
+  // ALL_STORES: "/dashboard/stores/all",
+  // ADD_STORE: "/dashboard/stores/add", 
 
   // STORE DETAILS PAGE
   STORE_DETAILS: "/dashboard/stores/:storeId",
@@ -70,7 +73,7 @@ export const AdminRouters = {
   SHIPPING_ORDERS: "/dashboard/orders/shipping",
 
   PACKED_ORDERS: "/dashboard/orders/packed",
-
+ADD_DRIVER_TO_ORDER: "/dashboard/orders/add-driver/:storeId/:orderId",
   ASSIGN_DRIVER: "/dashboard/orders/assign-driver",
   // =========================================
   // OUT FOR DELIVERY
@@ -81,22 +84,17 @@ export const AdminRouters = {
   // =========================================
   // ORDERS
   // =========================================
-  ORDERS: "/dashboard/orders",
+  // ORDERS: "/dashboard/orders",
 
-  ALL_ORDERS:
-    "/dashboard/orders/all",
+  // ALL_ORDERS:
+  //   "/dashboard/orders/all",
 
-  PENDING_ORDERS:
-    "/dashboard/orders/pending",
+  // PENDING_ORDERS:
+  //   "/dashboard/orders/pending",
 
   SHIPPING:
     "/dashboard/orders/shipping",
 
-  PACKED_ORDERS:
-    "/dashboard/orders/packed",
-
-  ASSIGN_DRIVER:
-    "/dashboard/orders/assign-driver",
 
   ORDER_STATUS:
     "/dashboard/orders/status",

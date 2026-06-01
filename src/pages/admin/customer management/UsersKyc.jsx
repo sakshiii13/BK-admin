@@ -107,7 +107,7 @@ const UsersKyc = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] px-5 py-6">
+    <div className="min-h-screen bg-[var(--app-bg)] px-3 md:px-5 py-4 md:py-6">
       <TableComponent
         title="Users KYC"
         columns={columns}

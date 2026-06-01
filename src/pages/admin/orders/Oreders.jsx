@@ -10,7 +10,8 @@ import {
   getStoreByIdApi,
 } from "../../../api/admin.api";
 
-import { useParams } from "react-router-dom";
+import { AdminRouters } from "../../../constants/routes";
+import { useParams, useNavigate } from "react-router-dom";
 
 import {
   ShoppingBag,
@@ -28,11 +29,12 @@ import {
   Mail,
 } from "lucide-react";
 
-const StoreProducts = () => {
+const Orders = () => {
   // =========================================
   // ROUTE PARAM
   // =========================================
   const { storeId } = useParams();
+  const navigate = useNavigate();
 
   // =========================================
   // STATES
@@ -42,6 +44,7 @@ const StoreProducts = () => {
 
   const [loading, setLoading] = useState(false);
   const [packingId, setPackingId] = useState(null);
+  const [packSuccess, setPackSuccess] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -140,25 +143,38 @@ const StoreProducts = () => {
 
       console.log("PACK ORDER RESPONSE 👉", res);
 
-      // =========================================
-      // LOCAL UI UPDATE
-      // =========================================
-      setOrders((prev) =>
-        prev.map((order) =>
-          order._id === orderId
-            ? {
-                ...order,
-                orderStatus: "PACKED",
-                packedAt: new Date().toISOString(),
-              }
-            : order
-        )
-      );
+      if (res?.success) {
+        // =========================================
+        // LOCAL UI UPDATE
+        // =========================================
+        setOrders((prev) =>
+          prev.map((order) =>
+            order._id === orderId
+              ? {
+                  ...order,
+                  orderStatus: "PACKED",
+                  packedAt: new Date().toISOString(),
+                }
+              : order
+          )
+        );
+
+        setPackSuccess(true);
+      }
     } catch (error) {
       console.log("PACK ORDER ERROR 👉", error);
     } finally {
       setPackingId(null);
     }
+  };
+
+  const handleClosePackModal = () => {
+    setPackSuccess(false);
+  };
+
+  const handleGoToPackedOrders = () => {
+    setPackSuccess(false);
+    navigate(`${AdminRouters.PACKED_ORDERS}?storeId=${storeId}`);
   };
 
   // =========================================
@@ -409,6 +425,37 @@ const StoreProducts = () => {
         />
       </div>
 
+      {packSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-md rounded-[32px] bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-900">
+              Order packed successfully
+            </h3>
+            <p className="mt-3 text-sm text-slate-600">
+              The order has been packed. Would you like to stay on this page or go to the packed orders list?
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleClosePackModal}
+                className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Stay here
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGoToPackedOrders}
+                className="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600"
+              >
+                Go to Packed Orders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* =========================================
           ORDERS
       ========================================= */}
@@ -612,28 +659,30 @@ const StoreProducts = () => {
               </div>
 
               {/* ACTION */}
-              <div className="px-5 pb-5">
-                {order?.orderStatus !==
-                "PACKED" ? (
+              <div className="px-5 pb-5 flex flex-wrap gap-3 items-center">
+                {order?.orderStatus !== "PACKED" ? (
                   <button
-                    onClick={() =>
-                      handlePackOrder(
-                        order._id
-                      )
-                    }
-                    disabled={
-                      packingId === order._id
-                    }
-                    className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all shadow-lg shadow-orange-100"
+                    onClick={() => handlePackOrder(order._id)}
+                    disabled={packingId === order._id}
+                    className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all shadow-lg shadow-orange-100 cursor-pointer"
                   >
-                    {packingId === order._id
-                      ? "Packing..."
-                      : "Pack Order"}
+                    {packingId === order._id ? "Packing..." : "Pack Order"}
                   </button>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold">
-                    ✅ Order Packed
-                  </div>
+                  <>
+                    <div className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
+                      ✅ Order Packed
+                    </div>
+                    {!order?.assignedDriver && (
+                      <button
+                        onClick={() => navigate(`/dashboard/orders/add-driver/${storeId}/${order._id}`)}
+                        className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all shadow-lg shadow-orange-100 flex items-center gap-2 cursor-pointer"
+                      >
+                        <Truck size={16} />
+                        Assign Driver
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -801,4 +850,4 @@ const StatusBadge = ({
   );
 };
 
-export default StoreProducts;
+export default Orders;

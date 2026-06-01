@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import {
   FaMapMarkerAlt,
   FaPhoneAlt,
@@ -19,11 +25,19 @@ const defaultLocation = {
   lng: "75.8700",
 };
 
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+});
+
 const StoreCategories = () => {
   const dispatch = useDispatch();
   const [location, setLocation] = useState(defaultLocation);
   const [nearestStore, setNearestStore] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [mapCenter, setMapCenter] = useState([Number(defaultLocation.lat), Number(defaultLocation.lng)]);
 
   const fetchNearestStore = async (customLocation = location) => {
     if (!customLocation.lat || !customLocation.lng) {
@@ -98,11 +112,27 @@ const StoreCategories = () => {
     );
   };
 
-  const lat =
-    nearestStore?.lat || nearestStore?.location?.coordinates?.[1] || "-";
+  const MapClickHandler = () => {
+    useMapEvents({
+      click(e) {
+        const clickLocation = {
+          lat: e.latlng.lat.toFixed(6),
+          lng: e.latlng.lng.toFixed(6),
+        };
+        setLocation(clickLocation);
+        fetchNearestStore(clickLocation);
+      },
+    });
+    return null;
+  };
 
-  const lng =
-    nearestStore?.lng || nearestStore?.location?.coordinates?.[0] || "-";
+  const storeLat = nearestStore?.lat || nearestStore?.location?.coordinates?.[1];
+  const storeLng = nearestStore?.lng || nearestStore?.location?.coordinates?.[0];
+  const lat = storeLat || "-";
+  const lng = storeLng || "-";
+  const mapCenterLat = Number(storeLat || location.lat);
+  const mapCenterLng = Number(storeLng || location.lng);
+  const mapCenterValue = [mapCenterLat, mapCenterLng];
 
   return (
     <div className="p-6 space-y-6 bg-slate-50/50 min-h-screen">
@@ -277,6 +307,36 @@ const StoreCategories = () => {
                   <p className="mt-0.5 font-black text-slate-700 text-sm">{lng}</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 bg-slate-50/30 p-6">
+            <h3 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400">
+              Store Location Map
+            </h3>
+            <div className="h-80 overflow-hidden rounded-3xl border border-slate-200">
+              <MapContainer
+                center={mapCenterValue}
+                zoom={13}
+                scrollWheelZoom={true}
+                className="h-full w-full"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapClickHandler />
+                {location.lat && location.lng && (
+                  <Marker position={[Number(location.lat), Number(location.lng)]}>
+                    <Popup>Search location</Popup>
+                  </Marker>
+                )}
+                {storeLat && storeLng && (
+                  <Marker position={[Number(storeLat), Number(storeLng)]}>
+                    <Popup>Nearest store</Popup>
+                  </Marker>
+                )}
+              </MapContainer>
             </div>
           </div>
 

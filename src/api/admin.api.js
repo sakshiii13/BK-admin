@@ -1,4 +1,8 @@
 import Axios from "./Axios";
+import {
+  getAllSubCategoriesApi as getAllSubCategoriesApiFromCategory,
+  getAllBrandsApi as getAllBrandsApiFromCategory,
+} from "./category.api";
 
 // ================= COMMON HELPERS =================
 
@@ -91,14 +95,145 @@ export const getAdminDashboardApi = async () => {
   }
 };
 
+// ==========================================
+// CREATE PRODUCT (ADMIN)
+// ==========================================
+export const createProductApi = async (data) => {
+  try {
+    const response = await Axios.post("/admin/create-product", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    return error.response?.data || {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+export const updateProductApi = async (productId, data) => {
+  try {
+    const response = await Axios.put(
+      `/admin/update-product/${productId}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    return error.response?.data || {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+// ======================================================
+// GET ALL PRODUCTS
+// ======================================================
+
+export const getAllProductsApi = async (
+  page = 1,
+  limit = 10,
+  category = "",
+  subCategory = "",
+  brand = ""
+) => {
+  try {
+    let url = `/user/get-all-products?page=${page}&limit=${limit}`;
+
+    if (category) {
+      url += `&category=${category}`;
+    }
+
+    if (subCategory) {
+      url += `&subCategory=${subCategory}`;
+    }
+
+    if (brand) {
+      url += `&brand=${brand}`;
+    }
+
+    const response = await Axios.get(url);
+
+    return response.data;
+  } catch (error) {
+    return (
+      error.response?.data || {
+        success: false,
+        message: error.message,
+      }
+    );
+  }
+};
+
+// ==========================================
+// GET SINGLE PRODUCT
+// ==========================================
+export const getSingleProductApi = async (productId) => {
+  try {
+    const response = await Axios.get(`/user/product/${productId}`);
+
+    return response.data;
+  } catch (error) {
+    return error.response?.data || {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
+// ==========================================
+// TOGGLE PRODUCT STATUS
+// ==========================================
+export const toggleProductStatusApi = async (productId) => {
+  try {
+    const response = await Axios.patch(
+      `/admin/toggle-product-status/${productId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    return (
+      error?.response?.data || {
+        success: false,
+        message: "Something went wrong",
+      }
+    );
+  }
+};
+
+// ==========================================
+// DELETE PRODUCT
+// ==========================================
+export const deleteProductApi = async (productId) => {
+  try {
+    const response = await Axios.delete(`/admin/delete-product/${productId}`);
+    return response.data;
+  } catch (error) {
+    return error?.response?.data || {
+      success: false,
+      message: error.message,
+    };
+  }
+};
+
 // ================= STORE =================
 
-export const createStoreApi = async (payload) => {
+export const createStoreApi = async (formData) => {
   try {
-    const res = await Axios.post("/admin/store-create", payload);
+    const res = await Axios.post("/admin/store-create", formData);
     return res.data;
   } catch (error) {
-    return handleApiError(error, "Create store failed");
+    return error.response?.data || { success: false, message: "Upload failed" };
   }
 };
 
@@ -113,12 +248,12 @@ export const getAllStoresApi = async (page = 1, limit = 10) => {
   }
 };
 
-export const updateStoreApi = async (storeId, payload) => {
+export const updateStoreApi = async (storeId, formData) => {
   try {
-    const res = await Axios.put(`/admin/update-store/${storeId}`, payload);
+    const res = await Axios.put(`/admin/update-store/${storeId}`, formData);
     return res.data;
   } catch (error) {
-    return handleApiError(error, "Update store failed");
+    return error.response?.data || { success: false, message: "Update failed" };
   }
 };
 
@@ -153,6 +288,9 @@ export const getAllCategoriesApi = async (page = 1, limit = 10) => {
   }
 };
 
+export const getAllSubCategoriesApi = getAllSubCategoriesApiFromCategory;
+export const getAllBrandsApi = getAllBrandsApiFromCategory;
+
 export const updateCategoryApi = async (categoryId, data) => {
   try {
     const res = await Axios.put(
@@ -170,17 +308,18 @@ export const updateCategoryApi = async (categoryId, data) => {
 // ================= LOCATION =================
 export const findNearestStoreApi = async (payload) => {
   try {
-    const res = await Axios.post(
-      "/store/find-nearest",
-      payload
-    );
-
+   
+    const res = await Axios.get("/store/nearest", {
+      params: {
+        lat: payload.lat,
+        lng: payload.lng
+      }
+    });
     return res.data;
   } catch (error) {
-    return handleApiError(
-      error,
-      "Failed to find nearest store"
-    );
+    console.error("API Error:", error.response?.data || error.message);
+   //error return kar rha hai
+    return error.response?.data || { success: false, message: "Server connection failed" };
   }
 };
 
@@ -242,9 +381,9 @@ export const getStoreOrdersApi = async (storeId) => {
   }
 };
 
-export const getOutForDeliveryOrdersApi = async (
+export const getStoreOrdersByStatusApi = async (
   storeId,
-  status = "OUT_FOR_DELIVERY"
+  status = "PACKED"
 ) => {
   try {
     if (!storeId) throw new Error("storeId is required");
@@ -255,7 +394,7 @@ export const getOutForDeliveryOrdersApi = async (
 
     return response.data;
   } catch (error) {
-    console.error("OUT_FOR_DELIVERY_API_ERROR 👉", error);
+    console.error("STORE_ORDERS_BY_STATUS_API_ERROR 👉", error);
 
     return {
       success: false,
@@ -266,6 +405,47 @@ export const getOutForDeliveryOrdersApi = async (
       data: [],
     };
   }
+};
+
+export const getAllOrdersByStatusApi = async (
+  status = "PACKED"
+) => {
+  try {
+    const res = await Axios.get("/admin/all-orders");
+    const data = res?.data;
+    const orders = Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+      ? data
+      : [];
+
+    const filteredOrders = orders.filter(
+      (order) => String(order?.orderStatus || "").toUpperCase() === status
+    );
+
+    return {
+      success: true,
+      data: filteredOrders,
+    };
+  } catch (error) {
+    console.error("ALL_ORDERS_BY_STATUS_API_ERROR 👉", error);
+
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong",
+      data: [],
+    };
+  }
+};
+
+export const getOutForDeliveryOrdersApi = async (
+  storeId,
+  status = "OUT_FOR_DELIVERY"
+) => {
+  return getStoreOrdersByStatusApi(storeId, status);
 };
 
 export const packStoreOrderApi = async (storeId, orderId) => {
@@ -291,6 +471,61 @@ export const assignDriverApi = async (storeId, orderId, driverId) => {
   }
 };
 
+// ================= PAYMENTS =================
+
+export const getAllTransactionsApi = async (
+  page = 1,
+  limit = 25,
+  status = "",
+  paymentMethod = ""
+) => {
+  try {
+    const res = await Axios.get("/admin/all-transactions", {
+      params: {
+        page,
+        limit,
+        status,
+        paymentMethod,
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch transactions");
+  }
+};
+
+export const getUserTransactionsApi = async (
+  userId,
+  page = 1,
+  limit = 25,
+  status = "",
+  paymentMethod = ""
+) => {
+  if (!userId) {
+    return {
+      success: false,
+      message: "userId is required to fetch user transactions",
+      data: [],
+    };
+  }
+
+  try {
+    const res = await Axios.get(`/admin/user-transactions/${userId}`, {
+      params: {
+        page,
+        limit,
+        status,
+        paymentMethod,
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch user transactions");
+  }
+};
+
 // ================= RATINGS =================
 
 export const getAppRatingsApi = async () => {
@@ -308,5 +543,24 @@ export const getAppRatingAverageApi = async () => {
     return res.data;
   } catch (error) {
     return handleApiError(error, "Failed to fetch rating average");
+  }
+};
+
+export const registerDriverApi = async (payload) => {
+  try {
+    const res = await Axios.post("/driver/register", payload);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Driver registration failed");
+  }
+};
+
+
+export const getDriversByStoreApi = async (storeId) => {
+  try {
+    const res = await Axios.get(`/driver/store/${storeId}`);
+    return res.data;
+  } catch (error) {
+    return error.response?.data || { success: false, message: "Failed to fetch drivers" };
   }
 };

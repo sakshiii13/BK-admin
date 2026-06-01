@@ -140,7 +140,7 @@ const OutForDeliveryOrders = () => {
       ========================================= */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-7">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 flex items-center gap-3">
             <div className="h-12 w-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-sm">
               <MdDeliveryDining size={28} />
             </div>
@@ -173,12 +173,12 @@ const OutForDeliveryOrders = () => {
       {/* =========================================
           STATUS FILTER
       ========================================= */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
         {ORDER_STATUS.map((status) => (
           <button
             key={status}
             onClick={() => setSelectedStatus(status)}
-            className={`px-5 py-3 rounded-2xl text-sm font-bold transition-all duration-200 border
+            className={`px-3 md:px-5 py-2 md:py-3 rounded-2xl text-xs md:text-sm font-bold transition-all duration-200 border
               
               ${
                 selectedStatus === status
