@@ -4,6 +4,7 @@ import {
   getAllSupportTicketsApi,
   updateSupportTicketStatusApi,
 } from "../../api/admin.api";
+import { FaPlus, FaPaperPlane, FaSearch, FaImage } from "react-icons/fa";
 
 const Support = () => {
   const [tickets, setTickets] = useState([]);
@@ -15,6 +16,8 @@ const Support = () => {
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [showCreate, setShowCreate] = useState(true);
+  const [query, setQuery] = useState("");
 
   const fetchTickets = async () => {
     setError("");
@@ -52,14 +55,14 @@ const Support = () => {
     setError("");
 
     if (!subject.trim() || !description.trim()) {
-      setMessage("Subject and description are required.");
-      return;
-    }
+        setMessage("Subject and description are required.");
+        return;
+      }
 
-    const formData = new FormData();
-    formData.append("subject", subject);
-    formData.append("description", description);
-    images.forEach((file) => formData.append("images", file));
+      const formData = new FormData();
+      formData.append("subject", subject);
+      formData.append("description", description);
+      images.forEach((file) => formData.append("images", file));
 
     setCreating(true);
     const res = await createSupportTicketApi(formData);
@@ -82,6 +85,30 @@ const Support = () => {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  // 3D tilt handlers (pure UI)
+  const handleTilt = (e, intensity = 12) => {
+    const el = e.currentTarget.querySelector(".tilt-inner") || e.currentTarget;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left; // x position within element
+    const y = e.clientY - rect.top; // y position within element
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const dx = (x - cx) / cx;
+    const dy = (y - cy) / cy;
+
+    const rotateY = dx * intensity;
+    const rotateX = -dy * intensity;
+
+    el.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
+    el.style.transition = "transform 0.05s linear";
+  };
+
+  const resetTilt = (e) => {
+    const el = e.currentTarget.querySelector(".tilt-inner") || e.currentTarget;
+    el.style.transform = "perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
+    el.style.transition = "transform 200ms ease-out";
+  };
 
   const handleChangeStatus = async (ticketId, newStatus) => {
     try {
@@ -229,17 +256,18 @@ const Support = () => {
                 <div className="mt-4 flex items-center gap-2">
                   {ticket.status !== 'RESOLVED' && (
                     <button
-                      className="rounded bg-green-500 px-3 py-1 text-sm text-white"
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-3 py-1 text-sm text-white shadow"
                       onClick={() => handleChangeStatus(ticket._id, 'RESOLVED')}
                       disabled={updatingId === ticket._id}
                     >
-                      {updatingId === ticket._id ? 'Updating...' : 'Mark Resolved'}
+                      <FaPaperPlane />
+                      {updatingId === ticket._id ? 'Updating...' : 'Resolve'}
                     </button>
                   )}
 
                   {ticket.status !== 'PENDING' && (
                     <button
-                      className="rounded border border-slate-200 px-3 py-1 text-sm text-slate-700"
+                      className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700"
                       onClick={() => handleChangeStatus(ticket._id, 'PENDING')}
                       disabled={updatingId === ticket._id}
                     >

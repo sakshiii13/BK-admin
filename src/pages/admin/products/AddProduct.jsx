@@ -113,9 +113,22 @@ const AddProduct = () => {
       try {
         const res = await getSingleProductApi(productId);
         if (!mounted) return;
+        // Normalize product result for multiple API shapes
+        let product = null;
 
-        if (res?.success && res?.data) {
-          const product = res.data;
+        if (res == null) {
+          product = null;
+        } else if (res?.success && res?.data) {
+          product = res.data;
+        } else if (res?.data && (res.data._id || res.data.id)) {
+          product = res.data;
+        } else if (res && (res._id || res.id)) {
+          product = res;
+        } else if (res?.product) {
+          product = res.product;
+        }
+
+        if (product) {
           setName(product.name || "");
           setBrand(product.brand?._id || product.brand || "");
           setCategory(product.category?._id || product.category || "");
