@@ -61,6 +61,7 @@ import StoreCategories from "../pages/admin/stores/StoreCategories";
 import Transactions from "../pages/admin/payments/Transactions";
 import Drivers from "../pages/admin/drivers/Drivers";
 import AddDriver from "../pages/admin/drivers/AddDriver";
+import Support from "../pages/admin/Support";
 
 
 
@@ -415,9 +416,7 @@ const adminRoutes = [
   // =========================================
   {
     path: AdminRouters.SUPPORT,
-    element: (
-      <CommonPage title="Support" />
-    ),
+    element: <Support />,
   },
 
   {

@@ -10,13 +10,10 @@ export const MainContent = {
 };
 
 export const backendConfig = {
-  // local backend
-  // base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
-  // origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
-
-  base: "https://api.bkgrocery.starchainlabs.online/api",
-  origin: "https://api.bkgrocery.starchainlabs.online/",
-  // phone / network testing ke liye
-  // base: "https://qc7b93cr-5000.inc1.devtunnels.ms/api",
-  // origin: "https://qc7b93cr-5000.inc1.devtunnels.ms/",
+  base:
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://api.bkgrocery.starchainlabs.online/api",
+  origin:
+    import.meta.env.VITE_API_ORIGIN ||
+    "https://api.bkgrocery.starchainlabs.online/",
 };

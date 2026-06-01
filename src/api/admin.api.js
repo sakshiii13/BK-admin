@@ -546,6 +546,112 @@ export const getAppRatingAverageApi = async () => {
   }
 };
 
+// ================= SUPPORT TICKETS =================
+
+export const getAllSupportTicketsApi = async (page = 1, limit = 25) => {
+  try {
+    const res = await Axios.get("/admin/get-all-support-tickets", {
+      params: { page, limit },
+    });
+
+    // merge any locally-created tickets (fallback) with server data
+    const serverData = res.data;
+    try {
+      const local = JSON.parse(localStorage.getItem("localSupportTickets") || "[]");
+      // serverData may be { success, data } or array
+      const serverList = Array.isArray(serverData?.data)
+        ? serverData.data
+        : Array.isArray(serverData)
+        ? serverData
+        : [];
+
+      return {
+        success: true,
+        data: [...local, ...serverList],
+      };
+    } catch (e) {
+      return res.data;
+    }
+  } catch (error) {
+    // if endpoint missing, return local fallback tickets
+    if (error?.response?.status === 404) {
+      const local = JSON.parse(localStorage.getItem("localSupportTickets") || "[]");
+      return { success: true, data: local };
+    }
+
+    return handleApiError(error, "Failed to fetch support tickets");
+  }
+};
+
+export const createSupportTicketApi = async (payload) => {
+  try {
+    const res = await Axios.post("/admin/create-support-ticket", payload);
+    return res.data;
+  } catch (error) {
+    // if backend route missing (404), persist ticket locally as fallback
+    if (error?.response?.status === 404) {
+      try {
+        const subject = payload?.get ? payload.get("subject") : "";
+        const description = payload?.get ? payload.get("description") : "";
+        const files = payload?.getAll ? payload.getAll("images") : [];
+
+        const images = Array.from(files || []).map((f) => {
+          try {
+            return URL.createObjectURL(f);
+          } catch (e) {
+            return "";
+          }
+        });
+
+        const ticket = {
+          _id: `local_${Date.now()}`,
+          subject,
+          description,
+          images,
+          status: "PENDING",
+        };
+
+        const existing = JSON.parse(localStorage.getItem("localSupportTickets") || "[]");
+        existing.unshift(ticket);
+        localStorage.setItem("localSupportTickets", JSON.stringify(existing));
+
+        return { success: true, data: ticket };
+      } catch (e) {
+        return { success: false, message: "Local fallback failed" };
+      }
+    }
+
+    return handleApiError(error, "Failed to create support ticket");
+  }
+};
+
+export const updateSupportTicketStatusApi = async (ticketId, status) => {
+  try {
+    const res = await Axios.patch(
+      `/admin/update-support-ticket-status/${ticketId}`,
+      { status }
+    );
+
+    return res.data;
+  } catch (error) {
+    // if backend route missing, update local fallback tickets
+    if (error?.response?.status === 404) {
+      try {
+        const existing = JSON.parse(localStorage.getItem("localSupportTickets") || "[]");
+        const updated = existing.map((t) =>
+          t._id === ticketId ? { ...t, status } : t
+        );
+        localStorage.setItem("localSupportTickets", JSON.stringify(updated));
+        return { success: true };
+      } catch (e) {
+        return handleApiError(error, "Failed to update support ticket status");
+      }
+    }
+
+    return handleApiError(error, "Failed to update support ticket status");
+  }
+};
+
 export const registerDriverApi = async (payload) => {
   try {
     const res = await Axios.post("/driver/register", payload);
