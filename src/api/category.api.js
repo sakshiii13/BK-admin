@@ -45,6 +45,23 @@ export const updateCategoryApi = async (categoryId, formData) => {
   }
 };
 
+export const deleteCategoryApi = async (categoryId) => {
+  try {
+    const response = await Axios.delete(
+      `/admin/delete-category/${categoryId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    return (
+      error.response?.data || {
+        success: false,
+        message: error.message,
+      }
+    );
+  }
+};
+
 // =======================================
 // SUB CATEGORY APIs
 // =======================================

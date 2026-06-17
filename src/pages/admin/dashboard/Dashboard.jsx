@@ -126,8 +126,8 @@ const Dashboard = () => {
         overview?.monthlyRevenue
       )}`,
       icon: <MdAttachMoney />,
-      bg: "bg-orange-50",
-      text: "text-orange-500",
+      bg: "bg-green-50/80 border border-green-100",
+      text: "text-[var(--primary-green)]",
     },
 
     {
@@ -137,8 +137,8 @@ const Dashboard = () => {
         overview?.weeklyRevenue
       )}`,
       icon: <MdShoppingCart />,
-      bg: "bg-slate-100",
-      text: "text-slate-700",
+      bg: "bg-yellow-50/80 border border-yellow-100",
+      text: "text-yellow-600",
     },
 
     {
@@ -146,8 +146,8 @@ const Dashboard = () => {
       value: overview?.totalUsers || 0,
       sub: "Registered customers",
       icon: <MdPeople />,
-      bg: "bg-orange-50",
-      text: "text-orange-500",
+      bg: "bg-blue-50/80 border border-blue-100",
+      text: "text-blue-600",
     },
 
     {
@@ -157,18 +157,18 @@ const Dashboard = () => {
       }`,
       sub: "Store network",
       icon: <MdStorefront />,
-      bg: "bg-slate-100",
-      text: "text-slate-700",
+      bg: "bg-orange-50/80 border border-orange-100",
+      text: "text-orange-600",
     },
   ];
 
   return (
-    <div className="p-4 md:p-6 min-h-screen bg-[#f5f6f8] space-y-7">
+    <div className="p-4 md:p-6 min-h-screen bg-[#f3f6f5] space-y-7">
 
       {/* =========================================
           HERO SECTION
       ========================================= */}
-      <div className="bg-white rounded-[34px] border border-[#ececec] p-5 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+      <div className="card-3d p-6 md:p-8 bg-white">
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
 
@@ -177,18 +177,14 @@ const Dashboard = () => {
 
             <div className="flex items-center gap-3">
 
-              <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl">
-                <GiShoppingBag />
+              <div className="h-12 w-12 rounded-2xl bg-green-50 text-[var(--primary-green)] border border-green-100 flex items-center justify-center text-2xl shadow-sm">
+                <GiShoppingBag className="animate-bounce" />
               </div>
 
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.3em] text-orange-500">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-[var(--primary-green)]">
                   BK Grocery
                 </p>
-
-                {/* <p className="text-sm text-slate-500">
-                  Premium Admin Dashboard
-                </p> */}
               </div>
             </div>
 
@@ -196,12 +192,12 @@ const Dashboard = () => {
               Smart Business Dashboard
             </h1>
 
-            <p className="mt-4 max-w-2xl text-slate-500 leading-7">
+            <p className="mt-4 max-w-2xl text-slate-500 font-bold leading-7">
               Monitor revenue, stores, orders, products and
               drivers from one clean premium dashboard.
             </p>
 
-            <p className="mt-5 text-xs font-semibold text-slate-400">
+            <p className="mt-5 text-xs font-black text-slate-400">
               {currentDate}
             </p>
           </div>
@@ -210,14 +206,14 @@ const Dashboard = () => {
           <button
             onClick={fetchDashboard}
             disabled={loading}
-            className="h-12 px-6 rounded-2xl bg-orange-500 text-white font-semibold shadow-[0_8px_20px_rgba(249,115,22,0.20)] hover:scale-[1.02] transition-all duration-300 flex items-center gap-2"
+            className="btn-3d btn-primary h-12 px-6"
           >
             <MdRefresh
-              className={loading ? "animate-spin" : ""}
+              className={loading ? "animate-spin mr-2" : "mr-2"}
               size={18}
             />
 
-            {loading ? "Refreshing..." : "Refresh"}
+            <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </button>
         </div>
       </div>
@@ -230,7 +226,7 @@ const Dashboard = () => {
         {stats.map((item, index) => (
           <div
             key={index}
-            className="bg-white rounded-[28px] border border-[#ececec] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:-translate-y-1 transition-all duration-300"
+            className="card-3d p-6 bg-white"
           >
 
             <div className="flex items-start justify-between">
@@ -240,33 +236,33 @@ const Dashboard = () => {
                   {item.title}
                 </p>
 
-                <h2 className="mt-4 text-4xl font-black text-slate-900">
+                <h2 className="mt-4 text-4xl font-black text-slate-900 tracking-tight">
                   {item.value}
                 </h2>
 
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-slate-500 font-bold">
                   {item.sub}
                 </p>
               </div>
 
               <div
-                className={`h-14 w-14 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center text-2xl`}
+                className={`h-14 w-14 rounded-2xl ${item.bg} ${item.text} flex items-center justify-center text-2xl shadow-md border-b-[3px] border-b-slate-200`}
               >
                 {item.icon}
               </div>
             </div>
 
-            <div className="mt-7 flex items-center justify-between border-t border-slate-100 pt-4">
+            <div className="mt-7 flex items-center justify-between border-t border-slate-100 pt-4 font-bold">
 
-              <div className="flex items-center gap-1 text-xs font-bold text-orange-500">
-                <MdTrendingUp />
+              {/* <div className="flex items-center gap-1 text-xs text-[var(--primary-green)]">
+                <MdTrendingUp size={16} />
                 Analytics
-              </div>
+              </div> */}
 
-              <div className="flex items-center gap-1 text-xs text-slate-400 font-bold">
+              {/* <div className="flex items-center gap-1 text-xs text-slate-400">
                 +12%
-                <MdArrowOutward />
-              </div>
+                <MdArrowOutward /> */}
+              {/* </div> */}
             </div>
           </div>
         ))}
@@ -320,23 +316,23 @@ const Dashboard = () => {
             return (
               <div
                 key={index}
-                className="mb-5 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
+                className="mb-5 rounded-[20px] border border-slate-200 border-b-4 border-b-slate-300 bg-slate-50/50 p-5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
               >
-                <div className="mb-3 flex justify-between">
+                <div className="mb-3 flex justify-between font-bold">
 
-                  <p className="font-bold text-slate-700">
+                  <p className="text-slate-700">
                     {item?._id}
                   </p>
 
-                  <p className="text-sm font-bold text-slate-400">
+                  <p className="text-sm text-slate-400">
                     {item?.total} Orders
                   </p>
                 </div>
 
-                <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                <div className="h-3.5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
 
                   <div
-                    className="h-full rounded-full bg-orange-500"
+                    className="h-full rounded-full bg-gradient-to-r from-[var(--primary-green)] to-[var(--primary-green-light)] shadow-md"
                     style={{
                       width: `${percent}%`,
                     }}
@@ -356,16 +352,16 @@ const Dashboard = () => {
           {paymentStats.map((item, index) => (
             <div
               key={index}
-              className="mb-4 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
+              className="mb-4 rounded-[20px] border border-slate-200 border-b-4 border-b-slate-300 bg-slate-50/50 p-5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
             >
               <div className="flex items-center justify-between">
 
                 <div>
-                  <p className="font-bold text-slate-700">
+                  <p className="font-extrabold text-slate-700">
                     {item?._id}
                   </p>
 
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 mt-1 font-bold">
                     Payment Method
                   </p>
                 </div>
@@ -394,23 +390,23 @@ const Dashboard = () => {
           {storeWiseRevenue.map((store, index) => (
             <div
               key={index}
-              className="mb-5 rounded-3xl border border-slate-100 bg-[#fafafa] p-5"
+              className="mb-5 rounded-[20px] border border-slate-200 border-b-4 border-b-slate-300 bg-slate-50/50 p-5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
             >
-              <div className="mb-3 flex justify-between">
+              <div className="mb-3 flex justify-between font-bold">
 
-                <p className="font-bold text-slate-700">
+                <p className="text-slate-700">
                   {store?.storeName}
                 </p>
 
-                <p className="font-black text-orange-500">
+                <p className="font-black text-[var(--primary-green)]">
                   {formatCurrency(store?.totalRevenue)}
                 </p>
               </div>
 
-              <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-3.5 w-full bg-slate-200 rounded-full overflow-hidden shadow-inner">
 
                 <div
-                  className="h-full rounded-full bg-orange-500"
+                  className="h-full rounded-full bg-gradient-to-r from-[var(--primary-green)] to-[var(--primary-orange)]"
                   style={{
                     width: `${
                       (store?.totalRevenue /
@@ -433,20 +429,20 @@ const Dashboard = () => {
           {topProducts.map((item, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 mb-4 rounded-3xl border border-slate-100 bg-[#fafafa] p-4 hover:bg-white transition-all"
+              className="flex items-center gap-4 mb-4 rounded-[20px] border border-slate-200 border-b-4 border-b-slate-300 bg-slate-50/55 p-4 hover:-translate-y-0.5 hover:bg-white hover:border-slate-300 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
             >
 
-              <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center font-black">
+              <div className="h-12 w-12 rounded-2xl bg-green-50 text-[var(--primary-green)] flex items-center justify-center font-black border border-green-100 shadow-inner">
                 #{index + 1}
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 text-left">
 
-                <p className="font-bold text-slate-800">
+                <p className="font-extrabold text-slate-800 text-sm">
                   {item?.productName}
                 </p>
 
-                <p className="text-sm text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1 font-bold">
                   {item?.totalSold} sold
                 </p>
               </div>
@@ -470,22 +466,22 @@ const Panel = ({
 }) => {
   return (
     <div
-      className={`bg-white rounded-[30px] border border-[#ececec] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] ${className}`}
+      className={`card-3d p-6 bg-white ${className}`}
     >
 
       <div className="mb-6 flex items-center justify-between">
 
-        <div>
+        <div className="text-left">
           <h2 className="text-xl font-black text-slate-900">
             {title}
           </h2>
 
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 mt-1 font-bold">
             {sub}
           </p>
         </div>
 
-        <div className="h-12 w-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl">
+        <div className="h-12 w-12 rounded-2xl bg-green-50 text-[var(--primary-green)] border border-green-100 flex items-center justify-center text-2xl shadow-sm">
           {icon}
         </div>
       </div>
@@ -503,13 +499,13 @@ const MiniCard = ({
   value,
 }) => {
   return (
-    <div className="bg-white rounded-[26px] border border-[#ececec] p-4 sm:p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+    <div className="card-3d p-4 sm:p-5 bg-white border-l-4 border-l-[var(--primary-green)] text-left">
 
       <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.25em] font-black text-slate-400">
         {title}
       </p>
 
-      <h2 className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 truncate" title={value}>
+      <h2 className="mt-3 text-xl sm:text-2xl lg:text-3xl font-black text-[var(--primary-green)] truncate" title={value}>
         {value}
       </h2>
     </div>

@@ -1,184 +1,108 @@
-import React, { useState } from "react";
-import { getDriversByStoreApi, registerDriverApi } from "../../../api/admin.api";
+import React, { useState, useEffect } from "react";
+import { getDriversByStoreApi, registerDriverApi, getAllStoresApi } from "../../../api/admin.api";
+import { FaUserPlus, FaTruck, FaStore } from "react-icons/fa";
 
 const Drivers = () => {
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    number: "",
-    store: "",
-    password: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [driversLoading, setDriversLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [stores, setStores] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
   const [drivers, setDrivers] = useState([]);
-  const [driversError, setDriversError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", number: "", password: "" });
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
-    setFieldErrors({});
-    setDriversError("");
-
-    const payload = {
-      firstName: form.firstName?.trim(),
-      lastName: form.lastName?.trim(),
-      email: form.email?.trim(),
-      number: form.number?.trim(),
-      store: form.store ? form.store.trim() : "",
-      password: form.password,
+  // 1. Stores Fetch karna
+  useEffect(() => {
+    const fetchStores = async () => {
+      const res = await getAllStoresApi(1, 100);
+      if (res?.success) setStores(res.data);
     };
+    fetchStores();
+  }, []);
 
-    const validation = validateForm(payload);
-    if (Object.keys(validation).length > 0) {
-      setFieldErrors(validation);
-      setLoading(false);
-      setError(Object.values(validation)[0]);
-      return;
-    }
+  // 2. Store select hote hi Drivers load karna
+  useEffect(() => {
+    if (selectedStoreId) fetchDrivers(selectedStoreId);
+    else setDrivers([]);
+  }, [selectedStoreId]);
 
-    try {
-      const res = await registerDriverApi(payload);
-      setLoading(false);
-      if (res?.success) {
-        setSuccess(res.message || "Driver registered successfully");
-        setForm({ firstName: "", lastName: "", email: "", number: "", store: "", password: "" });
-      } else {
-        setError(res?.message || "Registration failed");
-      }
-    } catch (err) {
-      setLoading(false);
-      setError(err?.message || "Registration failed");
-    }
+  const fetchDrivers = async (storeId) => {
+    setLoading(true);
+    const res = await getDriversByStoreApi(storeId);
+    if (res?.success) setDrivers(res.data || []);
+    setLoading(false);
   };
 
-  const handleFetchDrivers = async () => {
-    if (!form.store?.trim()) {
-      setDrivers([]);
-      setDriversError("Enter a Store ID to fetch drivers");
-      return;
+  // 3. Driver Register karna
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!selectedStoreId) return alert("Please select a store first!");
+    
+    const payload = { ...form, store: selectedStoreId };
+    const res = await registerDriverApi(payload);
+    
+    if (res?.success) {
+      alert("Driver Registered Successfully!");
+      setForm({ firstName: "", lastName: "", email: "", number: "", password: "" });
+      fetchDrivers(selectedStoreId); // List refresh
+    } else {
+      alert(res?.message || "Error registering driver");
     }
-
-    setDriversLoading(true);
-    setDriversError("");
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await getDriversByStoreApi(form.store.trim());
-      if (res?.success) {
-        setDrivers(res.data || []);
-      } else {
-        setDrivers([]);
-        setDriversError(res?.message || "Failed to fetch drivers");
-      }
-    } catch (err) {
-      setDrivers([]);
-      setDriversError(err?.message || "Failed to fetch drivers");
-    } finally {
-      setDriversLoading(false);
-    }
-  };
-
-  const validateForm = (values) => {
-    const errs = {};
-    if (!values.firstName || values.firstName.length < 2) errs.firstName = "First name must be at least 2 characters";
-    if (!values.email || !/^\S+@\S+\.\S+$/.test(values.email)) errs.email = "Enter a valid email";
-    if (!values.number || !/^\d{10,15}$/.test(values.number)) errs.number = "Enter a valid phone number";
-    if (!values.password || values.password.length < 6) errs.password = "Password must be at least 6 characters";
-    return errs;
   };
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)] p-4 md:p-6">
-      <div className="rounded-[32px] border border-[var(--border-soft)] bg-white p-5 md:p-8 shadow-sm max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-3">Register Driver</h1>
-        <p className="text-sm text-slate-500 mb-6">
-          Use this form to create a new driver. To view drivers for a store, enter the Store ID and click "Load Store Drivers".
-        </p>
-
-        {error && <div className="mb-4 rounded p-3 bg-red-50 text-red-700">{error}</div>}
-        {success && <div className="mb-4 rounded p-3 bg-emerald-50 text-emerald-700">{success}</div>}
-
-        <form onSubmit={onSubmit} className="grid grid-cols-1 gap-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <input name="firstName" value={form.firstName} onChange={onChange} required placeholder="First name" className="flex-1 rounded border px-3 py-2" />
-            <input name="lastName" value={form.lastName} onChange={onChange} placeholder="Last name" className="flex-1 rounded border px-3 py-2" />
-          </div>
-
+    <div className="p-6 bg-[var(--app-bg)] min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        {/* Header & Store Selector */}
+        <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl border border-slate-200">
           <div>
-            <input name="email" value={form.email} onChange={onChange} required placeholder="Email" type="email" className="w-full rounded border px-3 py-2" />
-            {fieldErrors.email && <div className="text-sm text-red-600 mt-1">{fieldErrors.email}</div>}
+            <h1 className="text-2xl font-black">Driver Management</h1>
+            <p className="text-slate-400 text-sm font-semibold">Manage and register drivers for your stores</p>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <input name="number" value={form.number} onChange={onChange} required placeholder="Phone number" className="w-full rounded border px-3 py-2" />
-              {fieldErrors.number && <div className="text-sm text-red-600 mt-1">{fieldErrors.number}</div>}
-            </div>
-            <div className="flex-1">
-              <input name="store" value={form.store} onChange={onChange} placeholder="Store ID" className="w-full rounded border px-3 py-2" />
-              <p className="text-xs text-slate-500 mt-2">Store ID is optional for registration, but required for lookup.</p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            <button
-              type="button"
-              onClick={handleFetchDrivers}
-              disabled={driversLoading}
-              className="rounded bg-slate-800 px-5 py-2.5 text-white font-semibold hover:bg-slate-900 transition disabled:opacity-60"
+          <div className="flex items-center gap-3">
+            <FaStore className="text-orange-500" />
+            <select 
+              className="p-3 rounded-xl border border-slate-200 font-bold"
+              value={selectedStoreId}
+              onChange={(e) => setSelectedStoreId(e.target.value)}
             >
-              {driversLoading ? "Loading drivers..." : "Load Store Drivers"}
-            </button>
-            {driversError && <p className="text-sm text-red-600">{driversError}</p>}
+              <option value="">Select a Store</option>
+              {stores.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Register Form */}
+          <div className="md:col-span-1 bg-white p-6 rounded-3xl border border-slate-200 h-fit">
+            <h2 className="text-lg font-black mb-4 flex items-center gap-2"><FaUserPlus /> Register New</h2>
+            <form onSubmit={handleRegister} className="space-y-3">
+              <input placeholder="First Name" className="w-full p-3 border rounded-xl" onChange={(e) => setForm({...form, firstName: e.target.value})} value={form.firstName} required />
+              <input placeholder="Last Name" className="w-full p-3 border rounded-xl" onChange={(e) => setForm({...form, lastName: e.target.value})} value={form.lastName} />
+              <input placeholder="Email" type="email" className="w-full p-3 border rounded-xl" onChange={(e) => setForm({...form, email: e.target.value})} value={form.email} required />
+              <input placeholder="Phone" className="w-full p-3 border rounded-xl" onChange={(e) => setForm({...form, number: e.target.value})} value={form.number} required />
+              <input placeholder="Password" type="password" className="w-full p-3 border rounded-xl" onChange={(e) => setForm({...form, password: e.target.value})} value={form.password} required />
+              <button className="w-full py-3 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-xl font-black">
+                Register Driver
+              </button>
+            </form>
           </div>
 
-          <div>
-            <input name="password" value={form.password} onChange={onChange} required placeholder="Password" type="password" className="w-full rounded border px-3 py-2" />
-            {fieldErrors.password && <div className="text-sm text-red-600 mt-1">{fieldErrors.password}</div>}
-          </div>
-
-          <div className="mt-4">
-            <button disabled={loading} type="submit" className="rounded bg-orange-500 px-6 py-2.5 text-white font-semibold hover:bg-orange-600 transition disabled:opacity-60">
-              {loading ? "Registering..." : "Register Driver"}
-            </button>
-          </div>
-        </form>
-
-        {drivers.length > 0 ? (
-          <div className="mt-8 rounded-[32px] border border-[var(--border-soft)] bg-white p-5 md:p-8 shadow-sm">
-            <h2 className="text-xl font-bold mb-4">Drivers for store {form.store}</h2>
-            <div className="grid gap-4">
-              {drivers.map((driver) => (
-                <div key={driver._id} className="rounded-2xl border border-slate-200 p-4 bg-slate-50">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Drivers List */}
+          <div className="md:col-span-2">
+            {loading ? <p>Loading...</p> : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {drivers.map(d => (
+                  <div key={d._id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500"><FaTruck /></div>
                     <div>
-                      <p className="font-semibold text-slate-900">{driver.firstName} {driver.lastName}</p>
-                      <p className="text-sm text-slate-600">{driver.email}</p>
-                      <p className="text-sm text-slate-600">{driver.number}</p>
-                    </div>
-                    <div className="text-sm text-slate-500">
-                      <span className="block">Verified: {driver.isVerified ? "Yes" : "No"}</span>
-                      <span className="block">Disabled: {driver.disable ? "Yes" : "No"}</span>
+                      <p className="font-black text-slate-800">{d.firstName} {d.lastName}</p>
+                      <p className="text-xs text-slate-400 font-bold">{d.number}</p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : form.store.trim() ? (
-          <div className="mt-8 rounded-[32px] border border-[var(--border-soft)] bg-white p-5 md:p-8 shadow-sm text-slate-500">
-            No drivers found for store ID <strong>{form.store}</strong>.
-          </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );

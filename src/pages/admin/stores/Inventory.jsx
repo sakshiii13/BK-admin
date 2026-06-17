@@ -1,804 +1,243 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
+import { showSuccess, showError } from "../../../utils/alertService";
+import { FaTimes } from "react-icons/fa";
+import Swal from "sweetalert2";
 import {
   createInventoryApi,
-  getAllStoresApi,
+  toggleInventoryStatusApi,
   getInventoryByStoreIdApi,
+  getAllStoresApi,
+  updateInventoryStockApi,
+  getAllVariantsApi,
 } from "../../../api/admin.api";
+import TableComponent from "../../../components/global/TableComponent";
 
-// Inline high-quality SVGs to replace react-icons dependencies and ensure successful compile
-const SvgBoxes = () => (
-  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
+// ─── Icon ─────────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 18, className = "" }) => (
+  <i className={`ti ti-${name} ${className}`} style={{ fontSize: size }} aria-hidden="true" />
 );
 
-const SvgExclamation = () => (
-  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-  </svg>
-);
+// ─── Normalize inventory response ─────────────────────────────────────────────
+const normalizeInventory = (res) => {
+  if (!res) { console.warn("❌ Response is null/undefined"); return []; }
+  if (!res?.success) { console.warn("❌ Response success is false:", res); return []; }
 
-const SvgPlus = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-  </svg>
-);
+  // API returns: { success, data: { inventory: [...], pagination: {...} } }
+  let arr =
+    Array.isArray(res?.data?.inventory) ? res.data.inventory :   // ✅ actual shape
+    Array.isArray(res?.data)            ? res.data            :   // flat array fallback
+    Array.isArray(res?.inventory)       ? res.inventory       :
+    Array.isArray(res?.items)           ? res.items           : null;
 
-const SvgTimes = () => (
-  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
+  if (!arr) { console.error("❌ Could not find array in response:", res); return []; }
 
-const SvgSearch = () => (
-  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
+  return arr.map((item) => {
+  console.log(" Inventory Item:", item);
+  console.log(" isAvailable:", item?.isAvailable);
 
-const SvgDownload = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-  </svg>
-);
+  const variant = item?.variant || {};
+  const product = variant?.product || {};
+  const store = item?.store || {};
+  const brand = product?.brand || {};
+  const category = product?.category || {};
 
-const emptyForm = {
-  store: "",
-  variants: [
-    {
-      variant: "",
-      stock: "",
-      lowStockThreshold: "",
-      maxOrderQuantity: "",
-      note: "",
-    },
-  ],
+  return {
+    _id: item?._id,
+    storeId: store?._id,
+    storeName: store?.name || "—",
+    storeAddress: store?.address || "",
+
+    productName: product?.name || "—",
+    productSlug: product?.slug || "",
+
+    thumbnail: variant?.thumbnail || product?.thumbnail || "",
+    brandName: brand?.name || "—",
+    categoryName: category?.name || "—",
+
+    variantId: variant?._id,
+    sku: variant?.sku || "—",
+    weight: variant?.weight ?? "",
+    unit: variant?.unit || "",
+    attributes: variant?.attributes || {},
+
+    mrp: Number(variant?.mrp || 0),
+    sellingPrice: Number(variant?.sellingPrice || 0),
+    isDefault: variant?.isDefault || false,
+
+    stock: Number(item?.stock || 0),
+    reservedStock: Number(item?.reservedStock || 0),
+    availableStock: Number(item?.availableStock || 0),
+
+    lowStockThreshold: Number(item?.lowStockThreshold || 0),
+    maxOrderQuantity: Number(item?.maxOrderQuantity || 0),
+
+    // 👇 Important
+    isAvailable: item?.isAvailable,
+
+    isDeleted: item?.isDeleted || false,
+    lastRestockedAt: item?.lastRestockedAt || null,
+    note: item?.note || "",
+
+    createdAt: item?.createdAt || null,
+    updatedAt: item?.updatedAt || null,
+  };
+});
 };
 
-const Inventory = () => {
-  const [stores, setStores] = useState([]);
-  const [selectedStoreId, setSelectedStoreId] = useState("");
-  const [inventory, setInventory] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [formData, setFormData] = useState(emptyForm);
+const normalizeStores = (res) => {
+  if (!res) return [];
+  return (
+    Array.isArray(res?.data) ? res.data :
+    Array.isArray(res?.data?.data) ? res.data.data :
+    Array.isArray(res?.data?.stores) ? res.data.stores :
+    Array.isArray(res?.stores) ? res.stores : []
+  );
+};
 
-  // Simulation controls to demonstrate 404 error handling gracefully
-  const [apiSimMode, setApiSimMode] = useState("200_SUCCESS"); // "200_SUCCESS" or "404_NOT_FOUND"
-  const [toast, setToast] = useState(null);
+// ─── Status helpers ────────────────────────────────────────────────────────────
+const getStatus = (item) => {
+  if (!item.isAvailable || item.availableStock === 0) return "out";
+  if (item.availableStock <= item.lowStockThreshold) return "low";
+  return "healthy";
+};
 
-  // Custom inline toast alert logic to decouple from external alertService
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3500);
-  };
+const STATUS_META = {
+  healthy: { label: "Healthy", icon: "circle-check", cls: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  low:     { label: "Low stock", icon: "alert-triangle", cls: "bg-amber-50 text-amber-700 border border-amber-200" },
+  out:     { label: "Out of stock", icon: "circle-x", cls: "bg-rose-50 text-rose-700 border border-rose-200" },
+};
 
-  // Load full store list from backend so all created stores appear in inventory selector
+// ─── Stock bar ────────────────────────────────────────────────────────────────
+const StockBar = ({ item }) => {
+  const status = getStatus(item);
+  const max = Math.max(item.stock, 1);
+  const pct = Math.round((item.availableStock / max) * 100);
+  const color = status === "out" ? "#e24b4a" : status === "low" ? "#ef9f27" : "#22c55e";
+  return (
+    <div className="flex flex-col gap-1.5 w-full">
+      <div className="flex justify-between items-baseline">
+        <span className="text-sm font-bold text-[#0f172a]">{item.stock}</span>
+        <span className="text-[10px] text-slate-400 font-semibold">min {item.lowStockThreshold}</span>
+      </div>
+      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
+      </div>
+    </div>
+  );
+};
+
+// ─── Variant Selector Dropdown ────────────────────────────────────────────────
+const VariantSelector = ({ value, onChange, allVariants, variantsLoading }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef(null);
+
   useEffect(() => {
-    const loadStores = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllStoresApi(1, 100);
-        const storeData = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res?.data?.data)
-          ? res.data.data
-          : Array.isArray(res?.data?.stores)
-          ? res.data.stores
-          : Array.isArray(res?.stores)
-          ? res.stores
-          : [];
-
-        setStores(storeData);
-        if (storeData.length) {
-          setSelectedStoreId((prev) => prev || storeData[0]?._id || "");
-        }
-      } catch (err) {
-        console.error("Failed to load stores for inventory", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStores();
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fetch Inventory dataset safely depending on selection and simulating latency & simulated 404 responses
-  const fetchInventoryData = async (storeId, mode) => {
-    if (!storeId) return;
+  const selected = allVariants.find((v) => v._id === value);
+  const filtered = useMemo(() => {
+    if (!query.trim()) return allVariants;
+    const q = query.toLowerCase();
+    return allVariants.filter((v) =>
+      v.productName?.toLowerCase().includes(q) ||
+      v.sku?.toLowerCase().includes(q) ||
+      v._id?.toLowerCase().includes(q)
+    );
+  }, [allVariants, query]);
 
-    try {
-      setLoading(true);
-      // Simulate network request roundtrip
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      if (mode === "404_NOT_FOUND") {
-        // Silently clear list and transition into clean, warning-free empty state
-        setInventory([]);
-        console.warn(`Simulated API 404 Response: No active inventory records found for Store ID ${storeId}`);
-        // Zero popups are triggered here, making it perfect for silent background recoveries!
-      } else {
-        const res = await getInventoryByStoreIdApi(storeId, 1, 100);
-        console.log("INVENTORY API RESPONSE:", res);
-
-        const rawData = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res?.data?.data)
-          ? res.data.data
-          : Array.isArray(res?.data?.inventory)
-          ? res.data.inventory
-          : Array.isArray(res?.inventory)
-          ? res.inventory
-          : Array.isArray(res?.data?.products)
-          ? res.data.products
-          : Array.isArray(res?.products)
-          ? res.products
-          : [];
-
-        const responseStore =
-          res?.store ||
-          res?.data?.store ||
-          (selectedStore ? { name: selectedStore.name } : null) ||
-          null;
-
-        const inventoryData = rawData.map((product) => {
-          const variant = product?.defaultVariant || product?.variant || {};
-          const brandName =
-            typeof product?.brand === "string"
-              ? product.brand
-              : product?.brand?.name || "";
-          const storeName = responseStore?.name || "";
-
-          const stockValue = Number(
-            variant?.stock ?? variant?.availableStock ?? 0
-          );
-
-          return {
-            _id:
-              variant?.inventoryId ||
-              variant?.variantId ||
-              product?.productId ||
-              product?._id ||
-              product?.id ||
-              `${storeId}-${product?.slug || product?.name || Math.random()}`,
-            store: { name: storeName },
-            stock: stockValue,
-            availableStock: stockValue,
-            reservedStock: Number(variant?.reservedStock || 0),
-            lowStockThreshold: Number(variant?.lowStockThreshold || 0),
-            isAvailable: stockValue > 0,
-            note: product?.description || product?.note || "",
-            variant: {
-              sku: variant?.sku || product?.slug || product?.name || "",
-              weight: variant?.weight || "",
-              unit: variant?.unit || "",
-              sellingPrice: Number(
-                variant?.sellingPrice ?? variant?.mrp ?? 0
-              ),
-              mrp: Number(variant?.mrp ?? 0),
-              product: {
-                name: product?.name || "",
-                brand: { name: brandName },
-                thumbnail: product?.thumbnail || "",
-              },
-            },
-          };
-        });
-
-        setInventory(inventoryData);
-      }
-    } catch (err) {
-      console.error("Critical connection failure:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load data reactively when filters or simulation parameters are changed
-  useEffect(() => {
-    if (selectedStoreId) {
-      fetchInventoryData(selectedStoreId, apiSimMode);
-    }
-  }, [selectedStoreId, apiSimMode]);
-
-  const selectedStore = useMemo(() => {
-    return stores.find((store) => store?._id === selectedStoreId);
-  }, [stores, selectedStoreId]);
-
-  const filteredInventory = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return inventory;
-
-    return inventory.filter((item) => {
-      const productName = item?.variant?.product?.name || "";
-      const sku = item?.variant?.sku || "";
-      const storeName = item?.store?.name || "";
-      const brand = item?.variant?.product?.brand?.name || "";
-
-      return (
-        productName.toLowerCase().includes(q) ||
-        sku.toLowerCase().includes(q) ||
-        storeName.toLowerCase().includes(q) ||
-        brand.toLowerCase().includes(q)
-      );
-    });
-  }, [inventory, search]);
-
-  const totalStock = useMemo(() => {
-    return inventory.reduce((sum, item) => sum + Number(item?.stock || 0), 0);
-  }, [inventory]);
-
-  const lowStockCount = useMemo(() => {
-    return inventory.filter(
-      (item) => Number(item?.availableStock || 0) <= Number(item?.lowStockThreshold || 0)
-    ).length;
-  }, [inventory]);
-
-  const openAddPopup = () => {
-    setFormData({
-      ...emptyForm,
-      store: selectedStoreId || "",
-    });
-    setShowPopup(true);
-  };
-
-  const closePopup = () => {
-    setShowPopup(false);
-    setFormData(emptyForm);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleVariantChange = (index, name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: prev.variants.map((variant, idx) =>
-        idx === index ? { ...variant, [name]: name === "variant" ? value.trim() : value } : variant
-      ),
-    }));
-  };
-
-  const handleAddVariantRow = () => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: [
-        ...prev.variants,
-        {
-          variant: "",
-          stock: "",
-          lowStockThreshold: "",
-          maxOrderQuantity: "",
-          note: "",
-        },
-      ],
-    }));
-  };
-
-  const handleRemoveVariantRow = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: prev.variants.length > 1
-        ? prev.variants.filter((_, idx) => idx !== index)
-        : prev.variants,
-    }));
-  };
-
-  // Safe manual addition logic to simulate immediate backend update success
-  const handleCreateInventory = async (e) => {
-    e.preventDefault();
-
-    if (!selectedStoreId && !formData.store) {
-      showToast("Select a store before adding inventory.", "warning");
-      return;
-    }
-
-    const variantsPayload = formData.variants
-      .filter((variant) => variant.variant.trim())
-      .map((variant) => ({
-        variant: variant.variant.trim(),
-        stock: Number(variant.stock),
-        lowStockThreshold: Number(variant.lowStockThreshold),
-        maxOrderQuantity: Number(variant.maxOrderQuantity || 0),
-        note: variant.note,
-      }));
-
-    if (!variantsPayload.length) {
-      showToast("At least one variant row is required.", "warning");
-      return;
-    }
-
-    const payload = {
-      store: formData.store || selectedStoreId,
-      variants: variantsPayload,
-    };
-
-    try {
-      setLoading(true);
-      const res = await createInventoryApi(payload);
-      console.log("CREATE INVENTORY RESPONSE:", res);
-
-      if (res?.success) {
-        showToast("Inventory asset registered successfully on shelf!", "success");
-        closePopup();
-        if (selectedStoreId) {
-          await fetchInventoryData(selectedStoreId, apiSimMode);
-        }
-      } else {
-        showToast(res?.message || "Failed to save inventory", "error");
-      }
-    } catch (error) {
-      console.error("Create inventory error", error);
-      showToast("Failed to save inventory", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatus = (item) => {
-    if (!item?.isAvailable || Number(item?.availableStock || 0) === 0) {
-      return "Out of Stock";
-    }
-    if (Number(item?.availableStock || 0) <= Number(item?.lowStockThreshold || 0)) {
-      return "Low Stock";
-    }
-    return "Healthy";
-  };
+  const handleSelect = (v) => { onChange(v._id); setQuery(""); setOpen(false); };
+  const handleClear = (e) => { e.stopPropagation(); onChange(""); setQuery(""); };
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 min-h-screen font-sans antialiased bg-[#f8fafc] text-[#1e293b] space-y-6">
-      
-      {/* ================= HEADER PANEL ================= */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-        <div>
-          <h1 className="text-2xl sm:text-4xl font-black text-[#0f172a] tracking-tight">
-            Inventory <span className="text-[#ff7e00]">Tracking</span>
-          </h1>
-          <p className="mt-1 text-[#64748b] font-semibold">
-            Monitor stock levels across all active stores seamlessly
-          </p>
-        </div>
-
-        {/* Dynamic simulator trigger for 404/200 live test */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-2xl">
-            <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider">
-              API Sandbox Sim:
-            </span>
-            <button
-              onClick={() => {
-                setApiSimMode("200_SUCCESS");
-                showToast("API Mode changed to 200 (Success with Data)", "success");
-              }}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                apiSimMode === "200_SUCCESS"
-                  ? "bg-[#ff7e00] text-white shadow-sm"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
-              }`}
-            >
-              200 OK
-            </button>
-            <button
-              onClick={() => {
-                setApiSimMode("404_NOT_FOUND");
-                showToast("API Mode changed to 404 (No Data - Silent Handling)", "warning");
-              }}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                apiSimMode === "404_NOT_FOUND"
-                  ? "bg-rose-500 text-white shadow-sm"
-                  : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
-              }`}
-            >
-              404 Silent
-            </button>
-          </div>
-
-          <button className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl font-bold transition-all flex items-center gap-2 cursor-pointer">
-            <SvgDownload /> Export
-          </button>
-
-          <button
-            onClick={openAddPopup}
-            className="px-8 py-3.5 bg-[#ff7e00] hover:bg-[#e06f00] text-white rounded-2xl font-bold shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-          >
-            <SvgPlus /> Add Stock
-          </button>
-        </div>
-      </div>
-
-      {/* ================= FILTERS GRID ================= */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">
-            Select Active Store
-          </label>
-
-          <select
-            value={selectedStoreId}
-            onChange={(e) => setSelectedStoreId(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] transition-all font-bold cursor-pointer"
-          >
-            {stores.map((store) => (
-              <option key={store?._id} value={store?._id}>
-                {store?.name}
-              </option>
-            ))}
-          </select>
-
-          {selectedStore && (
-            <p className="mt-2 text-xs text-slate-500 font-semibold pl-1">
-              Active Store:{" "}
-              <span className="font-bold text-[#ff7e00]">
-                {selectedStore?.name}
-              </span>
-            </p>
-          )}
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.02)] flex flex-col justify-center">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-500">
-            Search Shelf Inventory
-          </label>
-
-          <div className="relative flex items-center">
-            <div className="absolute left-5 text-slate-400">
-              <SvgSearch />
+    <div ref={ref} className="relative w-full">
+      <div
+        onClick={() => !variantsLoading && setOpen((p) => !p)}
+        className={`w-full flex items-center gap-3 bg-white border rounded-xl px-4 py-3 cursor-pointer transition-all
+          ${open ? "border-[#ff7e00] ring-2 ring-[#ff7e00]/10" : "border-slate-200 hover:border-slate-300"}
+          ${variantsLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+      >
+        {selected ? (
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 shrink-0">
+              {selected.thumbnail
+                ? <img src={selected.thumbnail} className="w-full h-full object-cover" alt="" />
+                : <div className="w-full h-full flex items-center justify-center"><Icon name="package" size={14} className="text-slate-300" /></div>
+              }
             </div>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search product name, SKU, brand, or comments..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] transition-all font-bold placeholder-slate-400"
-            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-[#0f172a] truncate">{selected.productName}</p>
+              <p className="text-[10px] text-slate-400 font-semibold">
+                {selected.sku} · {selected.weight}{selected.unit}
+                {selected.flavour && ` · ${selected.flavour}`}
+              </p>
+            </div>
+            <button type="button" onClick={handleClear} className="text-slate-300 hover:text-slate-500 cursor-pointer shrink-0">
+              <Icon name="x" size={14} />
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-2 flex-1 text-slate-400">
+            {variantsLoading
+              ? <><div className="w-3.5 h-3.5 border-2 border-slate-200 border-t-orange-400 rounded-full animate-spin" /><span className="text-sm font-semibold">Loading variants...</span></>
+              : <><Icon name="search" size={14} /><span className="text-sm font-semibold">Search by product name or SKU...</span></>
+            }
+          </div>
+        )}
+        <Icon name={open ? "chevron-up" : "chevron-down"} size={14} className="text-slate-400 shrink-0" />
       </div>
 
-      {/* ================= METRICS BLOCK ================= */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center gap-4 border-l-4 border-l-[#ff7e00] shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-550/10 text-xl text-[#ff7e00] bg-orange-50">
-            <SvgBoxes />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Stock on Shelf</p>
-            <p className="text-2xl font-black text-[#0f172a] mt-0.5">{loading ? "..." : totalStock}</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center gap-4 border-l-4 border-l-amber-500 shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-xl text-amber-500">
-            <SvgExclamation />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Low Stock Alert Items</p>
-            <p className="text-2xl font-black text-[#0f172a] mt-0.5">{loading ? "..." : lowStockCount}</p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center gap-4 border-l-4 border-l-emerald-500 shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-xl text-emerald-500 bg-emerald-50">
-            <SvgBoxes />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Catalog Items</p>
-            <p className="text-2xl font-black text-[#0f172a] mt-0.5">{loading ? "..." : filteredInventory.length}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* ================= DATATABLE COMPONENT ================= */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-[0_10px_30px_rgba(15,23,42,0.02)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="p-5 pl-8">Product Name</th>
-                <th className="p-5">Store</th>
-                <th className="p-5">SKU / Package</th>
-                <th className="p-5">Pricing</th>
-                <th className="p-5">Current Stock</th>
-                <th className="p-5">Available</th>
-                <th className="p-5">Reserved</th>
-                <th className="p-5">Aisle Status</th>
-                <th className="p-5">Internal Note</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
-              {loading ? (
-                <tr>
-                  <td colSpan="9" className="p-12 text-center text-slate-400 font-bold">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-2.5 w-2.5 bg-[#ff7e00] rounded-full animate-bounce"></div>
-                      <div className="h-2.5 w-2.5 bg-[#ff7e00] rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                      <div className="h-2.5 w-2.5 bg-[#ff7e00] rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                      <span>Syncing with Store Database...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredInventory.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="p-12 text-center text-slate-450 font-bold italic text-slate-400">
-                    No active inventory logs found for this store.
-                  </td>
-                </tr>
-              ) : (
-                filteredInventory.map((item) => {
-                  const product = item?.variant?.product;
-                  const variant = item?.variant;
-                  const status = getStatus(item);
-
-                  return (
-                    <tr key={item?._id} className="transition-colors hover:bg-slate-50/50">
-                      <td className="p-4 pl-8">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={variant?.thumbnail || product?.thumbnail || "/logo.png"}
-                            alt={product?.name}
-                            className="h-12 w-12 rounded-xl object-cover bg-slate-100 border border-slate-150 shadow-sm"
-                          />
-                          <div>
-                            <p className="font-bold text-[#0f172a]">{product?.name || "-"}</p>
-                            <p className="text-xs text-slate-400 font-bold">{product?.brand?.name || "-"}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="p-4 text-slate-600 font-bold">{item?.store?.name || "-"}</td>
-
-                      <td className="p-4">
-                        <p className="font-bold text-[#0f172a]">{variant?.sku || "-"}</p>
-                        <p className="text-xs text-slate-400 font-bold">
-                          {variant?.weight || "-"} {variant?.unit || ""}
-                        </p>
-                      </td>
-
-                      <td className="p-4">
-                        <p className="font-extrabold text-green-600">₹{variant?.sellingPrice || "-"}</p>
-                        <p className="text-xs text-slate-400 font-bold line-through">₹{variant?.mrp || "-"}</p>
-                      </td>
-
-                      <td className="p-4 font-bold text-[#0f172a]">
-                        {item?.stock}{" "}
-                        <span className="text-xs font-bold text-slate-400">
-                          / Min {item?.lowStockThreshold}
-                        </span>
-                      </td>
-
-                      <td className="p-4 font-bold text-green-600">{item?.availableStock}</td>
-                      <td className="p-4 font-bold text-amber-500">{item?.reservedStock}</td>
-
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${
-                            status === "Healthy"
-                              ? "bg-emerald-50 border-emerald-200 text-emerald-600"
-                              : status === "Low Stock"
-                              ? "bg-amber-50 border-amber-200 text-amber-500"
-                              : "bg-rose-50 border-rose-200 text-rose-500"
-                          }`}
-                        >
-                          {status}
-                        </span>
-                      </td>
-
-                      <td className="p-4 text-slate-400 text-xs italic font-semibold">{item?.note || "-"}</td>
-                    </tr>
-                  );
-                })
+      {open && (
+        <div className="absolute z-50 mt-2 w-full bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+              <Icon name="search" size={13} className="text-slate-400 shrink-0" />
+              <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search product, SKU..."
+                className="w-full bg-transparent text-sm font-semibold text-[#0f172a] outline-none placeholder-slate-300" />
+              {query && (
+                <button type="button" onClick={() => setQuery("")} className="text-slate-300 hover:text-slate-500 cursor-pointer">
+                  <Icon name="x" size={12} />
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* ================= POPUP FORM MODAL ================= */}
-      {showPopup && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/40 px-4 backdrop-blur-md overflow-y-auto py-6">
-          <div className="w-full max-w-3xl bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl relative animate-in fade-in zoom-in duration-300 max-h-[calc(100vh-3rem)] overflow-y-auto">
-            <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#ff7e00]">
-                  Action Panel
-                </p>
-                <h2 className="mt-1 text-2xl font-black text-[#0f172a]">Add Store Stock</h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={closePopup}
-                className="rounded-full bg-slate-100 p-2.5 text-slate-400 transition hover:bg-red-50 hover:text-red-500 cursor-pointer"
-              >
-                <SvgTimes />
-              </button>
             </div>
-
-            <form onSubmit={handleCreateInventory} className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                  Target Store
-                </label>
-                <select
-                  name="store"
-                  value={formData.store}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] font-bold cursor-pointer"
-                >
-                  <option value="">Select store</option>
-                  {stores.map((store) => (
-                    <option key={store?._id} value={store?._id}>
-                      {store?.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <Input
-                label="Variant ID / SKU"
-                name="variant"
-                value={formData.variant}
-                onChange={handleChange}
-                placeholder="Paste a variant ID or SKU here"
-                required
-              />
-
-              <Input
-                label="Opening Stock"
-                name="stock"
-                type="number"
-                value={formData.stock}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="Low Stock Threshold"
-                name="lowStockThreshold"
-                type="number"
-                value={formData.lowStockThreshold}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="Max Order Quantity"
-                name="maxOrderQuantity"
-                type="number"
-                value={formData.maxOrderQuantity}
-                onChange={handleChange}
-                placeholder="E.g., 10"
-              />
-
-              <div className="md:col-span-2">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                    Variant rows
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleAddVariantRow}
-                    className="text-[#ff7e00] font-bold text-sm hover:underline"
-                  >
-                    + Add variant
-                  </button>
-                </div>
-
-                <div className="space-y-5">
-                  {formData.variants.map((variantRow, index) => (
-                    <div
-                      key={index}
-                      className="rounded-3xl border border-slate-200 bg-slate-50 p-5"
-                    >
-                      <div className="flex items-center justify-between gap-3 mb-4">
-                        <p className="text-sm font-black text-slate-700 tracking-wide">
-                          Variant {index + 1}
-                        </p>
-                        {formData.variants.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveVariantRow(index)}
-                            className="text-rose-500 text-sm font-bold hover:text-rose-600"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Input
-                          label="Variant ID / SKU"
-                          name="variant"
-                          value={variantRow.variant}
-                          onChange={(e) => handleVariantChange(index, "variant", e.target.value)}
-                          placeholder="Paste variant ID or SKU"
-                          required
-                        />
-
-                        <Input
-                          label="Opening Stock"
-                          name="stock"
-                          type="number"
-                          value={variantRow.stock}
-                          onChange={(e) => handleVariantChange(index, "stock", e.target.value)}
-                          required
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
-                        <Input
-                          label="Low Stock Threshold"
-                          name="lowStockThreshold"
-                          type="number"
-                          value={variantRow.lowStockThreshold}
-                          onChange={(e) => handleVariantChange(index, "lowStockThreshold", e.target.value)}
-                          required
-                        />
-
-                        <Input
-                          label="Max Order Quantity"
-                          name="maxOrderQuantity"
-                          type="number"
-                          value={variantRow.maxOrderQuantity}
-                          onChange={(e) => handleVariantChange(index, "maxOrderQuantity", e.target.value)}
-                          placeholder="E.g., 10"
-                        />
-                      </div>
-
-                      <div className="mt-4">
-                        <label className="mb-1.5 block text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                          Note
-                        </label>
-                        <textarea
-                          name="note"
-                          rows="2"
-                          value={variantRow.note}
-                          onChange={(e) => handleVariantChange(index, "note", e.target.value)}
-                          placeholder="E.g., Fast moving item"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] font-bold resize-none placeholder-slate-400"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="md:col-span-2 flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="px-6 py-3 bg-slate-100 text-slate-500 font-bold rounded-xl hover:bg-slate-200 transition-all cursor-pointer"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-8 py-3 bg-[#ff7e00] hover:bg-[#e06f00] text-white font-bold rounded-xl transition-all cursor-pointer shadow-md"
-                >
-                  Register Stock
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
-
-      {/* ================= INLINE TOAST SYSTEM ================= */}
-      {toast && (
-        <div className="fixed bottom-5 right-5 z-[1000] flex items-center p-4 rounded-2xl shadow-2xl bg-white border-l-4 border-l-[#ff7e00] border border-slate-100 animate-slide-in">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#ff7e00] animate-ping" />
-            <p className="text-sm font-black text-slate-800">{toast.message}</p>
+          <div className="max-h-56 overflow-y-auto divide-y divide-slate-50">
+            {filtered.length === 0 ? (
+              <div className="py-8 text-center text-sm text-slate-400 font-semibold">No variants found</div>
+            ) : filtered.map((v) => (
+              <div key={v._id} onClick={() => handleSelect(v)}
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-orange-50/60 transition-colors ${value === v._id ? "bg-orange-50" : ""}`}>
+                <div className="w-9 h-9 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0">
+                  {v.thumbnail
+                    ? <img src={v.thumbnail} className="w-full h-full object-cover" alt="" />
+                    : <div className="w-full h-full flex items-center justify-center"><Icon name="package" size={16} className="text-slate-300" /></div>
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-[#0f172a] truncate">{v.productName}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">{v.sku}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">{v.weight}{v.unit}</span>
+                    {v.flavour && <span className="text-[10px] text-orange-500 font-semibold">{v.flavour}</span>}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-black text-emerald-600">₹{v.sellingPrice}</p>
+                  <p className="text-[10px] text-slate-400 line-through">₹{v.mrp}</p>
+                </div>
+                {value === v._id && <Icon name="check" size={14} className="text-[#ff7e00] shrink-0" />}
+              </div>
+            ))}
+          </div>
+          <div className="px-4 py-2 border-t border-slate-100 text-[10px] text-slate-400 font-semibold">
+            {filtered.length} variant{filtered.length !== 1 ? "s" : ""} available
           </div>
         </div>
       )}
@@ -806,17 +245,591 @@ const Inventory = () => {
   );
 };
 
-// Generic Input element helper to maintain pristine typography spacing and responsiveness
-const Input = ({ label, ...props }) => {
+// ─── Variant Row in modal ─────────────────────────────────────────────────────
+const emptyVariant = () => ({ variant: "", stock: "", lowStockThreshold: "", maxOrderQuantity: "", note: "" });
+
+const VariantRow = ({ idx, data, onChange, onRemove, showRemove, allVariants, variantsLoading }) => {
+  const field = (name) => ({ value: data[name], onChange: (e) => onChange(idx, name, e.target.value) });
   return (
-    <div>
-      <label className="mb-1.5 block text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-        {label}
-      </label>
-      <input
-        {...props}
-        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] font-bold placeholder-slate-400"
+    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-black uppercase tracking-wider text-slate-500">Variant {idx + 1}</span>
+        {showRemove && (
+          <button type="button" onClick={() => onRemove(idx)}
+            className="text-rose-500 hover:text-rose-700 text-xs font-bold flex items-center gap-1 cursor-pointer">
+            <Icon name="trash" size={12} /> Remove
+          </button>
+        )}
+      </div>
+      <div>
+        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+          Select Variant <span className="text-orange-400">*</span>
+        </label>
+        <VariantSelector value={data.variant} onChange={(val) => onChange(idx, "variant", val)}
+          allVariants={allVariants} variantsLoading={variantsLoading} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          { name: "stock", label: "Opening Stock", req: true, placeholder: "100" },
+          { name: "lowStockThreshold", label: "Low Stock Alert", placeholder: "5" },
+          { name: "maxOrderQuantity", label: "Max Order Qty", placeholder: "10" },
+        ].map(({ name, label, req, placeholder }) => (
+          <div key={name}>
+            <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+              {label} {req && <span className="text-orange-400">*</span>}
+            </label>
+            <input type="number" min={name === "maxOrderQuantity" ? "1" : "0"} required={!!req}
+              placeholder={placeholder}
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#0f172a] outline-none focus:border-[#ff7e00] focus:ring-2 focus:ring-[#ff7e00]/10 transition-all placeholder-slate-300"
+              {...field(name)} />
+          </div>
+        ))}
+      </div>
+      <div>
+        <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Note</label>
+        <input type="text" placeholder="e.g. Fast moving item"
+          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-[#0f172a] outline-none focus:border-[#ff7e00] focus:ring-2 focus:ring-[#ff7e00]/10 transition-all placeholder-slate-300"
+          {...field("note")} />
+      </div>
+    </div>
+  );
+};
+
+// ─── columns builder — receives stable callback refs ──────────────────────────
+const buildColumns = (onToggleStatus, onUpdateStock) => [
+  {
+    key: "productName",
+    label: "Product / Variant",
+    render: (_, row) => {
+      const attrs = Object.entries(row.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(" · ");
+      return (
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0">
+            {row.thumbnail
+              ? <img src={row.thumbnail} alt={row.productName} className="w-full h-full object-cover" />
+              : <div className="w-full h-full flex items-center justify-center"><Icon name="package" size={20} className="text-slate-300" /></div>
+            }
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[#0f172a] leading-tight">{row.productName}</p>
+            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{row.sku} · {row.weight}{row.unit}</p>
+            {attrs && <p className="text-[10px] text-slate-400 font-semibold italic mt-0.5">{attrs}</p>}
+            <p className="text-[10px] text-slate-300 font-mono mt-0.5 truncate max-w-[160px]" title={row.variantId}>{row.variantId}</p>
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    key: "storeName",
+    label: "Store",
+    render: (_, row) => (
+      <div>
+        <p className="text-sm font-bold text-[#0f172a]">{row.storeName}</p>
+        <p className="text-[11px] text-slate-400 font-semibold">{row.brandName}</p>
+        <p className="text-[10px] text-slate-300 font-semibold">{row.categoryName}</p>
+      </div>
+    ),
+  },
+  {
+    key: "sellingPrice",
+    label: "Pricing",
+    render: (_, row) => (
+      <div>
+        <p className="text-sm font-black text-emerald-600">₹{row.sellingPrice}</p>
+        <p className="text-[11px] text-slate-400 font-semibold line-through">₹{row.mrp}</p>
+        {row.mrp > row.sellingPrice && (
+          <p className="text-[10px] font-bold text-[#ff7e00]">
+            {Math.round(((row.mrp - row.sellingPrice) / row.mrp) * 100)}% off
+          </p>
+        )}
+      </div>
+    ),
+  },
+  {
+    key: "stock",
+    label: "Stock",
+    render: (_, row) => <StockBar item={row} />,
+  },
+  {
+    key: "availableStock",
+    label: "Available",
+    render: (val) => <span className="text-sm font-black text-emerald-600">{val}</span>,
+  },
+  {
+    key: "reservedStock",
+    label: "Reserved",
+    render: (val) => <span className="text-sm font-black text-amber-500">{val}</span>,
+  },
+  {
+    key: "maxOrderQuantity",
+    label: "Max Order",
+    render: (val) => <span className="text-sm font-bold text-slate-500">{val}</span>,
+  },
+  {
+    key: "isAvailable",
+    label: "Status",
+    render: (_, row) => {
+      const status = getStatus(row);
+      const meta = STATUS_META[status];
+      return (
+        <div className="flex flex-col gap-1.5">
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${meta.cls}`}>
+            <Icon name={meta.icon} size={10} /> {meta.label}
+          </span>
+          {row.note && (
+            <p className="text-[10px] text-slate-400 italic font-semibold max-w-[120px] truncate" title={row.note}>{row.note}</p>
+          )}
+        </div>
+      );
+    },
+  },
+  {
+    key: "lastRestockedAt",
+    label: "Last Restock",
+    render: (val) => (
+      <span className="text-xs text-slate-500 font-semibold">
+        {val ? new Date(val).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" }) : "—"}
+      </span>
+    ),
+  },
+  {
+    key: "_id",
+    label: "Actions",
+    render: (_, row) => (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onUpdateStock(row)}
+          className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+        >
+          <Icon name="pencil" size={11} /> Update
+        </button>
+        <button
+          onClick={() => onToggleStatus(row)}
+          className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-colors cursor-pointer flex items-center gap-1
+            ${row.isAvailable
+              ? "bg-rose-50 hover:bg-rose-100 text-rose-600"
+              : "bg-emerald-50 hover:bg-emerald-100 text-emerald-600"
+            }`}
+        >
+          <Icon name={row.isAvailable ? "eye-off" : "eye"} size={11} />
+          {row.isAvailable ? "Disable" : "Enable"}
+        </button>
+      </div>
+    ),
+  },
+];
+
+// ─── Main component ───────────────────────────────────────────────────────────
+const Inventory = () => {
+  const dispatch = useDispatch();
+
+  const [stores, setStores] = useState([]);
+  const [inventory, setInventory] = useState([]);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
+  const [allVariants, setAllVariants] = useState([]);
+  const [variantsLoading, setVariantsLoading] = useState(false);
+
+  const [selectedStoreId, setSelectedStoreId] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formStore, setFormStore] = useState("");
+  const [variants, setVariants] = useState([emptyVariant()]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
+  // ── load stores ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await getAllStoresApi(1, 100);
+        const list = normalizeStores(res);
+        setStores(list);
+        if (list.length) { setSelectedStoreId(list[0]?._id || ""); setFormStore(list[0]?._id || ""); }
+      } catch { showError("Failed to load stores"); }
+    };
+    load();
+  }, []);
+
+  // ── load all variants once ────────────────────────────────────────────────
+  useEffect(() => {
+    const loadVariants = async () => {
+      setVariantsLoading(true);
+      try {
+        const res = await getAllVariantsApi(1, 200);
+        if (res?.success && Array.isArray(res.data)) {
+          setAllVariants(res.data.map((v) => ({
+            _id: v._id,
+            productId: v.product?._id || "",
+            productName: v.product?.name || "Unknown Product",
+            thumbnail: v.thumbnail || v.product?.thumbnail || "",
+            sku: v.sku || "—",
+            weight: v.weight ?? "",
+            unit: v.unit || "",
+            mrp: Number(v.mrp || 0),
+            sellingPrice: Number(v.sellingPrice || 0),
+            isDefault: v.isDefault || false,
+            flavour: v.attributes?.flavour || v.attributes?.flavor || "",
+          })));
+        }
+      } catch { showError("Failed to load variants"); }
+      finally { setVariantsLoading(false); }
+    };
+    loadVariants();
+  }, []);
+
+  // ── load inventory ────────────────────────────────────────────────────────
+  const fetchInventory = useCallback(async (storeId) => {
+    if (!storeId) return;
+    try {
+      setFetchLoading(true);
+      const res = await getInventoryByStoreIdApi(storeId, 1, 50);
+      // console.log("Inventory Response:", res.data.inventory);
+      setInventory(normalizeInventory(res));
+      setPagination(res?.data?.pagination || res?.pagination || { total: 0, page: 1, totalPages: 1 });
+    } catch { showError("Failed to fetch inventory"); }
+    finally { setFetchLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (selectedStoreId) fetchInventory(selectedStoreId);
+  }, [selectedStoreId, fetchInventory, refetchTrigger]);
+
+  // ── action handlers (useCallback so columns memo stays stable) ────────────
+ const handleToggleStatus = useCallback(async (row) => {
+  try {
+    dispatch(showLoader());
+
+    console.log("Inventory ID:", row._id);
+
+
+    const res = await toggleInventoryStatusApi(row._id, { isAvailable: !row.isAvailable });
+
+console.log("Toggle API Response:", res.data || res);
+    if (res?.success) {
+      console.log("Before:", row.isAvailable);
+console.log("Response:", res);
+
+await fetchInventory(selectedStoreId);
+      setRefetchTrigger((p) => p + 1);
+    } else {
+      showError(res?.message || "Failed");
+    }
+  } catch (err) {
+    console.log("Toggle Error:", err);
+    showError(err?.message || "Something went wrong");
+  } finally {
+    dispatch(hideLoader());
+  }
+}, [dispatch]);
+
+ const handleUpdateStock = useCallback(async (row) => {
+  const { value: qty } = await Swal.fire({
+    title: "Update Inventory Stock",
+    text: `Current Stock: ${row.stock}`,
+    input: "number",
+    inputValue: row.stock,
+    inputLabel: "Enter New Stock Quantity",
+    inputAttributes: {
+      min: 0,
+    },
+    showCancelButton: true,
+    confirmButtonText: "Update Stock",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#ff7e00",
+    reverseButtons: true,
+    inputValidator: (value) => {
+      if (value === "" || value === null) {
+        return "Please enter stock quantity";
+      }
+
+      if (Number(value) < 0) {
+        return "Stock cannot be negative";
+      }
+
+      return null;
+    },
+  });
+
+  if (qty === undefined) return;
+
+  try {
+    dispatch(showLoader());
+
+    const res = await updateInventoryStockApi(row._id, {
+      stock: Number(qty),
+    });
+
+    if (res?.success) {
+      showSuccess(res?.message || "Stock updated successfully");
+      setRefetchTrigger((prev) => prev + 1);
+    } else {
+      showError(res?.message || "Failed to update stock");
+    }
+  } catch (err) {
+    showError(err?.message || "Something went wrong");
+  } finally {
+    dispatch(hideLoader());
+  }
+}, [dispatch]);
+
+  // ── columns — rebuilt only when action handlers change (stable) ───────────
+  const columns = useMemo(
+    () => buildColumns(handleToggleStatus, handleUpdateStock),
+    [handleToggleStatus, handleUpdateStock]
+  );
+
+  // ── derived ───────────────────────────────────────────────────────────────
+  const filteredByStatus = useMemo(() => {
+    if (statusFilter === "all") return inventory;
+    return inventory.filter((item) => getStatus(item) === statusFilter);
+  }, [inventory, statusFilter]);
+
+  const metrics = useMemo(() => ({
+    totalStock: inventory.reduce((s, i) => s + i.stock, 0),
+    totalItems: inventory.length,
+    healthy: inventory.filter((i) => getStatus(i) === "healthy").length,
+    low: inventory.filter((i) => getStatus(i) === "low").length,
+    out: inventory.filter((i) => getStatus(i) === "out").length,
+    totalValue: inventory.reduce((s, i) => s + i.sellingPrice * i.availableStock, 0),
+  }), [inventory]);
+
+  const selectedStore = useMemo(
+    () => stores.find((s) => s._id === selectedStoreId),
+    [stores, selectedStoreId]
+  );
+
+  // ── form handlers ─────────────────────────────────────────────────────────
+  const handleVariantChange = (idx, name, value) =>
+    setVariants((prev) => prev.map((v, i) => (i === idx ? { ...v, [name]: value } : v)));
+
+  const addVariantRow = () => setVariants((prev) => [...prev, emptyVariant()]);
+  const removeVariantRow = (idx) => setVariants((prev) => prev.filter((_, i) => i !== idx));
+
+  const openModal = () => {
+    setVariants([emptyVariant()]);
+    setFormStore(selectedStoreId || stores[0]?._id || "");
+    setShowModal(true);
+  };
+  const closeModal = () => {
+    setShowModal(false);
+    setTimeout(() => setVariants([emptyVariant()]), 300);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validVariants = variants.filter((v) => v.variant.trim() && v.stock !== "");
+    if (!formStore) return showError("Please select a store");
+    if (!validVariants.length) return showError("Select at least one variant and enter stock");
+    const payload = {
+      store: formStore,
+      variants: validVariants.map((v) => ({
+        variant: v.variant.trim(),
+        stock: Number(v.stock),
+        lowStockThreshold: Number(v.lowStockThreshold || 5),
+        maxOrderQuantity: Number(v.maxOrderQuantity || 10),
+        note: v.note.trim(),
+      })),
+    };
+    try {
+      setSubmitting(true);
+      dispatch(showLoader());
+      const res = await createInventoryApi(payload);
+      if (res?.success) {
+        showSuccess(res?.message || "Stock added successfully");
+        closeModal();
+        setRefetchTrigger((prev) => prev + 1);
+      } else {
+        showError(res?.message || "Failed to add stock");
+      }
+    } catch { showError("Server error — please try again"); }
+    finally { setSubmitting(false); dispatch(hideLoader()); }
+  };
+
+  // ── export CSV ────────────────────────────────────────────────────────────
+  const exportCSV = () => {
+    const headers = ["Product", "SKU", "Brand", "Weight", "Store", "Stock", "Available", "Reserved", "Low Threshold", "Max Order", "Selling Price", "MRP", "Status", "Last Restock", "Note"];
+    const rows = filteredByStatus.map((i) => [
+      i.productName, i.sku, i.brandName, `${i.weight}${i.unit}`, i.storeName,
+      i.stock, i.availableStock, i.reservedStock, i.lowStockThreshold, i.maxOrderQuantity,
+      i.sellingPrice, i.mrp, getStatus(i),
+      i.lastRestockedAt ? new Date(i.lastRestockedAt).toLocaleDateString() : "", i.note,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+    a.download = `inventory-${selectedStore?.name || "all"}-${Date.now()}.csv`;
+    a.click();
+  };
+
+  // ─── render ───────────────────────────────────────────────────────────────
+  return (
+    <div className="p-4 sm:p-6 md:p-8 min-h-screen bg-[#f8fafc] font-sans antialiased text-[#1e293b]">
+
+      {/* ── HEADER ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ff7e00] mb-1">Store operations</p>
+          <h1 className="text-3xl sm:text-4xl font-black text-[#0f172a] tracking-tight">
+            Inventory <span className="text-[#ff7e00]">tracking</span>
+          </h1>
+          {selectedStore && (
+            <p className="mt-1 text-sm text-slate-500 font-semibold flex items-center gap-1.5">
+              <Icon name="building-store" size={13} className="text-[#ff7e00]" />
+              {selectedStore.name}{selectedStore.address && ` · ${selectedStore.address}`}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer">
+            <Icon name="download" size={15} /> Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* ── STORE SELECTOR ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="bg-white border border-slate-200 rounded-2xl px-4 py-3">
+          <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Store</label>
+          <select value={selectedStoreId} onChange={(e) => setSelectedStoreId(e.target.value)}
+            className="w-full text-sm font-bold text-[#0f172a] bg-transparent outline-none cursor-pointer">
+            {stores.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* ── METRICS ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        {[
+          { label: "Total stock", value: metrics.totalStock.toLocaleString(), icon: "packages", color: "text-[#ff7e00]", filter: null },
+          { label: "Total items", value: metrics.totalItems, icon: "box", color: "text-slate-500", filter: null },
+          { label: "Healthy", value: metrics.healthy, icon: "circle-check", color: "text-emerald-600", filter: "healthy" },
+          { label: "Low stock", value: metrics.low, icon: "alert-triangle", color: "text-amber-600", filter: "low" },
+          { label: "Out of stock", value: metrics.out, icon: "circle-x", color: "text-rose-600", filter: "out" },
+          { label: "Stock value", value: `₹${metrics.totalValue.toLocaleString("en-IN")}`, icon: "currency-rupee", color: "text-blue-600", filter: null },
+        ].map(({ label, value, icon, color, filter }) => (
+          <div key={label}
+            onClick={() => filter && setStatusFilter((f) => f === filter ? "all" : filter)}
+            className={`bg-white border rounded-2xl px-4 py-3.5 transition-all
+              ${filter ? "cursor-pointer hover:border-slate-300 hover:shadow-sm" : ""}
+              ${statusFilter === filter ? "border-[#ff7e00] shadow-[0_0_0_2px_rgba(255,126,0,0.1)]" : "border-slate-200"}`}>
+            <div className={`text-xl mb-1 ${color}`}><Icon name={icon} size={18} /></div>
+            <div className="text-lg font-black text-[#0f172a]">{value}</div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── STATUS FILTER TABS ── */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {["all", "healthy", "low", "out"].map((s) => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer
+              ${statusFilter === s ? "bg-[#ff7e00] text-white shadow-sm" : "bg-white border border-slate-200 text-slate-500 hover:bg-slate-50"}`}>
+            {s === "all" ? `All (${inventory.length})` :
+             s === "healthy" ? `Healthy (${metrics.healthy})` :
+             s === "low" ? `Low stock (${metrics.low})` :
+             `Out of stock (${metrics.out})`}
+          </button>
+        ))}
+      </div>
+
+      {/* ── TABLE ── */}
+      <TableComponent
+        title="Inventory Records"
+        subtitle={selectedStore ? `Showing stock for ${selectedStore.name}` : "Select a store to view inventory"}
+        columns={columns}
+        data={filteredByStatus}
+        searchPlaceholder="Search by product, SKU, brand or variant ID..."
+        showSearch={true}
+        showIndex={false}
+        loading={fetchLoading}
+        addButtonText="Add stock"
+        onAdd={openModal}
+        onRefresh={() => setRefetchTrigger((prev) => prev + 1)}
       />
+
+      {/* Pagination info */}
+      {!fetchLoading && filteredByStatus.length > 0 && (
+        <div className="mt-3 flex justify-end">
+          <p className="text-xs text-slate-400 font-semibold">
+            {pagination.total} total records · Page {pagination.page} of {pagination.totalPages} · Last synced: {new Date().toLocaleTimeString("en-IN")}
+          </p>
+        </div>
+      )}
+
+      {/* ── ADD STOCK MODAL ── */}
+      {showModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="w-full max-w-xl bg-white border border-slate-100 rounded-[2rem] shadow-[0_30px_60px_rgba(15,23,42,0.15)] overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#ff7e00]">Stock management</p>
+                <h2 className="text-xl font-black text-[#0f172a] mt-0.5">Add stock</h2>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
+                  {allVariants.length} variants loaded
+                </span>
+               <button
+  onClick={closeModal}
+  className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-800 cursor-pointer transition-all"
+>
+  <FaTimes size={16} />
+</button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto space-y-4">
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                  Store <span className="text-orange-400">*</span>
+                </label>
+                <select value={formStore} onChange={(e) => setFormStore(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-[#0f172a] outline-none focus:border-[#ff7e00] cursor-pointer">
+                  <option value="">Select a store</option>
+                  {stores.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    Variants ({variants.length})
+                  </label>
+                  <button type="button" onClick={addVariantRow}
+                    className="text-[#ff7e00] text-xs font-bold flex items-center gap-1 hover:text-[#e06f00] cursor-pointer">
+                    <Icon name="plus" size={12} /> Add another variant
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {variants.map((v, idx) => (
+                    <VariantRow key={idx} idx={idx} data={v} onChange={handleVariantChange}
+                      onRemove={removeVariantRow} showRemove={variants.length > 1}
+                      allVariants={allVariants} variantsLoading={variantsLoading} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
+              <button type="button" onClick={closeModal}
+                className="px-5 py-2.5 text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer">
+                Cancel
+              </button>
+              <button onClick={handleSubmit} disabled={submitting}
+                className="px-6 py-2.5 text-sm font-bold text-white bg-[#ff7e00] hover:bg-[#e06f00] rounded-xl shadow-md transition-all disabled:opacity-50 cursor-pointer flex items-center gap-2">
+                {submitting
+                  ? <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</>
+                  : <><Icon name="check" size={14} /> Register stock</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

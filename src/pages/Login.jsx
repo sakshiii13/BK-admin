@@ -1,18 +1,22 @@
+// src/pages/Login.jsx
+
 import React, { useState } from "react";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { MdLocalGroceryStore } from "react-icons/md";
+import { GiCarrot, GiTomato, GiBreadSlice } from "react-icons/gi";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { adminLoginApi } from "../api/admin.api";
 import { showLoader, hideLoader } from "../redux/slices/loaderSlice";
-import { showOtpSentAlert, showError } from "../utils/alertService"; 
+import { showOtpSentAlert, showError } from "../utils/alertService";
 import Swal from "sweetalert2";
+import { MainContent } from "../constants/mainContent";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [receivedOtp, setReceivedOtp] = useState(""); 
+  const [receivedOtp, setReceivedOtp] = useState("");
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -20,10 +24,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      email,
-      password,
-    };
+    const payload = { email, password };
 
     try {
       dispatch(showLoader());
@@ -32,16 +33,14 @@ const Login = () => {
       if (response?.success) {
         localStorage.setItem("adminEmail", email);
         localStorage.setItem("adminOtp", response?.otp);
-        setReceivedOtp(response?.otp); 
+        setReceivedOtp(response?.otp);
 
         dispatch(hideLoader());
 
-        // 🔥 CRITICAL FIX: explicit promise resolution logic
         showOtpSentAlert().then(() => {
-          Swal.close(); // Force kill modal overlay context before unmounting
-          navigate("/verify-otp"); // Now change page flawlessly
+          Swal.close();
+          navigate("/verify-otp");
         });
-
       } else {
         dispatch(hideLoader());
         showError(response?.message || "Login failed");
@@ -53,105 +52,167 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50/30 flex items-center justify-center px-4 relative overflow-hidden font-sans">
-      
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-green-500/5 rounded-full blur-[130px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-orange-500/5 rounded-full blur-[130px]" />
+    <div className="min-h-screen w-full bg-[#fefcf6] flex items-center justify-center px-4 py-8 relative overflow-x-hidden overflow-y-auto font-sans">
 
-      <div className="relative w-full max-w-[1000px] min-h-[620px] bg-white rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.1)] overflow-hidden grid lg:grid-cols-2 border border-slate-200/80">
-        
-        <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 relative overflow-hidden">
-          <div className="absolute -right-20 -top-20 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl" />
-          <div className="absolute left-[-10%] bottom-[-10%] w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl" />
-          
-          <div>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/[0.04] border border-white/10 text-slate-300 rounded-full text-xs font-bold tracking-wider backdrop-blur-md shadow-sm">
-              <MdLocalGroceryStore className="text-orange-400 text-sm" />
-              BK GROCERY ADMIN
+      {/* AMBIENT BACKGROUND GLOW — warm citrus tones matching the logo */}
+      <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] bg-[var(--primary-orange)]/[0.10] rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-15%] right-[-10%] w-[500px] h-[500px] bg-[var(--primary-green)]/[0.10] rounded-full blur-[120px]" />
+
+      <div className="relative w-full max-w-[1000px] my-auto bg-[var(--card-bg)] rounded-[28px] border border-slate-200 border-b-[6px] border-b-[var(--border-3d)] shadow-[0_24px_60px_rgba(15,23,42,0.10)] overflow-hidden grid lg:grid-cols-[1.05fr_1fr]">
+
+        {/* ===================== BRAND PANEL ===================== */}
+        <div
+          className="
+            relative overflow-hidden
+            bg-gradient-to-br from-[#fff6e0] via-[#fef0d9] to-[#f3ead0]
+            border-b border-orange-100 lg:border-b-0 lg:border-r
+            flex flex-col justify-between
+            p-6 sm:p-8 lg:p-12
+          "
+        >
+          {/* citrus glow accents */}
+          <div className="absolute -right-16 -top-16 w-56 h-56 bg-[var(--primary-orange)]/15 rounded-full blur-[80px]" />
+          <div className="absolute left-[-10%] bottom-[-15%] w-64 h-64 bg-[var(--primary-green)]/15 rounded-full blur-[90px]" />
+
+          <div className="relative">
+            {/* LOGO — hero element, large and centered to top */}
+            <img
+              src={MainContent.logo}
+              alt="BK Grocery"
+  className="h-24 sm:h-38 lg:h-44 w-auto object-contain drop-shadow-[0_4px_10px_rgba(242,122,26,0.25)] mx-auto"
+            />
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white border border-orange-200 text-[var(--primary-orange-dark)] rounded-full text-[10px] sm:text-xs font-black tracking-wider mt-6 lg:mt-8 shadow-sm">
+              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--primary-green)] opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-[var(--primary-green)]" />
+              </span>
+              ADMIN CONSOLE
             </div>
 
-            <h1 className="mt-14 text-4xl font-extrabold text-white leading-[1.25] tracking-tight">
-              Manage Your <br />
-              <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-emerald-400 bg-clip-text text-transparent font-black">
-                Grocery Hub
+            <h1 className="mt-4 lg:mt-6 text-2xl sm:text-3xl lg:text-[2.3rem] font-black text-slate-800 leading-[1.15] tracking-tight">
+              Fresh stock, <br className="hidden sm:block" />
+              <span className="bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-green)] bg-clip-text text-transparent">
+                fully managed
               </span>
             </h1>
 
-            <p className="mt-4 text-slate-400 text-[14px] leading-relaxed max-w-sm font-medium">
-              Smart administrative ecosystem optimized for live product metrics, rapid category assignments, and intelligent order dispatch tracking.
+            <p className="mt-3 lg:mt-4 text-slate-500 text-[13px] sm:text-sm leading-relaxed max-w-sm font-semibold hidden sm:block">
+              Approve listings, dispatch drivers, and keep every store shelf stocked — all from one console.
             </p>
           </div>
 
-          <div className="bg-white/[0.03] backdrop-blur-md rounded-2xl p-5 border border-white/10 relative group shadow-inner transition-all duration-300">
-            <p className="text-white font-bold text-base tracking-wide flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              Realtime Architecture
-            </p>
-            <p className="text-slate-400 text-xs mt-1.5 leading-relaxed font-medium">
-              Equipped with live inventory syncing, lightning fast push notifications, and adaptive logistics dashboards.
-            </p>
+          {/* OPS STRIP */}
+          <div className="relative grid grid-cols-3 gap-2 sm:gap-3 mt-6 lg:mt-10">
+            <div className="bg-white/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-orange-100">
+              <p className="text-[var(--primary-orange-dark)] font-black text-base sm:text-xl leading-none">
+                48
+              </p>
+              <p className="text-slate-500 text-[9px] sm:text-[11px] mt-1.5 font-bold leading-tight">
+                Stores live
+              </p>
+            </div>
+            <div className="bg-white/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-orange-100">
+              <p className="text-[var(--primary-orange-dark)] font-black text-base sm:text-xl leading-none">
+                1.2k
+              </p>
+              <p className="text-slate-500 text-[9px] sm:text-[11px] mt-1.5 font-bold leading-tight">
+                Orders today
+              </p>
+            </div>
+            <div className="bg-white/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-orange-100">
+              <p className="text-[var(--primary-orange-dark)] font-black text-base sm:text-xl leading-none">
+                6
+              </p>
+              <p className="text-slate-500 text-[9px] sm:text-[11px] mt-1.5 font-bold leading-tight">
+                Pending approvals
+              </p>
+            </div>
+          </div>
+
+          {/* PRODUCE STRIP — desktop only, ties directly to the logo's basket illustration */}
+          <div className="relative hidden lg:flex items-center gap-4 bg-white/70 backdrop-blur-md rounded-2xl p-5 border border-orange-100 mt-8">
+            <div className="flex items-center -space-x-2 shrink-0">
+              <div className="w-9 h-9 rounded-full bg-red-100 border-2 border-white flex items-center justify-center shadow-sm">
+                <GiTomato className="text-red-500 text-base" />
+              </div>
+              <div className="w-9 h-9 rounded-full bg-orange-100 border-2 border-white flex items-center justify-center shadow-sm">
+                <GiCarrot className="text-[var(--primary-orange)] text-base" />
+              </div>
+              <div className="w-9 h-9 rounded-full bg-amber-100 border-2 border-white flex items-center justify-center shadow-sm">
+                <GiBreadSlice className="text-amber-700 text-base" />
+              </div>
+            </div>
+            <div>
+              <p className="text-slate-700 font-black text-sm tracking-wide leading-tight">
+                Every aisle, tracked live
+              </p>
+              <p className="text-slate-500 text-xs mt-0.5 font-bold leading-relaxed">
+                Inventory updates the moment stock moves.
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center p-8 sm:p-14 bg-white">
+        {/* ===================== LOGIN FORM PANEL ===================== */}
+        <div className="flex items-center justify-center p-6 sm:p-10 lg:p-14 bg-[var(--card-bg)]">
           <div className="w-full max-w-sm">
-            
-            <div className="text-center mb-9">
-              <div className="h-16 flex items-center justify-center mb-3">
-                <img 
-                  src="/logo.png" 
-                  alt="logo" 
-                  className="h-14 object-contain drop-shadow-sm transition-transform hover:scale-105 duration-300" 
-                />
+
+            <div className="text-center mb-7 sm:mb-9">
+              <div className="lg:hidden h-12 sm:h-14 flex items-center justify-center mb-5">
+               {/* <div className="lg:hidden h-12 sm:h-14 flex items-center justify-center mb-5">
+  {/* <img
+    src={MainContent.logo}
+    alt="BK Grocery logo"
+    className="h-12 sm:h-14 w-auto object-contain"
+  /> */}
+{/* </div>  */}
               </div>
 
-              <h2 className="text-[26px] font-extrabold text-slate-800 tracking-tight">
-                Welcome Back
+              <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tracking-tight">
+                Sign in to the console
               </h2>
 
-              <p className="text-slate-400 mt-1 text-xs font-bold tracking-wide">
-                ENTER CREDENTIALS TO SECURE WORKSPACE
+              <p className="text-slate-400 mt-1.5 text-[11px] sm:text-xs font-black tracking-wide uppercase">
+                Admin access only
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              
+
               <div>
-                <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">
-                  Email Address
+                <label className="text-xs font-black text-slate-500 mb-2 block uppercase tracking-wider">
+                  Email address
                 </label>
 
-                <div className="h-12 rounded-xl bg-slate-50/60 border border-slate-200 flex items-center px-4 gap-3 focus-within:border-orange-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-500/5 transition-all shadow-sm">
+                <div className="h-12 w-full input-3d flex items-center px-4 gap-3 focus-within:border-[var(--primary-orange)] focus-within:bg-white focus-within:ring-4 focus-within:ring-[var(--primary-orange)]/15 transition-all">
                   <FaEnvelope className="text-slate-400 text-sm shrink-0" />
-
                   <input
                     type="email"
                     placeholder="admin@bkgrocery.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-transparent outline-none text-[13px] text-slate-800 placeholder-slate-400 font-bold"
+                    className="w-full bg-transparent outline-none text-[13px] text-slate-800 placeholder-slate-400 font-extrabold"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">
+                <label className="text-xs font-black text-slate-500 mb-2 block uppercase tracking-wider">
                   Password
                 </label>
 
-                <div className="h-12 rounded-xl bg-slate-50/60 border border-slate-200 flex items-center px-4 gap-3 focus-within:border-orange-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-500/5 transition-all shadow-sm">
+                <div className="h-12 w-full input-3d flex items-center px-4 gap-3 focus-within:border-[var(--primary-orange)] focus-within:bg-white focus-within:ring-4 focus-within:ring-[var(--primary-orange)]/15 transition-all">
                   <FaLock className="text-slate-400 text-sm shrink-0" />
-
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-transparent outline-none text-[13px] text-slate-800 placeholder-slate-400 font-bold tracking-widest"
+                    className="w-full bg-transparent outline-none text-[13px] text-slate-800 placeholder-slate-400 font-extrabold tracking-widest"
                     required
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -164,16 +225,16 @@ const Login = () => {
 
               <button
                 type="submit"
-                className="btn-3d btn-gradient-orange w-full h-12 rounded-xl text-white text-sm font-extrabold tracking-wide cursor-pointer transition-all flex items-center justify-center shadow-md mt-2"
+                className="btn-3d btn-orange w-full h-12 text-sm font-black tracking-wide mt-2"
               >
-                Send Verification OTP
+                Send verification OTP
               </button>
 
               {receivedOtp && (
-                <div className="mt-4 p-3.5 bg-orange-50 border border-orange-200/60 rounded-xl text-center shadow-inner-sm transform transition-all animate-bounce-short">
-                  <p className="text-xs text-slate-500 font-bold tracking-wide">
-                    🛠️ Testing OTP Mode active:{" "}
-                    <span className="font-black text-orange-600 bg-orange-100/80 px-2.5 py-0.5 rounded-lg tracking-widest text-sm shadow-sm border border-orange-200/40 ml-1">
+                <div className="mt-4 p-3.5 bg-[var(--primary-orange)]/10 border border-[var(--primary-orange)]/40 border-b-4 border-b-[var(--primary-orange)]/60 rounded-2xl text-center">
+                  <p className="text-xs text-slate-600 font-black tracking-wide flex items-center justify-center gap-1.5 flex-wrap">
+                    <span>OTP mode:</span>
+                    <span className="font-black text-slate-900 bg-[var(--primary-orange)]/15 px-2.5 py-0.5 rounded-lg tracking-widest text-sm border border-[var(--primary-orange)]/40">
                       {receivedOtp}
                     </span>
                   </p>

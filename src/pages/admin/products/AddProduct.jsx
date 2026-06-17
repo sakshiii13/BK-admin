@@ -1,733 +1,783 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  createProductApi,
+  
   getAllBrandsApi,
-  getAllSubCategoriesApi,
   getAllCategoriesApi,
+  getAllSubCategoriesApi,
+} from "../../../api/category.api";
+import {
+  getAllParentCategoriesApi,
+  getAllVariantsApi,
+  createProductApi,
   getSingleProductApi,
   updateProductApi,
 } from "../../../api/admin.api";
 import { showSuccess, showError } from "../../../utils/alertService";
-// ==========================================
-// CUSTOM INLINE SVG ICONS (Removes react-icons dependency)
-// ==========================================
-const SvgArrowLeft = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
 
-);
-const SvgPlus = () => (
-  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-);
-const SvgTrash = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-);
-const SvgUpload = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-);
-const SvgCheckCircle = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-);
-const SvgBoxes = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-);
-const SvgRegListAlt = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line><line x1="5" y1="9" x2="5.01" y2="9"></line><line x1="5" y1="13" x2="5.01" y2="13"></line></svg>
+// ─── ICONS ───────────────────────────────────────────────────────────────────
+const Icon = {
+  Back: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+    </svg>
+  ),
+  Plus: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  ),
+  Trash: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  ),
+  Upload: () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  ),
+  Tag: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  ),
+  Package: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" /><line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  ),
+  Image: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+    </svg>
+  ),
+  Sparkle: () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  ),
+  ChevronDown: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  ),
+};
+
+// ─── REUSABLE COMPONENTS ──────────────────────────────────────────────────────
+const Label = ({ children, required }) => (
+  <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-800 mb-1.5">
+    {children}{required && <span className="text-orange-400 ml-0.5">*</span>}
+  </label>
 );
 
+const InputField = ({ label, required, ...props }) => (
+  <div>
+    {label && <Label required={required}>{label}</Label>}
+    <input
+      {...props}
+      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-black outline-none
+        placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
+    />
+  </div>
+);
+
+const SelectField = ({ label, required, disabled, children, ...props }) => (
+  <div>
+    {label && <Label required={required}>{label}</Label>}
+    <div className="relative">
+      <select
+        disabled={disabled}
+        {...props}
+        className={`w-full appearance-none bg-white border border-slate-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-slate-700 outline-none
+          focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all cursor-pointer
+          ${disabled ? "opacity-40 cursor-not-allowed bg-slate-50" : ""}`}
+      >
+        {children}
+      </select>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+        <Icon.ChevronDown />
+      </div>
+    </div>
+  </div>
+);
+
+// ─── SECTION CARD ─────────────────────────────────────────────────────────────
+const Card = ({ icon, title, subtitle, action, children }) => (
+  <div className="bg-white rounded-2xl border border-slate-300 shadow-sm overflow-hidden">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div className="flex items-center gap-2.5">
+        <span className="text-orange-500">{icon}</span>
+        <div>
+          <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+          {subtitle && <p className="text-[11px] text-slate-600 mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      {action}
+    </div>
+    <div className="p-6">{children}</div>
+  </div>
+);
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const AddProduct = () => {
   const fileRef = useRef(null);
   const navigate = useNavigate();
   const { productId } = useParams();
   const isEditMode = Boolean(productId);
 
-  // UI Notification Toast State (used by effects and handlers)
-  const [notification, setNotification] = useState(null);
-  const showLocalNotification = (msg, type = "error") => {
-    setNotification({ text: msg, type });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setTimeout(() => setNotification(null), 4000);
+  // ── Toast ──
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "error") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
   };
 
-  // ==========================================
-  // COMPILER MOCK DATA & ACTIONS 
-  // (Provides offline preview stability inside isolated environments)
-  // ==========================================
+  // ── Master Data ──
+  const [brands, setBrands] = useState([]);
+  const [parentCategories, setParentCategories] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [filteredSubCategories, setFilteredSubCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  // Fetch master data from APIs (categories & brands) on mount
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchMasterData = async () => {
-      try {
-        const [catRes, brandRes] = await Promise.all([
-          getAllCategoriesApi(1, 100),
-          getAllBrandsApi({ page: 1, limit: 100 }),
-        ]);
-
-        if (!mounted) return;
-
-        // Categories
-        if (catRes?.success) {
-          setCategories(catRes.data || catRes.categories || []);
-        } else if (Array.isArray(catRes)) {
-          setCategories(catRes);
-        } else {
-          setCategories([]);
-          if (catRes?.message) showLocalNotification(catRes.message);
-        }
-
-        // Brands
-        if (brandRes?.success) {
-          setBrands(brandRes.data || brandRes.brands || []);
-        } else if (Array.isArray(brandRes)) {
-          setBrands(brandRes);
-        } else {
-          setBrands([]);
-          if (brandRes?.message) showLocalNotification(brandRes.message);
-        }
-      } catch (err) {
-        if (!mounted) return;
-        showLocalNotification("Failed to fetch master data");
-      }
-    };
-
-    fetchMasterData();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!productId) return;
-
-    let mounted = true;
-
-    const loadProduct = async () => {
-      try {
-        const res = await getSingleProductApi(productId);
-        if (!mounted) return;
-        // Normalize product result for multiple API shapes
-        let product = null;
-
-        if (res == null) {
-          product = null;
-        } else if (res?.success && res?.data) {
-          product = res.data;
-        } else if (res?.data && (res.data._id || res.data.id)) {
-          product = res.data;
-        } else if (res && (res._id || res.id)) {
-          product = res;
-        } else if (res?.product) {
-          product = res.product;
-        }
-
-        if (product) {
-          setName(product.name || "");
-          setBrand(product.brand?._id || product.brand || "");
-          setCategory(product.category?._id || product.category || "");
-          setSubCategory(product.subCategory?._id || product.subCategory || "");
-          setDescription(product.description || "");
-          setIsActive(product.isActive ?? true);
-          setVariants(
-            Array.isArray(product.variants) && product.variants.length > 0
-              ? product.variants.map((variant) => ({
-                  sku: variant.sku || "",
-                  weight: variant.weight || "",
-                  unit: variant.unit || "",
-                  mrp: variant.mrp || "",
-                  sellingPrice: variant.sellingPrice || "",
-                }))
-              : variants
-          );
-          setExistingImages(product.images || []);
-        }
-      } catch (err) {
-        if (!mounted) return;
-        showLocalNotification("Failed to load product details");
-      }
-    };
-
-    loadProduct();
-
-    return () => {
-      mounted = false;
-    };
-  }, [productId]);
-
-  // Fetch subcategories when parent category changes (server-backed)
-  // (moved) fetch of subcategories happens after `category` state is declared
-
-
-  // Main Product States
+  // ── Form ──
   const [name, setName] = useState("");
-  const [brand, setBrand] = useState("");
-  const [category, setCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
   const [description, setDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
-  const [existingImages, setExistingImages] = useState([]);
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedParent, setSelectedParent] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
 
-  // Fetch subcategories from server when parent category changes
-  useEffect(() => {
-    if (!category) return; // nothing to fetch yet
-
-    let mounted = true;
-
-    const fetchSubs = async () => {
-      try {
-        const res = await getAllSubCategoriesApi({ page: 1, limit: 200, category });
-        if (!mounted) return;
-        if (res?.success) {
-          setSubCategories(res.data || res.subCategories || []);
-        } else if (Array.isArray(res)) {
-          setSubCategories(res);
-        } else {
-          if (res?.message) showLocalNotification(res.message);
-        }
-      } catch (err) {
-        if (!mounted) return;
-        showLocalNotification("Failed to fetch sub categories");
-      }
-    };
-
-    fetchSubs();
-
-    return () => {
-      mounted = false;
-    };
-  }, [category]);
-
-  // Images upload states
+  // ── Images ──
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
 
-  // Multi-variant arrays (Grocery standard: multi size packs per item)
+  // ── Variants ──
   const [variants, setVariants] = useState([
     { sku: "", weight: "", unit: "g", mrp: "", sellingPrice: "" },
   ]);
+  const [loading, setLoading] = useState(false);
+  const [variantsLoading, setVariantsLoading] = useState(false);
 
+  // ─── FETCH ON MOUNT ───────────────────────────────────────────────────────
   useEffect(() => {
-    if (category) {
-      const filtered = subCategories.filter((sub) => {
-        const catId = typeof sub.category === "object" ? sub.category?._id : sub.category;
-        return catId === category;
-      });
-      setFilteredSubCategories(filtered);
-      setSubCategory(""); // Reset selected subcategory on parent category change
-    } else {
-      setFilteredSubCategories([]);
-    }
-  }, [category, subCategories]);
+    const fetchMaster = async () => {
+      try {
+        const [parentRes, brandRes] = await Promise.all([
+          getAllParentCategoriesApi(1, 100),
+          getAllBrandsApi({ page: 1, limit: 100 }),
+        ]);
+        if (parentRes?.success) setParentCategories(parentRes.data || []);
+        if (brandRes?.success) setBrands(brandRes.data || []);
+        else if (Array.isArray(brandRes)) setBrands(brandRes);
+      } catch {
+        showToast("Failed to load master data");
+      }
+    };
+    fetchMaster();
+  }, []);
 
-  const handleAddVariantRow = () => {
-    setVariants((prev) => [
-      ...prev,
-      { sku: "", weight: "", unit: "g", mrp: "", sellingPrice: "" },
-    ]);
-  };
+  // ─── FETCH CATEGORIES WHEN PARENT CHANGES ─────────────────────────────────
+  useEffect(() => {
+    setCategories([]);
+    setSubCategories([]);
+    setSelectedCategory("");
+    setSelectedSubCategory("");
+    if (!selectedParent) return;
 
-  
-  const handleRemoveVariantRow = (index) => {
-    if (variants.length === 1) {
-      showLocalNotification("A supermarket product must have at least one pack variant!");
-      return;
-    }
-    setVariants((prev) => prev.filter((_, idx) => idx !== index));
-  };
+    const fetchCats = async () => {
+      try {
+        const res = await getAllCategoriesApi({ page: 1, limit: 100, parentCategory: selectedParent });
+        if (res?.success) setCategories(res.data || []);
+        else if (Array.isArray(res)) setCategories(res);
+      } catch {
+        showToast("Failed to load categories");
+      }
+    };
+    fetchCats();
+  }, [selectedParent]);
 
-  const handleVariantChange = (index, field, value) => {
-    setVariants((prev) =>
-      prev.map((v, idx) => {
-        if (idx === index) {
-          return { ...v, [field]: value };
+  // ─── FETCH SUBCATEGORIES WHEN CATEGORY CHANGES ────────────────────────────
+  useEffect(() => {
+    setSubCategories([]);
+    setSelectedSubCategory("");
+    if (!selectedCategory) return;
+
+    const fetchSubs = async () => {
+      try {
+        const res = await getAllSubCategoriesApi({ page: 1, limit: 100, category: selectedCategory });
+        if (res?.success) setSubCategories(res.data || []);
+        else if (Array.isArray(res)) setSubCategories(res);
+      } catch {
+        showToast("Failed to load sub categories");
+      }
+    };
+    fetchSubs();
+  }, [selectedCategory]);
+
+  // ─── EDIT MODE: LOAD PRODUCT ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!productId) return;
+    const load = async () => {
+      try {
+        const res = await getSingleProductApi(productId);
+        const p = res?.data || res;
+        if (p) {
+          setName(p.name || "");
+          setDescription(p.description || "");
+          setIsActive(p.isActive ?? true);
+          setSelectedBrand(p.brand?._id || p.brand || "");
+          setSelectedParent(p.parentCategory?._id || p.parentCategory || "");
+          setSelectedCategory(p.category?._id || p.category || "");
+          setSelectedSubCategory(p.subCategory?._id || p.subCategory || "");
+          fetchVariants(productId);
         }
-        return v;
-      })
-    );
+      } catch {
+        showToast("Failed to load product");
+      }
+    };
+    load();
+  }, [productId]);
+
+  const fetchVariants = async (pid) => {
+    setVariantsLoading(true);
+    try {
+      const res = await getAllVariantsApi(1, 100, pid);
+      const data = res?.success ? res.data : Array.isArray(res) ? res : [];
+      if (data.length > 0) {
+        setVariants(data.map((v) => ({
+          _id: v._id,
+          sku: v.sku || "",
+          weight: String(v.weight || ""),
+          unit: v.unit || "g",
+          mrp: String(v.mrp || ""),
+          sellingPrice: String(v.sellingPrice || ""),
+        })));
+      }
+    } catch {
+      showToast("Could not load variants");
+    } finally {
+      setVariantsLoading(false);
+    }
   };
 
-  const handleAutoGenerateSKU = (index) => {
-    const v = variants[index];
-    const brandObj = brands.find((b) => b._id === brand);
-    const brandName = brandObj ? brandObj.name : "BK";
-    
-    if (!name.trim()) {
-      showLocalNotification("Please enter product name first to auto-generate SKU");
-      return;
-    }
-    if (!v.weight) {
-      showLocalNotification("Please enter weight for this variant to generate SKU");
-      return;
-    }
+  // ─── VARIANT HANDLERS ─────────────────────────────────────────────────────
+  const addVariant = () =>
+    setVariants((p) => [...p, { sku: "", weight: "", unit: "g", mrp: "", sellingPrice: "" }]);
 
-    const cleanBrand = brandName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-    const cleanName = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 10).toUpperCase();
-    const cleanUnit = v.unit.toUpperCase();
-    const generatedSKU = `${cleanBrand}-${cleanName}-${v.weight}${cleanUnit}`;
-
-    handleVariantChange(index, "sku", generatedSKU);
+  const removeVariant = (i) => {
+    if (variants.length === 1) return showToast("At least one variant required");
+    setVariants((p) => p.filter((_, idx) => idx !== i));
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+  const updateVariant = (i, field, val) =>
+    setVariants((p) => p.map((v, idx) => (idx === i ? { ...v, [field]: val } : v)));
 
-    const validFiles = files.filter((file) => file.type.startsWith("image/"));
-    if (validFiles.length !== files.length) {
-      showLocalNotification("Only image file formats are accepted!");
-    }
+ const autoSKU = (i) => {
+  const v = variants[i];
+  const brandObj = brands.find((b) => b._id === selectedBrand);
+  if (!name.trim()) return showToast("Enter product name first");
+  if (!v.weight) return showToast("Enter weight/quantity first");
+  const b = (brandObj?.name || "BK").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 5);
+  const n = name.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 8);
+  const w = String(v.weight).replace(/[^a-zA-Z0-9]/g, "");
+  const u = String(v.unit).toUpperCase();
+  updateVariant(i, "sku", `${b}-${n}-${w}${u}`);
+};
 
-    setImages((prev) => [...prev, ...validFiles]);
-
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews((prev) => [...prev, reader.result]);
-      };
-      reader.readAsDataURL(file);
+  // ─── IMAGE HANDLERS ───────────────────────────────────────────────────────
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files).filter((f) => f.type.startsWith("image/"));
+    setImages((p) => [...p, ...files]);
+    files.forEach((file) => {
+      const r = new FileReader();
+      r.onloadend = () => setPreviews((p) => [...p, r.result]);
+      r.readAsDataURL(file);
     });
   };
 
-  const handleRemoveImage = (index) => {
-    setImages((prev) => prev.filter((_, idx) => idx !== index));
-    setPreviews((prev) => prev.filter((_, idx) => idx !== index));
+  const removeImage = (i) => {
+    setImages((p) => p.filter((_, idx) => idx !== i));
+    setPreviews((p) => p.filter((_, idx) => idx !== i));
   };
 
-  const handleSubmitProduct = async (e) => {
+  // ─── SUBMIT ───────────────────────────────────────────────────────────────
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 1. Basic Validations
-    if (!name.trim()) return showLocalNotification("Product Title is required");
-    if (!brand) return showLocalNotification("Please select a Brand");
-    if (!category) return showLocalNotification("Please select a Category");
-    if (!subCategory) return showLocalNotification("Please select a SubCategory");
-    if (!images.length && !isEditMode) return showLocalNotification("Please upload at least one image");
+    if (!name.trim()) return showToast("Product name is required");
+    if (!selectedBrand) return showToast("Select a brand");
+    if (!selectedParent) return showToast("Select a parent category");
+    if (!selectedCategory) return showToast("Select a category");
+    if (!selectedSubCategory) return showToast("Select a sub category");
+    if (!images.length && !isEditMode) return showToast("Upload at least one image");
+    if (variants.some((v) => !v.sku || !v.weight || !v.mrp || !v.sellingPrice))
+      return showToast("All variant fields are required");
 
     setLoading(true);
+    const fd = new FormData();
+    fd.append("name", name);
+    fd.append("description", description);
+    fd.append("brand", selectedBrand);
+    fd.append("parentCategory", selectedParent);
+    fd.append("category", selectedCategory);
+    fd.append("subCategory", selectedSubCategory);
+    // fd.append("isActive", String(isActive)); --- IGNORE ---
+    images.forEach((f) => fd.append("images", f));
+    fd.append("variants", JSON.stringify(variants.map(({ _id, ...v }) => ({
+      ...v,
+      weight: parseFloat(v.weight),
+      mrp: parseFloat(v.mrp),
+      sellingPrice: parseFloat(v.sellingPrice),
+    }))));
 
-    // 2. FormData Construction
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("brand", brand);
-    formData.append("category", category);
-    formData.append("subCategory", subCategory);
-    formData.append("description", description);
-    formData.append("isActive", String(isActive));
-
-    if (images.length) {
-      images.forEach((file) => {
-        formData.append("images", file);
-      });
-    }
-
-    formData.append("variants", JSON.stringify(variants));
-
-    // 3. API Hit
-    const res = isEditMode
-      ? await updateProductApi(productId, formData)
-      : await createProductApi(formData);
-
-    setLoading(false);
-
-    if (res?.success) {
-      showLocalNotification(
-        isEditMode ? "Product updated successfully!" : "Product Published Successfully!",
-        "success"
-      );
-      if (isEditMode) {
-        navigate("/dashboard/products");
+    try {
+      const res = isEditMode
+        ? await updateProductApi(productId, fd)
+        : await createProductApi(fd);
+      if (res?.success) {
+        showToast(isEditMode ? "Product updated!" : "Product published!", "success");
+        setTimeout(() => navigate("/dashboard/products/all"), 1500);
+      } else {
+        showToast(res?.message || "Failed to save");
       }
-    } else {
-      showLocalNotification(res?.message || "Failed to save product");
+    } catch {
+      showToast("Submission error");
+    } finally {
+      setLoading(false);
     }
   };
+
+  // ─── DERIVED: filtered categories by parent ───────────────────────────────
+  const filteredCategories = categories.filter((c) => {
+    const pid = typeof c.parentCategory === "object" ? c.parentCategory?._id : c.parentCategory;
+    return !pid || pid === selectedParent;
+  });
+
+const UNITS = ["g", "kg", "ml", "ltr", "pcs", "pack", "tabs", "dozen"];
+  // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 md:p-8 min-h-screen font-sans antialiased bg-[#f8fafc] text-[#1e293b]">
-      {/* ================= NOTIFICATION BANNER ================= */}
-      {notification && (
-        <div className={`mb-6 p-5 rounded-2xl border flex items-center justify-between shadow-md transition-all ${
-          notification.type === "success" 
-            ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
-            : "bg-rose-50 border-rose-200 text-rose-800"
-        }`}>
-          <span className="font-bold text-sm tracking-wide">{notification.text}</span>
-          <button 
-            type="button" 
-            onClick={() => setNotification(null)}
-            className="text-xs font-black uppercase hover:underline opacity-80 cursor-pointer"
-          >
-            Close
-          </button>
+    <div className="min-h-screen bg-slate-50 font-sans">
+      {/* ── TOAST ── */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold border transition-all
+          ${toast.type === "success"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+            : "bg-red-50 border-red-200 text-red-700"
+          }`}>
+          <span>{toast.msg}</span>
+          <button onClick={() => setToast(null)} className="opacity-60 hover:opacity-100 font-bold cursor-pointer">✕</button>
         </div>
       )}
 
-      {/* ================= HEADER SECTION ================= */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="flex items-center gap-4">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+        {/* ── HEADER ── */}
+        <div className="flex items-center gap-4 mb-2">
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="p-3 bg-white hover:bg-slate-50 text-slate-600 hover:text-[#ff7e00] border border-slate-200 rounded-2xl shadow-sm transition-all cursor-pointer flex items-center justify-center h-11 w-11"
+            className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-orange-500 hover:border-orange-200 transition-all shadow-sm cursor-pointer"
           >
-            <SvgArrowLeft />
+            <Icon.Back />
           </button>
           <div>
-            <h1 className="text-2xl md:text-4xl font-black text-[#0f172a] tracking-tight">
-              {isEditMode ? "Edit" : "Add New"} <span className="text-[#ff7e00]">Product</span>
-            </h1>
-            <p className="text-[#64748b] font-semibold mt-1 text-sm md:text-base">
-              {isEditMode
-                ? "Update product details and save changes to the catalog"
-                : "Publish premium goods to the active supermarket display shelves"}
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black text-slate-900">
+                {isEditMode ? "Edit Product" : "Add New Product"}
+              </h1>
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide
+                ${isEditMode ? "bg-blue-100 text-blue-600" : "bg-orange-100 text-orange-600"}`}>
+                {isEditMode ? "Edit Mode" : "New"}
+              </span>
+            </div>
+            <p className="text-sm text-slate-400 mt-0.5">
+              {isEditMode ? "Update product info and variants" : "Fill all details to publish a new product"}
             </p>
           </div>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmitProduct} className="space-y-8">
-        {/* ================= PRIMARY DETAILS GRID ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-          {/* LEFT 2 COLUMNS: GENERAL METRICS */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-5 md:p-8 shadow-[0_10px_30px_rgba(15,23,42,0.02)] space-y-6">
-              <h2 className="text-xl font-black text-[#0f172a] border-b border-slate-100 pb-3 flex items-center gap-2">
-                <SvgRegListAlt /> Product Essentials
-              </h2>
-
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                  Product Title / Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 transition-all font-bold placeholder-slate-400"
-                  placeholder="e.g. Amul Gold Fresh Milk"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Brand Selector */}
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                    Brand Provider
-                  </label>
-                  <select
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* ── ROW 1: ESSENTIALS + MEDIA ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* LEFT: Essentials */}
+            <div className="lg:col-span-2 space-y-5">
+              {/* Product Info */}
+              <Card icon={<Icon.Tag />} title="Product Info" subtitle="Basic details about the product">
+                <div className="space-y-4">
+                  <InputField
+                    label="Product Name"
                     required
-                    value={brand}
-                    onChange={(e) => setBrand(e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-700 outline-none focus:bg-white focus:border-[#ff7e00] transition-all font-bold cursor-pointer"
-                  >
+                    type="text"
+                    placeholder="e.g. Amul Gold Fresh Milk"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                  <div>
+                    <Label>Product Description</Label>
+                    <textarea
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Key features, ingredients, usage info..."
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-800 outline-none
+                        placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Classification: Brand → Parent → Category → Sub */}
+              <Card icon={<Icon.Package />} title="Classification" subtitle="Assign brand and category hierarchy">
+                <div className="space-y-4">
+                  {/* Brand */}
+                  <SelectField label="Brand" required value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)}>
                     <option value="">Select Brand</option>
                     {brands.map((b) => (
-                      <option key={b._id} value={b._id}>
-                        {b.name}
-                      </option>
+                      <option key={b._id} value={b._id}>{b.name}</option>
                     ))}
-                  </select>
-                </div>
+                  </SelectField>
 
-                {/* Parent Category */}
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                    Parent Category
-                  </label>
-                  <select
-                    required
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-700 outline-none focus:bg-white focus:border-[#ff7e00] transition-all font-bold cursor-pointer"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {/* 3-col grid: Parent → Category → Sub */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <SelectField
+                      label="Parent Category"
+                      required
+                      value={selectedParent}
+                      onChange={(e) => setSelectedParent(e.target.value)}
+                    >
+                      <option value="">Select Parent</option>
+                      {parentCategories.map((p) => (
+                        <option key={p._id} value={p._id}>{p.name}</option>
+                      ))}
+                    </SelectField>
 
-                {/* Sub-Category Aisle */}
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                    Department Aisle (Sub)
-                  </label>
-                  <select
-                    required
-                    disabled={!category}
-                    value={subCategory}
-                    onChange={(e) => setSubCategory(e.target.value)}
-                    className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-4 py-4 text-slate-700 outline-none focus:bg-white focus:border-[#ff7e00] transition-all font-bold cursor-pointer disabled:opacity-50"
-                  >
-                    <option value="">Select Aisle</option>
-                    {filteredSubCategories.map((sub) => (
-                      <option key={sub._id} value={sub._id}>
-                        {sub.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    <SelectField
+                      label="Category"
+                      required
+                      disabled={!selectedParent}
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                      <option value="">{selectedParent ? "Select Category" : "Select parent first"}</option>
+                      {filteredCategories.map((c) => (
+                        <option key={c._id} value={c._id}>{c.name}</option>
+                      ))}
+                    </SelectField>
 
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                  Product Description
-                </label>
-                <textarea
-                  rows="4"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-slate-50/50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 transition-all font-bold placeholder-slate-400 resize-none"
-                  placeholder="Elaborate key details, health ingredients, nutrient value, etc..."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: MEDIA UPLOAD & GENERAL CONFIG */}
-          <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-5 md:p-8 shadow-[0_10px_30px_rgba(15,23,42,0.02)] space-y-6">
-              <h2 className="text-xl font-black text-[#0f172a] border-b border-slate-100 pb-3 flex items-center gap-2">
-                <SvgUpload /> Cover & Media
-              </h2>
-
-              {/* Status Visibility config */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                  Visibility Status
-                </label>
-                <div
-                  onClick={() => setIsActive(!isActive)}
-                  className={`flex items-center justify-between px-5 py-4 rounded-2xl border cursor-pointer transition-all ${
-                    isActive
-                      ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                      : "bg-rose-50 border-rose-200 text-rose-700"
-                  }`}
-                >
-                  <span className="text-xs font-extrabold uppercase tracking-wide">
-                    {isActive ? "Active / Public" : "Draft / Hidden"}
-                  </span>
-                  <span className={`w-3.5 h-3.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-rose-500"}`} />
-                </div>
-              </div>
-
-              {/* Drag and drop looking selector zone */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                  Upload Product Showcase
-                </label>
-                <div
-                  onClick={() => fileRef.current.click()}
-                  className="flex flex-col items-center justify-center h-44 bg-slate-50/50 border border-dashed border-slate-300 rounded-2xl cursor-pointer hover:border-[#ff7e00] hover:bg-slate-50 transition-all group"
-                >
-                  <span className="text-slate-400 group-hover:text-[#ff7e00] mb-2 transition-colors">
-                    <SvgUpload />
-                  </span>
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-wide">
-                    Click to upload media
-                  </span>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                  />
-                </div>
-              </div>
-
-              {/* Mini previews listing thumbnails scrollable strip */}
-              {previews.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">
-                    Uploaded Previews ({previews.length})
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5 max-h-40 overflow-y-auto pr-1">
-                    {previews.map((previewSrc, idx) => (
-                      <div
-                        key={idx}
-                        className="relative aspect-square border border-slate-100 rounded-xl overflow-hidden bg-slate-50 group"
-                      >
-                        <img src={previewSrc} className="w-full h-full object-cover" alt="" />
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(idx)}
-                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white hover:text-red-400 cursor-pointer"
-                        >
-                          <SvgTrash />
-                        </button>
-                      </div>
-                    ))}
+                    <SelectField
+                      label="Sub Category"
+                      required
+                      disabled={!selectedCategory}
+                      value={selectedSubCategory}
+                      onChange={(e) => setSelectedSubCategory(e.target.value)}
+                    >
+                      <option value="">{selectedCategory ? "Select Sub Category" : "Select category first"}</option>
+                      {subCategories.map((s) => (
+                        <option key={s._id} value={s._id}>{s.name}</option>
+                      ))}
+                    </SelectField>
                   </div>
+
+                  {/* Breadcrumb preview */}
+                  {(selectedParent || selectedCategory || selectedSubCategory) && (
+                    <div className="flex items-center gap-1.5 flex-wrap text-[11px] bg-orange-50 border border-orange-100 rounded-lg px-3 py-2">
+                      <span className="text-slate-400 font-medium">Path:</span>
+                      {selectedParent && (
+                        <span className="font-semibold text-orange-600">
+                          {parentCategories.find((p) => p._id === selectedParent)?.name}
+                        </span>
+                      )}
+                      {selectedCategory && (
+                        <>
+                          <span className="text-slate-300">›</span>
+                          <span className="font-semibold text-orange-600">
+                            {filteredCategories.find((c) => c._id === selectedCategory)?.name}
+                          </span>
+                        </>
+                      )}
+                      {selectedSubCategory && (
+                        <>
+                          <span className="text-slate-300">›</span>
+                          <span className="font-semibold text-orange-600">
+                            {subCategories.find((s) => s._id === selectedSubCategory)?.name}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
+              </Card>
             </div>
-          </div>
-        </div>
 
-        {/* ================= DYNAMIC VARIANT GRID BUILDER ================= */}
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-5 md:p-8 shadow-[0_10px_30px_rgba(15,23,42,0.02)] space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 gap-4">
-            <div>
-              <h2 className="text-2xl font-black text-[#0f172a] flex items-center gap-2.5">
-                <SvgBoxes /> Product Pack Variants
-              </h2>
-              <p className="text-[#64748b] text-xs font-semibold mt-0.5">
-                Define sizes, packages, weight increments, and specific retail selling pricing
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleAddVariantRow}
-              className="px-5 py-3.5 bg-orange-50 hover:bg-[#ff7e00] text-[#ff7e00] hover:text-white border border-orange-200/50 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shadow-sm uppercase tracking-wider"
-            >
-              <SvgPlus /> Add New Pack Size
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {variants.map((v, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-50/50 border border-slate-200/60 rounded-2xl p-5 relative group"
-              >
-                {/* Variant serial badge */}
-                <div className="absolute -top-3.5 left-4 bg-slate-200 text-slate-600 border border-slate-300 text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full">
-                  Pack variant {index + 1}
-                </div>
-
-                {/* Pack Weight input */}
-                <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-[#64748b] tracking-wider pl-0.5">
-                    Weight / Vol
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={v.weight}
-                    onChange={(e) => handleVariantChange(index, "weight", e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-[#0f172a] outline-none focus:border-[#ff7e00] font-bold"
-                    placeholder="e.g. 500"
-                  />
-                </div>
-
-                {/* Pack Unit selector */}
-                <div className="md:col-span-1 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-[#64748b] tracking-wider pl-0.5">
-                    Unit
-                  </label>
-                  <select
-                    value={v.unit}
-                    onChange={(e) => handleVariantChange(index, "unit", e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2 py-2.5 text-xs text-slate-700 outline-none focus:border-[#ff7e00] font-bold cursor-pointer"
-                  >
-                    {["g", "kg", "ml", "L", "pcs", "pack", "tabs"].map((unitOpt) => (
-                      <option key={unitOpt} value={unitOpt}>
-                        {unitOpt}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* SKU configuration block with trigger */}
-                <div className="md:col-span-3 space-y-1.5">
-                  <div className="flex justify-between items-center px-0.5">
-                    <label className="text-[10px] font-black uppercase text-[#64748b] tracking-wider">
-                      Stock SKU Code
-                    </label>
+            {/* RIGHT: Media + Status */}
+            <div className="space-y-5">
+              <Card icon={<Icon.Image />} title="Cover Media" subtitle="Upload product images">
+                <div className="space-y-4">
+                  {/* Status Toggle */}
+                  <div>
+                    <Label>Visibility</Label>
                     <button
                       type="button"
-                      onClick={() => handleAutoGenerateSKU(index)}
-                      className="text-[9px] font-extrabold uppercase text-[#ff7e00] hover:underline cursor-pointer"
+                      onClick={() => setIsActive((p) => !p)}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm font-bold transition-all cursor-pointer
+                        ${isActive
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                          : "bg-slate-50 border-slate-200 text-slate-500"
+                        }`}
                     >
-                      Auto Gen ✨
+                      <span>{isActive ? "Active / Public" : "Draft / Hidden"}</span>
+                      <div className={`w-9 h-5 rounded-full transition-all relative ${isActive ? "bg-emerald-500" : "bg-slate-300"}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isActive ? "left-4" : "left-0.5"}`} />
+                      </div>
                     </button>
                   </div>
-                  <input
-                    type="text"
-                    required
-                    value={v.sku}
-                    onChange={(e) => handleVariantChange(index, "sku", e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-[#0f172a] outline-none focus:border-[#ff7e00] font-bold uppercase tracking-wide"
-                    placeholder="SKU-CODE"
-                  />
-                </div>
 
-                {/* Maximum Retail Price MRP */}
-                <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-[#64748b] tracking-wider pl-0.5">
-                    MRP (₹)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={v.mrp}
-                    onChange={(e) => handleVariantChange(index, "mrp", e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-red-600 outline-none focus:border-[#ff7e00] font-bold"
-                    placeholder="e.g. 150"
-                  />
-                </div>
+                  {/* Upload zone */}
+                  <div>
+                    <Label>Images</Label>
+                    <div
+                      onClick={() => fileRef.current.click()}
+                      className="flex flex-col items-center justify-center gap-2 h-36 border-2 border-dashed border-slate-200
+                        rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all group"
+                    >
+                      <span className="text-slate-300 group-hover:text-orange-400 transition-colors"><Icon.Upload /></span>
+                      <p className="text-xs font-semibold text-slate-400 group-hover:text-orange-500 transition-colors">
+                        Click to upload
+                      </p>
+                      <p className="text-[10px] text-slate-300">JPG, PNG, WEBP accepted</p>
+                    </div>
+                    <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleImages} />
+                  </div>
 
-                {/* Discounted Supermarket Selling Price */}
-                <div className="md:col-span-2 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase text-[#64748b] tracking-wider pl-0.5">
-                    Selling Price (₹)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={v.sellingPrice}
-                    onChange={(e) => handleVariantChange(index, "sellingPrice", e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-green-600 outline-none focus:border-[#ff7e00] font-bold"
-                    placeholder="e.g. 135"
-                  />
+                  {/* Previews */}
+                  {previews.length > 0 && (
+                    <div>
+                      <Label>{previews.length} image{previews.length > 1 ? "s" : ""} selected</Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {previews.map((src, i) => (
+                          <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-slate-100 group">
+                            <img src={src} className="w-full h-full object-cover" alt="" />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(i)}
+                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white cursor-pointer"
+                            >
+                              <Icon.Trash />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              </Card>
+            </div>
+          </div>
 
-                {/* Row Delete Button */}
-                <div className="md:col-span-2 flex justify-center pb-0.5">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveVariantRow(index)}
-                    className="w-full h-[38px] bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-300 text-rose-500 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 font-bold text-xs shadow-sm"
-                  >
-                    <SvgTrash /> Delete
-                  </button>
+          {/* ── VARIANTS ── */}
+          <Card
+            icon={<Icon.Package />}
+            title="Pack Variants"
+            subtitle={`${variants.length} variant${variants.length > 1 ? "s" : ""} added — define weight, unit, SKU & pricing`}
+            action={
+              <button
+                type="button"
+                onClick={addVariant}
+                disabled={variantsLoading}
+                className="flex items-center gap-1.5 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-xl
+                  transition-all cursor-pointer disabled:opacity-50 shadow-sm shadow-orange-200"
+              >
+                <Icon.Plus /> Add Variant
+              </button>
+            }
+          >
+            {variantsLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="flex items-center gap-3 text-slate-400">
+                  <div className="w-4 h-4 border-2 border-slate-200 border-t-orange-400 rounded-full animate-spin" />
+                  <span className="text-sm font-medium">Loading variants...</span>
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="space-y-3">
+                {/* Header row */}
+                <div className="hidden md:grid grid-cols-12 gap-3 px-4 text-[10px] font-bold uppercase tracking-widest text-slate-800">
+                  <div className="col-span-2">Weight</div>
+                  <div className="col-span-1">Unit</div>
+                  <div className="col-span-4">SKU Code</div>
+                  <div className="col-span-2">MRP (₹)</div>
+                  <div className="col-span-2">Sale Price (₹)</div>
+                  <div className="col-span-1"></div>
+                </div>
+
+                {variants.map((v, i) => (
+                  <div key={i} className="relative grid grid-cols-1 md:grid-cols-12 gap-3 items-center
+                    bg-slate-50 border border-slate-100 rounded-xl px-4 py-4 group hover:border-orange-200 transition-all">
+                    {/* Badge */}
+                    <div className="absolute -top-2.5 left-3 bg-white border border-slate-200 text-[9px] font-black uppercase px-2 py-0.5 rounded-full text-slate-500 shadow-sm">
+                      {isEditMode && v._id ? "Saved" : "New"} #{i + 1}
+                    </div>
+
+                    {/* Weight */}
+                    <div className="md:col-span-2">
+                      <label className="block md:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Weight</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 500"
+                        value={v.weight}
+                        onChange={(e) => updateVariant(i, "weight", e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800
+                          outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-500"
+                      />
+                    </div>
+
+                    {/* Unit */}
+                    <div className="md:col-span-1">
+                      <label className="block md:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Unit</label>
+                      <div className="relative">
+                        <select
+                          value={v.unit}
+                          onChange={(e) => updateVariant(i, "unit", e.target.value)}
+                          className="w-full appearance-none bg-white border border-slate-200 rounded-lg px-3 py-2.5 pr-7 text-sm font-semibold
+                            text-slate-700 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all cursor-pointer"
+                        >
+                          {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+                          <Icon.ChevronDown />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SKU */}
+                    <div className="md:col-span-4">
+                      <label className="block md:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">SKU Code</label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          placeholder="SKU-CODE"
+                          value={v.sku}
+                          onChange={(e) => updateVariant(i, "sku", e.target.value.toUpperCase())}
+                          className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 pr-16 text-sm font-mono font-semibold
+                            text-slate-800 uppercase outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-500 placeholder:normal-case placeholder:font-sans"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => autoSKU(i)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-extrabold text-orange-500
+                            hover:text-orange-700 transition-colors cursor-pointer uppercase tracking-wide bg-orange-50 hover:bg-orange-100 rounded px-1.5 py-0.5"
+                        >
+                          <Icon.Sparkle /> Auto
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* MRP */}
+                    <div className="md:col-span-2">
+                      <label className="block md:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">MRP (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+                        <input
+                          type="number"
+                          required
+                          placeholder="150"
+                          value={v.mrp}
+                          onChange={(e) => updateVariant(i, "mrp", e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-lg pl-7 pr-3 py-2.5 text-sm font-semibold text-red-500
+                            outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-300 placeholder:text-slate-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Selling Price */}
+                    <div className="md:col-span-2">
+                      <label className="block md:hidden text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Sale Price (₹)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">₹</span>
+                        <input
+                          type="number"
+                          required
+                          placeholder="135"
+                          value={v.sellingPrice}
+                          onChange={(e) => updateVariant(i, "sellingPrice", e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-lg pl-7 pr-3 py-2.5 text-sm font-semibold text-emerald-600
+                            outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all placeholder:text-slate-300 placeholder:text-slate-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Delete */}
+                    <div className="md:col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(i)}
+                        className="p-2.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-red-500 hover:border-red-200
+                          hover:bg-red-50 transition-all cursor-pointer"
+                      >
+                        <Icon.Trash />
+                      </button>
+                    </div>
+
+                    {/* Discount badge */}
+                    {v.mrp && v.sellingPrice && parseFloat(v.mrp) > parseFloat(v.sellingPrice) && (
+                      <div className="md:col-span-12 flex items-center gap-1.5 -mt-1">
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                          {Math.round(((v.mrp - v.sellingPrice) / v.mrp) * 100)}% off
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          Saving ₹{(parseFloat(v.mrp) - parseFloat(v.sellingPrice)).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* ── ACTIONS ── */}
+          <div className="flex justify-between items-center bg-white border border-slate-100 rounded-2xl px-6 py-4 shadow-sm">
+            <p className="text-xs text-slate-400 font-medium">
+              {variants.length} variant{variants.length > 1 ? "s" : ""} · {images.length} image{images.length !== 1 ? "s" : ""}
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading || variantsLoading}
+                className="flex items-center gap-2 px-7 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-black rounded-xl
+                  shadow-md shadow-orange-200 hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 uppercase tracking-wide active:scale-95"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <Icon.Check />
+                    {isEditMode ? "Save Changes" : "Publish Product"}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* ================= FORM ACTIONS BAR ================= */}
-        <div className="flex justify-end items-center gap-4 bg-white border border-slate-200 rounded-[1.8rem] p-6 shadow-[0_10px_30px_rgba(15,23,42,0.02)]">
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-2xl font-bold transition-all cursor-pointer active:scale-95 text-sm"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-10 py-4 bg-[#ff7e00] hover:bg-[#e06f00] text-white rounded-2xl font-black shadow-lg shadow-[#ff7e00]/25 hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95 text-sm uppercase tracking-wider"
-          >
-            <SvgCheckCircle /> {loading ? "Publishing Catalog..." : "Publish Product"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

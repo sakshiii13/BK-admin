@@ -5,10 +5,10 @@ import RouterPage from './components/RouterPage'
 import PageLoader from './components/global/PageLoader'
 
 const App = () => {
-  const loading = useSelector((state)=>state?.loader?.loading)
+  // const loading = useSelector((state)=>state?.loader?.loading)
   return (
     <>
-    {loading && <PageLoader />}
+    {/* {loading && <PageLoader />} */}
     {/* <ToastContainer /> */}
     <RouterPage />
     </>

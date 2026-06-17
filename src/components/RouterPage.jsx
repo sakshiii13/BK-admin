@@ -50,6 +50,7 @@ import AddProduct from "../pages/admin/products/AddProduct";
 import Categories from "../pages/admin/categories/Categories";
 import SubCategories from "../pages/admin/categories/SubCategories";
 import Brands from "../pages/admin/categories/Brands";
+import ParentCategories from "../pages/admin/categories/ParentCategories";
 
 // =========================================
 // STORES
@@ -60,6 +61,7 @@ import StoreDetails from "../pages/admin/stores/StoreDetails";
 import StoreCategories from "../pages/admin/stores/StoreCategories";
 import Transactions from "../pages/admin/payments/Transactions";
 import Drivers from "../pages/admin/drivers/Drivers";
+import StoreDrivers from "../pages/admin/drivers/StoreDrivers";
 import AddDriver from "../pages/admin/drivers/AddDriver";
 import Support from "../pages/admin/Support";
 
@@ -69,11 +71,16 @@ import Support from "../pages/admin/Support";
 // OUT FOR DELIVERY
 // =========================================
 import OutForDeliveryOrders from "../pages/admin/orders/OutForDeliveryOrders";
+import PendingOrders from "../pages/admin/orders/PendingOrders";
+// import ShippingOrders from "../pages/admin/orders/ShippingOrders";
+// import AllOrdersPage from "../pages/admin/orders/AllOrders";
+// import OrderStatus from "../pages/admin/orders/OrderStatus";
 
-// =========================================
+
 // RATINGS
-// =========================================
+
 import Ratings from "../pages/admin/ratings/Ratings";
+import Rewards from "../pages/admin/rewards/Rewards";
 import AllRatings from "../pages/admin/ratings/AllRatings";
 import AverageRating from "../pages/admin/ratings/AverageRating";
 
@@ -82,10 +89,15 @@ import AllOrders from "../pages/admin/orders/AllOrders";
 import Orders from "../pages/admin/orders/Oreders";
 import PackedOrders from "../pages/admin/orders/PackedOrders";
 import StoreProduct from "../pages/admin/stores/StoreProduct";
+import Variants from "../pages/admin/products/Variants";
+import ManageWallet from "../pages/admin/Wallet/ManageWallet";
+import TimeSlot from "../pages/admin/timeslot/TimeSlot";
+import Notifications from "../pages/admin/notifications/Notifications";
+ 
 
-// =========================================
+
 // COMMON PAGE
-// =========================================
+
 const CommonPage = ({ title, desc }) => {
   return (
     <div className="min-h-screen bg-[var(--app-bg)] p-6">
@@ -149,6 +161,15 @@ const adminRoutes = [
     element: <Dashboard />,
   },
 
+  {
+    path: AdminRouters.TIME_SLOTS,
+    element: <TimeSlot />
+  },
+
+  {
+    path: AdminRouters.NOTIFICATIONS,
+    element: <Notifications />
+  },
   // =========================================
   // USERS
   // =========================================
@@ -173,8 +194,8 @@ const adminRoutes = [
   // PRODUCTS
   // =========================================
   {
-    path: AdminRouters.PRODUCTS,
-    element: <Products />,
+    path: AdminRouters.VARIANTS,
+    element: <Variants />,
   },
   {
     path: AdminRouters.ALL_PRODUCTS,
@@ -192,6 +213,10 @@ const adminRoutes = [
   // =========================================
   // CATEGORIES
   // =========================================
+  {
+    path: AdminRouters.PARENT_CATEGORIES,
+    element: <ParentCategories />,
+  },
   {
     path: AdminRouters.CATEGORIES,
     element: <Categories />,
@@ -258,6 +283,11 @@ const adminRoutes = [
     path: AdminRouters.OUT_FOR_DELIVERY_ORDERS,
     element: <OutForDeliveryOrders />
   },
+  {
+    path: AdminRouters.PENDING_ORDERS,
+    element: <PendingOrders />
+  },
+  
 
   // =========================================
   // OUT FOR DELIVERY
@@ -352,17 +382,30 @@ const adminRoutes = [
   },
 
   // =========================================
-  // DRIVERS
+  // WALLET MANAGEMENT
   // =========================================
   {
-    path: AdminRouters.DRIVERS,
-    element: <Drivers />,
+    path: AdminRouters.MANAGE_WALLET,
+    element: (
+      <ManageWallet />
+    )
   },
+  {
+    path: AdminRouters.REWARDS,
+    element: (
+      <Rewards />
+    )
+  },
+  // =========================================
+  // {
+  //   path: AdminRouters.DRIVERS,
+  //   element: <Drivers />,
+  // },
 
   {
     path: AdminRouters.ALL_DRIVERS,
     element: (
-      <CommonPage title="All Drivers" />
+      <StoreDrivers />
     ),
   },
 {
@@ -373,7 +416,7 @@ const adminRoutes = [
     },
   {
     path: AdminRouters.ADD_DRIVER,
-    element: <Drivers />,
+    element: <Drivers />
   },
 
   // =========================================

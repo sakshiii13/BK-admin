@@ -109,7 +109,7 @@ const PackedOrders = () => {
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
               placeholder="Paste store ID or use pack action from Store Orders"
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
             />
           </div>
 
@@ -139,7 +139,7 @@ const PackedOrders = () => {
           </div>
 
           {loading ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+            <div className="rounded-3xl border border-slate-300 bg-slate-100 p-8 text-center text-slate-500">
               Loading packed orders...
             </div>
           ) : filteredOrders.length === 0 ? (
@@ -149,7 +149,7 @@ const PackedOrders = () => {
           ) : (
             <div className="space-y-5">
               {filteredOrders.map((order) => (
-                <div key={order._id} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+                <div key={order._id} className="rounded-[28px] border border-slate-400 bg-white p-5 shadow-sm">
                   <div className="flex flex-col lg:flex-row lg:justify-between gap-4 mb-4">
                     <div>
                       <h2 className="text-xl font-bold text-slate-900">#{order.orderNumber}</h2>

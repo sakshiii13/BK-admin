@@ -25,7 +25,10 @@ export const sidebarMenu = {
       path: AdminRouters.DASHBOARD,
       icon: MdDashboard,
     },
-
+{
+  title: "Time Slots",
+  path: AdminRouters.TIME_SLOTS,
+}
     {
       title: "User Management",
       icon: MdPeople,
@@ -49,6 +52,11 @@ export const sidebarMenu = {
           icon: MdOutlineRadioButtonUnchecked,
         },
         {
+          title: "Variants",
+          path: AdminRouters.VARIANTS,
+          icon: MdOutlineRadioButtonUnchecked,
+        },
+        {
           title: "Add Product",
           path: AdminRouters.ADD_PRODUCT,
           icon: MdOutlineRadioButtonUnchecked,
@@ -60,6 +68,11 @@ export const sidebarMenu = {
       title: "Category Management",
       icon: MdCategory,
       children: [
+        {
+          title: "Parent Category",
+          path: AdminRouters.PARENT_CATEGORIES,
+          icon: MdOutlineRadioButtonUnchecked,
+        },
         {
           title: "Categories",
           path: AdminRouters.CATEGORIES,
@@ -93,15 +106,15 @@ export const sidebarMenu = {
           icon: MdOutlineRadioButtonUnchecked,
         },
         {
-          title: "Store Categories",
+          title: "Find Stores",
           path: AdminRouters.STORE_CATEGORIES,
           icon: MdOutlineRadioButtonUnchecked,
         },
-        {
-          title: "Store Sub Categories",
-          path: AdminRouters.STORE_SUB_CATEGORIES,
-          icon: MdOutlineRadioButtonUnchecked,
-        },
+        // {
+        //   title: "Store Sub Categories",
+        //   path: AdminRouters.STORE_SUB_CATEGORIES,
+        //   icon: MdOutlineRadioButtonUnchecked,
+        // },
         // {
         //   title: "Store Products",
         //   path: AdminRouters.STORE_PRODUCTS,
@@ -126,23 +139,23 @@ export const sidebarMenu = {
       icon: MdOutlineRadioButtonUnchecked,
     },
 
-    {
-      title: "Pending Orders",
-      path: AdminRouters.PENDING_ORDERS,
-      icon: MdOutlineRadioButtonUnchecked,
-    },
+    // {
+    //   title: "Pending Orders",
+    //   path: AdminRouters.PENDING_ORDERS,
+    //   icon: MdOutlineRadioButtonUnchecked,
+    // },
 
-    {
-      title: "Packed Orders",
-      path: AdminRouters.PACKED_ORDERS,
-      icon: MdOutlineRadioButtonUnchecked,
-    },
+    // {
+    //   title: "Packed Orders",
+    //   path: AdminRouters.PACKED_ORDERS,
+    //   icon: MdOutlineRadioButtonUnchecked,
+    // },
 
-    {
-      title: "Shipping",
-      path: AdminRouters.SHIPPING,
-      icon: MdOutlineRadioButtonUnchecked,
-    },
+    // {
+    //   title: "Shipping",
+    //   path: AdminRouters.SHIPPING,
+    //   icon: MdOutlineRadioButtonUnchecked,
+    // },
 
     {
       title: "Assign Driver",
@@ -155,6 +168,11 @@ export const sidebarMenu = {
       path: AdminRouters.ORDER_STATUS,
       icon: MdOutlineRadioButtonUnchecked,
     },
+    {
+      title: "All Orders by Status",
+      path: AdminRouters.OUT_FOR_DELIVERY_ORDERS,
+      icon: MdOutlineRadioButtonUnchecked,
+    }
   ],
 },
 
@@ -181,7 +199,7 @@ export const sidebarMenu = {
       icon: MdLocalShipping,
       children: [
         {
-          title: "All Drivers",
+          title: "All Store Drivers",
           path: AdminRouters.ALL_DRIVERS,
           icon: MdOutlineRadioButtonUnchecked,
         },
@@ -193,6 +211,17 @@ export const sidebarMenu = {
       ],
     },
 
+  //   {
+  //     title: "Manage Wallet",
+  //     path: AdminRouters.MANAGE_WALLET,
+  //     icon: MdOutlineRadioButtonUnchecked,
+  //   },
+
+  // {
+  //   title: "Rewards",
+  //   path: AdminRouters.REWARDS,
+  //   icon: MdOutlineRadioButtonUnchecked,
+  // },
     {
       title: "Rating Management",
       icon: MdStarRate,

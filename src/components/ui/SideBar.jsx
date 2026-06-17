@@ -19,13 +19,16 @@ import {
   MdNotifications,
   MdSettings,
   MdMenu,
+  MdAttachMoney,
+  MdTimer,
 } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Routers } from "../../constants/routes";
 import { closeSideMenu } from "../../redux/slices/sideBarMenuSlice";
+import { MainContent } from "../../constants/mainContent";
 
-const logo = "/logo.png";
+
 
 const SideBar = () => {
   // =========================================
@@ -74,6 +77,7 @@ const SideBar = () => {
     setOpenMenus({
       productManagement: pathname.startsWith("/products"),
       categoryManagement:
+      pathname.startsWith("/parent-categories") ||
         pathname.startsWith("/categories") ||
         pathname.startsWith("/sub-categories") ||
         pathname.startsWith("/brands"),
@@ -146,23 +150,19 @@ const SideBar = () => {
           rounded-2xl cursor-pointer transition-all duration-300 ease-out
           ${
             isActive
-              ? "bg-gradient-to-br from-white to-slate-50 border border-white/60 shadow-[0_10px_20px_-5px_rgba(249,115,22,0.15),0_4px_6px_-2px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.8)] -translate-y-[2px]"
-              : "border border-transparent hover:bg-white/40 hover:border-white/20 hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] hover:-translate-y-[1px]"
+              ? "bg-gradient-to-br from-[var(--primary-green)] to-[#155a30] text-white border border-[#005a2d] border-b-4 border-b-[#00421e] shadow-[0_8px_16px_rgba(0,142,71,0.15),inset_0_1px_0_rgba(255,255,255,0.2)] -translate-y-[2px]"
+              : "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/60 hover:border-slate-200/80 hover:shadow-[0_6px_10px_rgba(0,0,0,0.03)] hover:-translate-y-[1px]"
           }
-          active:translate-y-0 active:shadow-sm
+          active:translate-y-0 active:border-b-[1px] active:shadow-sm
         `}
       >
-        {isActive && (
-          <div className="absolute left-0 top-[20%] h-[60%] w-[5px] rounded-r-full bg-gradient-to-b from-orange-400 to-orange-600 shadow-[1px_0_8px_rgba(249,115,22,0.6)]" />
-        )}
-
         <span
           className={`
             relative z-10 text-[22px] p-1 rounded-xl transition-all duration-300
             ${
               isActive
-                ? "text-orange-500 drop-shadow-[0_3px_6px_rgba(249,115,22,0.3)] scale-110"
-                : "text-slate-400 group-hover:text-orange-500 group-hover:scale-110"
+                ? "text-[var(--primary-yellow)] drop-shadow-[0_2px_4px_rgba(255,204,3,0.4)] scale-110"
+                : "text-slate-400 group-hover:text-[var(--primary-green)] group-hover:scale-110"
             }
           `}
         >
@@ -172,8 +172,8 @@ const SideBar = () => {
         {!collapsed && (
           <span
             className={`
-              relative z-10 text-[14px] font-bold tracking-wide transition-all duration-300
-              ${isActive ? "text-slate-800" : "text-slate-500 group-hover:text-slate-800"}
+              relative z-10 text-[14px] font-extrabold tracking-wide transition-all duration-300
+              ${isActive ? "text-white" : "text-slate-600 group-hover:text-slate-900"}
             `}
           >
             {label}
@@ -193,7 +193,7 @@ const SideBar = () => {
     });
 
     return (
-      <div className={`transition-all duration-300 ${collapsed ? "mx-3" : "mx-4"}`}>
+      <div className={`transition-all duration-300  ${collapsed ? "mx-3" : "mx-4"}`}>
         <div
           onClick={onToggle}
           className={`
@@ -202,14 +202,14 @@ const SideBar = () => {
             rounded-2xl cursor-pointer transition-all duration-300 ease-out
             ${
               isChildActive
-                ? "bg-gradient-to-br from-white to-slate-50 border border-white/80 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]"
-                : "border border-transparent hover:bg-white/40 hover:border-white/20 hover:shadow-[0_8px_16px_-6px_rgba(0,0,0,0.05)] hover:-translate-y-[1px]"
+                ? "bg-white border border-slate-200 border-b-4 border-b-slate-300 shadow-[0_8px_16px_rgba(0,0,0,0.04)]"
+                : "border border-transparent text-slate-600 hover:text-slate-900 hover:bg-white/60 hover:border-slate-200/80 hover:shadow-[0_6px_10px_rgba(0,0,0,0.03)] hover:-translate-y-[1px]"
             }
             active:translate-y-0
           `}
         >
           {isChildActive && (
-            <div className="absolute left-0 top-[20%] h-[60%] w-[4px] rounded-r-full bg-orange-400 shadow-[1px_0_6px_rgba(249,115,22,0.4)]" />
+            <div className="absolute left-0 top-[20%] h-[60%] w-[4px] rounded-r-full bg-[var(--primary-green)] shadow-[1px_0_6px_rgba(0,142,71,0.4)]" />
           )}
 
           <div className={`relative z-10 flex items-center ${collapsed ? "" : "gap-3"}`}>
@@ -218,8 +218,8 @@ const SideBar = () => {
                 text-[22px] transition-all duration-300
                 ${
                   isChildActive
-                    ? "text-orange-500 drop-shadow-[0_2px_4px_rgba(249,115,22,0.2)] scale-110"
-                    : "text-slate-400 group-hover:text-orange-500 group-hover:scale-110"
+                    ? "text-[var(--primary-green)] drop-shadow-[0_2px_4px_rgba(0,142,71,0.2)] scale-110"
+                    : "text-slate-400 group-hover:text-[var(--primary-green)] group-hover:scale-110"
                 }
               `}
             >
@@ -229,8 +229,8 @@ const SideBar = () => {
             {!collapsed && (
               <span
                 className={`
-                  text-[14px] font-bold tracking-wide transition-all duration-300
-                  ${isChildActive ? "text-slate-800" : "text-slate-500 group-hover:text-slate-800"}
+                  text-[14px]  font-extrabold tracking-wide transition-all duration-300
+                  ${isChildActive ? "text-slate-800" : "text-slate-600 group-hover:text-slate-900"}
                 `}
               >
                 {label}
@@ -242,7 +242,7 @@ const SideBar = () => {
             <MdChevronLeft
               className={`
                 relative z-10 transition-all duration-300 ease-out
-                ${isOpen ? "-rotate-90 text-orange-500 scale-110" : "text-slate-400 group-hover:text-slate-700"}
+                ${isOpen ? "-rotate-90 text-[var(--primary-green)] scale-110" : "text-slate-400 group-hover:text-slate-700"}
               `}
               size={18}
             />
@@ -257,6 +257,7 @@ const SideBar = () => {
                 : "max-h-0"
             }`}
           >
+            <div className="flex flex-col space-y-2 px-2">
             {items.map((item, index) => {
               const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
 
@@ -269,8 +270,8 @@ const SideBar = () => {
                     transition-all duration-200 group/sub select-none
                     ${
                       isActive
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold shadow-[0_4px_12px_rgba(249,115,22,0.25)] scale-[1.02]"
-                        : "hover:bg-white text-slate-500 hover:text-slate-800 font-medium hover:shadow-sm"
+                        ? "bg-gradient-to-r from-[var(--primary-orange)] to-[var(--primary-orange-light)] text-white font-extrabold shadow-[0_3px_0_var(--primary-orange-dark)] border-b-2 border-t border-r border-l border-[var(--primary-orange-dark)] scale-[1.02] -translate-y-[1px]"
+                        : "hover:bg-white text-slate-500 hover:text-slate-800 font-bold hover:shadow-sm"
                     }
                   `}
                 >
@@ -278,13 +279,14 @@ const SideBar = () => {
                     size={16}
                     className={`
                       transition-all duration-200
-                      ${isActive ? "text-white rotate-90" : "text-slate-400 group-hover/sub:text-orange-500 group-hover/sub:translate-x-1"}
+                      ${isActive ? "text-white rotate-90" : "text-slate-400 group-hover/sub:text-[var(--primary-green)] group-hover/sub:translate-x-1"}
                     `}
                   />
                   <span className="text-[13px] tracking-wide">{item.label}</span>
                 </div>
               );
             })}
+          </div>
           </div>
         )}
       </div>
@@ -296,8 +298,8 @@ const SideBar = () => {
       className={`
         fixed lg:sticky top-0 left-0 z-50 h-screen select-none
         ${collapsed ? "w-[100px]" : "w-[300px]"}
-        bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200/90
-        backdrop-blur-xl border-r border-white/60
+        bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200/95
+        backdrop-blur-xl border-r border-white/80
         transition-all duration-300 ease-in-out
         flex flex-col justify-between
         shadow-[5px_0_30px_rgba(15,23,42,0.04),inset_-1px_0_0_rgba(255,255,255,0.6)]
@@ -305,30 +307,38 @@ const SideBar = () => {
       `}
     >
       {/* ========================================= */}
-      {/* BRANDING HEADER ZONE (OPTIMIZED LOGO) */}
+      {/* BRANDING HEADER ZONE (3D LOGO CONTAINER) */}
       {/* ========================================= */}
       <div
         className={`
-          relative flex items-center h-[85px] w-full transition-all duration-300
+          relative flex items-center h-[95px] w-full transition-all duration-300
           ${collapsed ? "justify-center px-2" : "justify-between px-5"}
-          bg-white/80 backdrop-blur-md border-b border-gradient-to-r from-slate-200/60 via-slate-100 to-transparent
+          bg-white/85 backdrop-blur-md border-b border-slate-200/60
         `}
       >
         {/* LOGO BACKDROP SOFT 3D SHADOW GLOW */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-28 bg-orange-500/10 rounded-full blur-xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-28 bg-[var(--primary-yellow)]/10 rounded-full blur-xl pointer-events-none" />
 
         {/* LOGO CONTAINER W/ SYSTEMIZED PADDING */}
-        <div className={`relative z-10 flex items-center justify-center ${collapsed ? "w-full h-12" : "h-14"}`}>
-          <img
-            src={logo}
-            alt="logo"
+        <div className={`relative z-10 flex items-center justify-center ${collapsed ? "w-full h-14" : "h-16"}`}>
+          <div 
             onClick={() => handleNavigate(Routers.DASHBOARD)}
             className={`
-              max-h-full object-contain cursor-pointer transition-all duration-500 ease-out
-              filter drop-shadow-[0_4px_10px_rgba(15,23,42,0.08)] hover:scale-105 active:scale-95
-              ${collapsed ? "w-[114px] p-0.5" : "w-[135px] py-1"}
+              cursor-pointer transition-all 
+              
+              flex items-center justify-center
+              ${collapsed ? "w-[60px] h-[50px] p-1" : "px-4 py-2 h-[59px]"}
             `}
-          />
+          >
+            <img
+              src={MainContent.logo}
+              alt="logo"
+              className={`
+                
+                ${collapsed ? "w-[44px]" : "w-[190px]"}
+              `}
+            />
+          </div>
         </div>
 
         {/* COLLAPSE/EXPAND TRIGGER TOGGLE (3D FLOATING) */}
@@ -337,11 +347,11 @@ const SideBar = () => {
             onClick={() => setCollapsed(true)}
             className="
               relative z-10 h-10 w-10 flex items-center justify-center
-              rounded-xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50
-              text-slate-500 shadow-[0_4px_10px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.9)]
-              transition-all duration-300 hover:from-orange-500 hover:to-orange-600 hover:text-white
-              hover:border-orange-600 hover:shadow-[0_6px_15px_rgba(249,115,22,0.3)]
-              active:scale-95 active:translate-y-0
+              rounded-xl border border-slate-200 bg-gradient-to-b from-white to-slate-50
+              text-slate-500 shadow-[0_3px_0_rgba(15,23,42,0.1),0_4px_6px_rgba(0,0,0,0.04)]
+              transition-all duration-300 hover:from-[var(--primary-green)] hover:to-[var(--primary-green-light)] hover:text-white
+              hover:border-[var(--primary-green-light)] hover:shadow-[0_6px_12px_rgba(0,142,71,0.25)]
+              active:translate-y-[2px] active:shadow-sm
             "
           >
             <MdOutlineKeyboardDoubleArrowLeft size={20} />
@@ -364,10 +374,10 @@ const SideBar = () => {
       </div>
 
       {/* INNER MENU CONTAINER */}
-      <div className="flex-1 overflow-y-auto py-6 space-y-2.5 sidebar-scroll">
+      <div className="flex-1 overflow-y-auto py-6 space-y-4 sidebar-scroll">
         {/* DASHBOARD */}
         <NavItem icon={<MdDashboard />} label="Dashboard" router={Routers.DASHBOARD} />
-
+<NavItem icon={<MdTimer />} label="Time Slots" router={Routers.TIME_SLOTS} />
         {/* PRODUCT MANAGEMENT */}
         <DropdownMenu
           icon={<MdInventory2 />}
@@ -375,8 +385,9 @@ const SideBar = () => {
           isOpen={openMenus.productManagement}
           onToggle={() => toggleMenu("productManagement")}
           items={[
-            { label: "Products", route: Routers.PRODUCTS },
+            // { label: "Products", route: Routers.PRODUCTS },
             { label: "All Products", route: Routers.ALL_PRODUCTS },
+            { label: "Variants", route: Routers.VARIANTS },
             { label: "Add Product", route: Routers.ADD_PRODUCT },
           ]}
         />
@@ -388,6 +399,7 @@ const SideBar = () => {
           isOpen={openMenus.categoryManagement}
           onToggle={() => toggleMenu("categoryManagement")}
           items={[
+            { label: "Parent Categories", route: Routers.PARENT_CATEGORIES },
             { label: "Categories", route: Routers.CATEGORIES },
             { label: "Sub Categories", route: Routers.SUB_CATEGORIES },
             { label: "Brands", route: Routers.BRANDS },
@@ -403,11 +415,8 @@ const SideBar = () => {
           items={[
             { label: "Stores", route: Routers.STORES },
             { label: "Inventory", route: Routers.INVENTORY },
-            { label: "Store Categories", route: Routers.STORE_CATEGORIES },
-            { label: "Store Sub Categories", route: Routers.STORE_SUB_CATEGORIES },
-            // { label: "Store Products", route: Routers.STORE_PRODUCTS },
-            { label: "Store Orders", route: Routers.STORE_ORDERS },
-            // { label: "Out For Delivery", route: Routers.OUT_FOR_DELIVERY },
+            { label: "Find Stores", route: Routers.STORE_CATEGORIES },
+            
           ]}
         />
 
@@ -430,11 +439,11 @@ const SideBar = () => {
           isOpen={openMenus.orderManagement}
           onToggle={() => toggleMenu("orderManagement")}
           items={[
-            // { label: "Orders", route: Routers.ORDERS },
+           
             { label: "All Orders", route: Routers.ALL_ORDERS },
-            // { label: "Pending Orders", route: Routers.PENDING_ORDERS },
-            { label: "Packed Orders", route: Routers.PACKED_ORDERS },
-            // { label: "Shipping", route: Routers.SHIPPING },
+            
+            { label: "All Orders by Status", route: Routers.OUT_FOR_DELIVERY_ORDERS },
+           
           ]}
         />
 
@@ -457,7 +466,7 @@ const SideBar = () => {
           isOpen={openMenus.driverManagement}
           onToggle={() => toggleMenu("driverManagement")}
           items={[
-            // { label: "Drivers", route: Routers.DRIVERS },
+            { label: "All Store Drivers", route: Routers.ALL_DRIVERS },
             { label: "Add Driver", route: Routers.ADD_DRIVER },
           ]}
         />
@@ -474,23 +483,13 @@ const SideBar = () => {
           ]}
         />
 
-        {/* REPORTS
-        <DropdownMenu
-          icon={<MdBarChart />}
-          label="Reports"
-          isOpen={openMenus.reportsManagement}
-          onToggle={() => toggleMenu("reportsManagement")}
-          items={[
-            { label: "Sales Report", route: Routers.SALES_REPORT },
-            { label: "User Analytics", route: Routers.USER_ANALYTICS },
-          ]}
-        /> */}
+        {/* <NavItem icon={<MdAttachMoney />} label="Manage Wallet" router={Routers.MANAGE_WALLET} />
+        <NavItem icon={<MdBarChart />} label="Rewards" router={Routers.REWARDS} /> */}
 
         {/* BOTTOM FIXED ZONE */}
         <div className="pt-5 mt-5 border-t border-slate-200/60 space-y-2.5">
           <NavItem icon={<MdSupportAgent />} label="Support" router={Routers.SUPPORT} />
-          {/* <NavItem icon={<MdNotifications />} label="Notifications" router={Routers.NOTIFICATIONS} /> */}
-          {/* <NavItem icon={<MdSettings />} label="Settings" router={Routers.SETTINGS} /> */}
+          
         </div>
       </div>
     </div>

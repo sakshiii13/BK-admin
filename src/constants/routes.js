@@ -18,6 +18,7 @@ export const AdminRouters = {
   // USERS
   // =========================================
   USERS: "/dashboard/users",
+
   ALL_USERS: "/dashboard/users/all",
   ADD_USER: "/dashboard/users/add",
   ADMIN_ROLES: "/dashboard/users/roles",
@@ -25,8 +26,11 @@ export const AdminRouters = {
   // =========================================
   // PRODUCTS
   // =========================================
+  NOTIFICATIONS: "/dashboard/notifications",
+  TIME_SLOTS: "/dashboard/time-slots",
   PRODUCTS: "/dashboard/products",
   ALL_PRODUCTS: "/dashboard/products/all",
+  VARIANTS: "/dashboard/products/variants",
   ADD_PRODUCT: "/dashboard/products/add",
   EDIT_PRODUCT: "/dashboard/products/edit/:productId",
 
@@ -36,6 +40,7 @@ export const AdminRouters = {
   CATEGORIES: "/dashboard/categories",
   SUB_CATEGORIES: "/dashboard/sub-categories",
   BRANDS: "/dashboard/brands",
+  PARENT_CATEGORIES: "/dashboard/parent-categories",
 
   // =========================================
   // STORES
@@ -82,15 +87,11 @@ ADD_DRIVER_TO_ORDER: "/dashboard/orders/add-driver/:storeId/:orderId",
     "/dashboard/store/out-for-delivery/:storeId",
 
   // =========================================
-  // ORDERS
+  // Wallet Management
   // =========================================
-  // ORDERS: "/dashboard/orders",
-
-  // ALL_ORDERS:
-  //   "/dashboard/orders/all",
-
-  // PENDING_ORDERS:
-  //   "/dashboard/orders/pending",
+  MANAGE_WALLET: "/dashboard/wallet/manage",
+  
+REWARDS: "/dashboard/rewards",
 
   SHIPPING:
     "/dashboard/orders/shipping",

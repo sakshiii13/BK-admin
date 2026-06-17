@@ -1,21 +1,34 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { FaSearch, FaSyncAlt } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
 import Axios from "../../../api/Axios";
+import TableComponent from "../../../components/global/TableComponent";
+import { showSuccess, showError } from "../../../utils/alertService";
+import {
+  getReferralSettingApi,
+  updateReferralSettingApi,
+  creditWalletApi,
+} from "../../../api/admin.api";
 
 const AllUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
+  const [referralSettings, setReferralSettings] = useState(null);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [rewardAmount, setRewardAmount] = useState("");
+  const [isActive, setIsActive] = useState(false);
+  const [editingSettings, setEditingSettings] = useState(false);
 
-  // ================= API =================
+  // ── Reward Modal State ──
+  const [rewardModal, setRewardModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditReason, setCreditReason] = useState("");
+  const [crediting, setCrediting] = useState(false);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await Axios.get("/admin/get-all-users");
-
-      if (res?.data?.success) {
-        setUsers(res?.data?.data || []);
-      }
+      if (res?.data?.success) setUsers(res?.data?.data || []);
     } catch (err) {
       console.log(err);
       setUsers([]);
@@ -24,207 +37,319 @@ const AllUsers = () => {
     }
   };
 
+  const fetchReferralSettings = async () => {
+    try {
+      setSettingsLoading(true);
+      const res = await getReferralSettingApi();
+      if (res?.success) {
+        setReferralSettings(res?.data);
+        setRewardAmount(res?.data?.rewardAmount || "");
+        setIsActive(res?.data?.isActive || false);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const updateReferralSettings = async () => {
+    try {
+      setSettingsLoading(true);
+      const res = await updateReferralSettingApi({
+        rewardAmount: parseInt(rewardAmount),
+        isActive,
+      });
+      if (res?.success) {
+        setReferralSettings(res?.data);
+        setEditingSettings(false);
+        showSuccess("Referral settings updated successfully!");
+      }
+    } catch (err) {
+      showError(err?.response?.data?.message || "Failed to update referral settings");
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const openRewardModal = (user) => {
+    setSelectedUser(user);
+    setCreditAmount("");
+    setCreditReason("");
+    setRewardModal(true);
+  };
+
+  const closeRewardModal = () => {
+    setRewardModal(false);
+    setSelectedUser(null);
+    setCreditAmount("");
+    setCreditReason("");
+  };
+
+  const handleCreditWallet = async () => {
+    if (!creditAmount || isNaN(creditAmount) || Number(creditAmount) <= 0)
+      return showError("Please enter a valid amount");
+    if (!creditReason.trim())
+      return showError("Please enter a reason");
+
+    try {
+      setCrediting(true);
+      const res = await creditWalletApi({
+        userId: selectedUser._id,
+        amount: Number(creditAmount),
+        reason: creditReason.trim(),
+      });
+      if (res?.success) {
+        showSuccess(`₹${creditAmount} credited to ${selectedUser.firstName}'s wallet!`);
+        closeRewardModal();
+      } else {
+        showError(res?.message || "Failed to credit wallet");
+      }
+    } catch (err) {
+      showError("Something went wrong");
+    } finally {
+      setCrediting(false);
+    }
+  };
+
+  const COLUMNS = [
+    {
+      key: "firstName",
+      label: "User",
+      render: (val, row) => (
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl btn-gradient-orange text-white flex items-center justify-center font-black text-sm shrink-0">
+            {val?.charAt(0)}
+          </div>
+          <div>
+            <p className="font-extrabold text-slate-800 text-sm">{val} {row.lastName}</p>
+            <p className="text-xs font-bold text-slate-400">ID: {row._id?.slice(-8)}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "email",
+      label: "Contact",
+      render: (val, row) => (
+        <div>
+          <p className="text-sm font-extrabold text-slate-700">{val}</p>
+          <p className="text-xs font-bold text-slate-400 mt-0.5">{row.number || "-"}</p>
+        </div>
+      ),
+    },
+    {
+      key: "role",
+      label: "Role",
+      render: (val) => (
+        <span className="px-3 py-1 text-xs font-black uppercase rounded-full border border-blue-200 bg-blue-50 text-blue-600">
+          {val}
+        </span>
+      ),
+    },
+    {
+      key: "disable",
+      label: "Status",
+      render: (val) => (
+        <span className={`px-3 py-1 text-xs font-black uppercase rounded-full border ${val ? "bg-red-50 text-red-500 border-red-200" : "bg-green-50 text-green-600 border-green-200"}`}>
+          {val ? "Disabled" : "Active"}
+        </span>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Joined",
+      render: (val) => (
+        <span className="text-xs font-bold text-slate-500">
+          {new Date(val).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}
+        </span>
+      ),
+    },
+    {
+      key: "_id",
+      label: "Actions",
+      render: (val, row) => (
+        <button
+          onClick={() => openRewardModal(row)}
+          className="px-3 py-1.5 text-xs font-black text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-all cursor-pointer"
+        >
+          🎁 Reward
+        </button>
+      ),
+    },
+  ];
+
   useEffect(() => {
     fetchUsers();
+    fetchReferralSettings();
   }, []);
 
-  // ================= FILTER =================
-  const filtered = useMemo(() => {
-    if (!search) return users;
-    return users.filter((u) =>
-      `${u.firstName} ${u.lastName} ${u.email} ${u.number} ${u.role}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }, [search, users]);
-
   return (
-    <div className="p-4 md:p-6 space-y-6">
-
-      {/* ================= HEADER ================= */}
-      <div className="card-3d p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-
-        {/* TITLE */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
-            All Users
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage your platform users in one place
-          </p>
-        </div>
-
-        {/* SEARCH + REFRESH */}
-        <div className="flex gap-3 w-full lg:w-auto">
-
-          <div className="relative w-full lg:w-80">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search users..."
-              className="input-3d h-11 w-full pl-11 text-sm"
-            />
-          </div>
-
-          <button
-  onClick={fetchUsers}
-  disabled={loading}
-  className="group relative h-11 px-5 flex items-center gap-2 rounded-xl 
-             bg-white border border-slate-200 
-             shadow-[0_6px_18px_rgba(0,0,0,0.06)] 
-             hover:shadow-[0_10px_25px_rgba(247,148,29,0.25)] 
-             transition-all duration-300 active:scale-95"
->
-
-  {/* ICON WRAPPER */}
-  <span className="relative flex items-center justify-center">
-    <FaSyncAlt
-      className={`text-sm text-slate-600 group-hover:text-orange-500 transition-all duration-300
-        ${loading ? "animate-spin" : ""}`}
-    />
-  </span>
-
-  {/* TEXT */}
-  <span className="text-xs font-bold text-slate-700 group-hover:text-orange-500 transition-all">
-    {loading ? "Refreshing..." : "Refresh"}
-  </span>
-
-  {/* TOP GLOW LINE */}
-  <span className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-orange-400 via-orange-500 to-orange-300 opacity-0 group-hover:opacity-100 transition-all rounded-t-xl" />
-
-</button>
-
-        </div>
-      </div>
-
-      {/* ================= STATS BAR ================= */}
+    <div className="p-4 md:p-6 space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-        <div className="card-3d p-5">
-          <p className="text-xs text-slate-500">Total Users</p>
-          <h2 className="text-2xl font-extrabold text-slate-800 mt-1">
-            {users.length}
-          </h2>
-        </div>
-
-        <div className="card-3d p-5">
-          <p className="text-xs text-slate-500">Active Users</p>
-          <h2 className="text-2xl font-extrabold text-green-600 mt-1">
-            {users.filter(u => !u.disable).length}
-          </h2>
-        </div>
-
-        <div className="card-3d p-5">
-          <p className="text-xs text-slate-500">Drivers</p>
-          <h2 className="text-2xl font-extrabold text-orange-500 mt-1">
-            {users.filter(u => u.role === "DRIVER").length}
-          </h2>
-        </div>
-
+        <StatCard label="Total Users" value={users.length} color="var(--primary-green)" />
+        <StatCard label="Active Users" value={users.filter(u => !u.disable).length} color="#16a34a" />
+        <StatCard label="Drivers" value={users.filter(u => u.role === "DRIVER").length} color="#f97316" />
       </div>
 
-      {/* ================= TABLE ================= */}
-      <div className="card-3d overflow-hidden">
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[950px]">
-
-            {/* HEADER */}
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase">User</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Contact</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Role</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Status</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase">Joined</th>
-              </tr>
-            </thead>
-
-            {/* BODY */}
-            <tbody className="divide-y divide-slate-100">
-
-              {loading ? (
-                <tr>
-                  <td colSpan="5" className="p-10 text-center text-slate-500">
-                    Loading users...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="p-10 text-center text-slate-500">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((u) => (
-                  <tr
-                    key={u._id}
-                    className="hover:bg-white transition-all duration-200 hover:shadow-sm"
-                  >
-
-                    {/* USER */}
-                    <td className="p-5">
-                      <div className="flex items-center gap-3">
-
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 text-white flex items-center justify-center font-bold shadow-md">
-                          {u.firstName?.charAt(0)}
-                        </div>
-
-                        <div>
-                          <p className="font-bold text-slate-800 text-sm">
-                            {u.firstName} {u.lastName}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            ID: {u._id?.slice(-6)}
-                          </p>
-                        </div>
-
-                      </div>
-                    </td>
-
-                    {/* CONTACT */}
-                    <td className="p-5">
-                      <p className="text-sm text-slate-700">{u.email}</p>
-                      <p className="text-xs text-slate-400">{u.number || "-"}</p>
-                    </td>
-
-                    {/* ROLE */}
-                    <td className="p-5">
-                      <span className="px-3 py-1 text-xs rounded-full bg-blue-50 text-blue-600 font-semibold">
-                        {u.role}
-                      </span>
-                    </td>
-
-                    {/* STATUS */}
-                    <td className="p-5">
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full font-semibold ${
-                          u.disable
-                            ? "bg-red-50 text-red-500"
-                            : "bg-green-50 text-green-600"
-                        }`}
-                      >
-                        {u.disable ? "Disabled" : "Active"}
-                      </span>
-                    </td>
-
-                    {/* JOINED */}
-                    <td className="p-5 text-xs text-slate-500">
-                      {new Date(u.createdAt).toLocaleDateString()}
-                    </td>
-
-                  </tr>
-                ))
-              )}
-
-            </tbody>
-          </table>
+      {/* REFERRAL SETTINGS */}
+      <div className="p-5 bg-white rounded-2xl border-l-4 shadow-sm" style={{ borderLeftColor: "#8b5cf6" }}>
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Referral Settings</p>
+            {!editingSettings && referralSettings && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-extrabold text-slate-700">Reward Amount:</span>
+                  <span className="text-2xl font-black text-purple-600">₹{referralSettings?.rewardAmount}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-extrabold text-slate-700">Status:</span>
+                  <span className={`px-3 py-1 text-xs font-black uppercase rounded-full border ${referralSettings?.isActive ? "bg-green-50 text-green-600 border-green-200" : "bg-red-50 text-red-500 border-red-200"}`}>
+                    {referralSettings?.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
+            )}
+            {editingSettings && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-600 block mb-2">Reward Amount (₹)</label>
+                  <input
+                    type="number"
+                    value={rewardAmount}
+                    onChange={(e) => setRewardAmount(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-xs font-bold text-slate-700">Enable Referral Rewards</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {!editingSettings && (
+              <button onClick={() => setEditingSettings(true)} className="px-3 py-2 text-xs font-bold text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100">
+                Edit
+              </button>
+            )}
+            {editingSettings && (
+              <>
+                <button onClick={updateReferralSettings} disabled={settingsLoading} className="px-3 py-2 text-xs font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700">
+                  {settingsLoading ? "Saving..." : "Save"}
+                </button>
+                <button onClick={() => setEditingSettings(false)} className="px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 rounded-lg">
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
         </div>
-
       </div>
+
+      <TableComponent
+        title="All Users"
+        subtitle="Manage platform customers and delivery staff"
+        columns={COLUMNS}
+        data={users}
+        loading={loading}
+        showSearch={true}
+        showIndex={true}
+        searchPlaceholder="Search name, email, role..."
+        onRefresh={fetchUsers}
+      />
+
+      {/* REWARD MODAL */}
+      {rewardModal && (
+        <div className="fixed inset-0 z-[999] bg-slate-900/40 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7">
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">
+                  🎁 Credit <span className="text-purple-600">Wallet</span>
+                </h2>
+                <p className="text-xs font-bold text-slate-400 mt-0.5">
+                  {selectedUser?.firstName} {selectedUser?.lastName}
+                </p>
+              </div>
+              <button
+                onClick={closeRewardModal}
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all cursor-pointer font-black text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Amount */}
+            <div className="mb-4">
+              <label className="text-xs font-black uppercase text-slate-500 tracking-wider block mb-2">
+                Amount (₹)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">₹</span>
+                <input
+                  type="number"
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Reason */}
+            <div className="mb-6">
+              <label className="text-xs font-black uppercase text-slate-500 tracking-wider block mb-2">
+                Reason
+              </label>
+              <textarea
+                value={creditReason}
+                onChange={(e) => setCreditReason(e.target.value)}
+                placeholder="e.g. Festival bonus, Compensation, Manual reward..."
+                rows={3}
+                className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all resize-none placeholder:text-slate-400"
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={closeRewardModal}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-2xl text-sm transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreditWallet}
+                disabled={crediting}
+                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white font-black rounded-2xl text-sm transition-all cursor-pointer disabled:opacity-50 shadow-lg shadow-purple-200"
+              >
+                {crediting ? "Crediting..." : "Send Reward"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const StatCard = ({ label, value, color }) => (
+  <div className="p-5 bg-white rounded-2xl border-l-4 shadow-sm" style={{ borderLeftColor: color }}>
+    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</p>
+    <h2 className="text-3xl font-black mt-1" style={{ color }}>{value}</h2>
+  </div>
+);
 
 export default AllUsers;

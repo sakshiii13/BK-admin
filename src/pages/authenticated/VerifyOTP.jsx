@@ -74,19 +74,20 @@ const VerifyOTP = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50/30 flex items-center justify-center px-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-100 via-slate-50 to-orange-50/30 px-4 font-sans overflow-y-auto">
+  <div className="min-h-screen flex items-start lg:items-center justify-center py-6 lg:py-8">
       
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-green-500/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-500/5 rounded-full blur-[120px]" />
 
-      <div className="relative w-full max-w-md bg-white rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.1)] border border-slate-200/80 p-8 sm:p-10">
+     <div className="relative w-full max-w-md bg-white rounded-[32px] shadow-[0_25px_60px_-15px_rgba(15,23,42,0.1)] border border-slate-200/80 p-6 sm:p-8 lg:p-10">
         
         <div className="text-center mb-8">
           <div className="h-16 flex items-center justify-center mb-5">
             <img 
               src="/logo.png" 
               alt="logo" 
-              className="h-14 object-contain transition-transform hover:scale-105 duration-300" 
+              className="h-37 w-40 transition-transform hover:scale-105 duration-300" 
             />
           </div>
 
@@ -142,7 +143,7 @@ const VerifyOTP = () => {
           {localStorage.getItem("adminOtp") && (
             <div className="mt-4 p-3.5 bg-orange-50 border border-orange-200/60 rounded-xl text-center shadow-inner-sm">
               <p className="text-xs text-slate-500 font-bold tracking-wide">
-                🛠️ Testing OTP:{" "}
+                🛠️ Your OTP:{" "}
                 <span className="font-black text-orange-600 bg-orange-100/80 px-2.5 py-0.5 rounded-lg tracking-widest text-sm shadow-sm border border-orange-200/40 ml-1">
                   {localStorage.getItem("adminOtp")}
                 </span>
@@ -151,6 +152,7 @@ const VerifyOTP = () => {
           )}
         </form>
       </div>
+    </div>
     </div>
   );
 };

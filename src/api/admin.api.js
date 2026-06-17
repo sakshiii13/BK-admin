@@ -1,8 +1,5 @@
 import Axios from "./Axios";
-import {
-  getAllSubCategoriesApi as getAllSubCategoriesApiFromCategory,
-  getAllBrandsApi as getAllBrandsApiFromCategory,
-} from "./category.api";
+
 
 // ================= COMMON HELPERS =================
 
@@ -288,8 +285,29 @@ export const getAllCategoriesApi = async (page = 1, limit = 10) => {
   }
 };
 
-export const getAllSubCategoriesApi = getAllSubCategoriesApiFromCategory;
-export const getAllBrandsApi = getAllBrandsApiFromCategory;
+export const getAllSubCategoriesApi = async (params = {}) => {
+  try {
+    const { page = 1, limit = 200, category = "" } = params;
+    const res = await Axios.get("/user/get-all-sub-categories", {
+      params: { page, limit, ...(category && { category }) },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch sub categories");
+  }
+};
+
+export const getAllBrandsApi = async (params = {}) => {
+  try {
+    const { page = 1, limit = 100 } = params;
+    const res = await Axios.get("/user/get-all-brands", {
+      params: { page, limit },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch brands");
+  }
+};
 
 export const updateCategoryApi = async (categoryId, data) => {
   try {
@@ -304,6 +322,50 @@ export const updateCategoryApi = async (categoryId, data) => {
   }
 };
 
+
+// ================= PARENT CATEGORY =================
+
+export const createParentCategoryApi = async (data) => {
+  try {
+    const res = await Axios.post("/admin/parent-category-create", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to create parent category");
+  }
+};
+
+export const getAllParentCategoriesApi = async (page = 1, limit = 50) => {
+  try {
+    const res = await Axios.get("/admin/get-all-parent-categories", {
+      params: { page, limit },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch parent categories");
+  }
+};
+
+export const updateParentCategoryApi = async (id, data) => {
+  try {
+    const res = await Axios.put(`/admin/update-parent-category/${id}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to update parent category");
+  }
+};
+
+export const deleteParentCategoryApi = async (id) => {
+  try {
+    const res = await Axios.delete(`/admin/delete-parent-category/${id}`);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to delete parent category");
+  }
+};
 
 // ================= LOCATION =================
 export const findNearestStoreApi = async (payload) => {
@@ -353,7 +415,7 @@ export const getInventoryByStoreIdApi = async (
 ) => {
   try {
     const res = await Axios.get(
-      `/admin/inventory/${storeId}`,
+      `/admin/store-inventory/${storeId}`,
       {
         params: { page, limit },
       }
@@ -368,6 +430,133 @@ export const getInventoryByStoreIdApi = async (
   }
 };
 
+export const toggleInventoryStatusApi = async (inventoryId,payload) => {
+  try {
+    const res = await Axios.patch(
+      `/admin/toggle-inventory/${inventoryId}`,
+      payload
+    );
+
+    return res.data;
+  } catch (error) {
+    return handleApiError(
+      error,
+      "Failed to toggle inventory status"
+    );
+  }
+};
+
+export const updateInventoryStockApi = async (
+  inventoryId,
+  stockData
+) => {
+  try {
+    const res = await Axios.put(
+      `/admin/update-stock/${inventoryId}`,
+      stockData
+    );
+
+    return res.data;
+  } catch (error) {
+    return handleApiError(
+      error,
+      "Failed to update inventory stock"
+    );
+  }
+};
+
+export const getHomeProductsApi = async (lat, lng) => {
+  try {
+    const res = await Axios.get("/user/home-products", {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch home products");
+  }
+};
+ 
+/**
+ * 2. Store categories — categories available in nearest store
+ * GET /user/store-categories?lat=22.7196&lng=75.8577
+ * Response: { success, store: { _id, name, phone, address }, data: [], message }
+ */
+export const getStoreCategoriesApi = async (lat, lng) => {
+  try {
+    const res = await Axios.get("/user/store-categories", {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch store categories");
+  }
+};
+ 
+/**
+ * 3. Store sub-categories — sub-categories under a specific category
+ * GET /user/store-subcategories/:categoryId?lat=22.7196&lng=75.8577
+ * Response: { success, store: { _id, name }, data: [], message }
+ */
+export const getStoreSubCategoriesApi = async (categoryId, lat, lng) => {
+  try {
+    const res = await Axios.get(`/user/store-subcategories/${categoryId}`, {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch store sub-categories");
+  }
+};
+ 
+/**
+ * 4. Store products — products under a specific sub-category
+ * GET /user/store-products/:subCategoryId?lat=22.7196&lng=75.8577
+ * Response: { success, store: { _id, name }, data: [], message }
+ */
+export const getStoreProductsApi = async (subCategoryId, lat, lng) => {
+  try {
+    const res = await Axios.get(`/user/store-products/${subCategoryId}`, {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch store products");
+  }
+};
+ 
+/**
+ * 5. Product details — full detail of a single product
+ * GET /user/product-details/:productId?lat=22.7196&lng=75.8577
+ * Response: { success, store: { _id, name }, product: null | {...}, message }
+ */
+export const getProductDetailsApi = async (productId, lat, lng) => {
+  try {
+    const res = await Axios.get(`/user/product-details/${productId}`, {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch product details");
+  }
+};
+ 
+/**
+ * 6. Recent products — recently added/viewed products for nearest store
+ * GET /user/recent-products?lat=23.1734567&lng=77.4363867
+ * Response: { success, store: { _id, name, address, images, openingTime, closingTime }, data: [], message }
+ */
+export const getRecentProductsApi = async (lat, lng) => {
+  try {
+    const res = await Axios.get("/user/recent-products", {
+      params: { lat, lng },
+    });
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch recent products");
+  }
+};
+ 
+
 // ================= ORDERS =================
 
 export const getStoreOrdersApi = async (storeId) => {
@@ -380,33 +569,6 @@ export const getStoreOrdersApi = async (storeId) => {
     return handleApiError(error, "Get store orders failed");
   }
 };
-
-export const getStoreOrdersByStatusApi = async (
-  storeId,
-  status = "PACKED"
-) => {
-  try {
-    if (!storeId) throw new Error("storeId is required");
-
-    const response = await Axios.get(`/store/orders/${storeId}`, {
-      params: { status },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error("STORE_ORDERS_BY_STATUS_API_ERROR 👉", error);
-
-    return {
-      success: false,
-      message:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      data: [],
-    };
-  }
-};
-
 export const getAllOrdersByStatusApi = async (
   status = "PACKED"
 ) => {
@@ -441,11 +603,49 @@ export const getAllOrdersByStatusApi = async (
   }
 };
 
+export const getStoreOrdersByStatusApi = async (
+  storeId,
+  status = "PACKED"
+) => {
+  try {
+    if (!storeId) throw new Error("storeId is required");
+
+    const response = await Axios.get(`/store/orders/${storeId}`, {
+      params: { status },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("STORE_ORDERS_BY_STATUS_API_ERROR 👉", error);
+
+    return {
+      success: false,
+      message:
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong",
+      data: [],
+    };
+  }
+};
+
 export const getOutForDeliveryOrdersApi = async (
   storeId,
   status = "OUT_FOR_DELIVERY"
 ) => {
   return getStoreOrdersByStatusApi(storeId, status);
+};
+
+export const getDeliveredOrdersApi = async (storeId) => {
+  return getStoreOrdersByStatusApi(storeId, "DELIVERED");
+};
+
+export const getPendingOrdersApi = async (storeId) => {
+  return getStoreOrdersByStatusApi(storeId, "PENDING");
+};
+
+export const getConfirmedOrdersApi = async (storeId) => {
+  return getStoreOrdersByStatusApi(storeId, "CONFIRMED");
 };
 
 export const packStoreOrderApi = async (storeId, orderId) => {
@@ -670,3 +870,221 @@ export const getDriversByStoreApi = async (storeId) => {
     return error.response?.data || { success: false, message: "Failed to fetch drivers" };
   }
 };
+
+
+
+// Get All Variants
+
+// const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Create Variant
+export const createVariantApi = async (data) => {
+  try {
+    const response = await Axios.post(
+      `/admin/variant-create`,
+      data
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error?.response?.data || error;
+  }
+};
+
+// Get All Variants
+export const getAllVariantsApi = async (
+  page = 1,
+  limit = 10,
+  product = ""
+) => {
+  try {
+    const response = await Axios.get(
+      `/user/get-all-variants?page=${page}&limit=${limit}&product=${product}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error?.response?.data || error;
+  }
+};
+
+// Get Single Variant
+export const getVariantByIdApi = async (variantId) => {
+  try {
+    const response = await Axios.get(
+      `/user/variant/${variantId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error?.response?.data || error;
+  }
+};
+
+// Update Variant
+export const updateVariantApi = async (variantId, data) => {
+  try {
+    const response = await Axios.put(
+      `/admin/update-variant/${variantId}`,
+      data
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error?.response?.data || error;
+  }
+};
+
+// Toggle Variant Status
+export const toggleVariantStatusApi = async (variantId) => {
+  try {
+    const response = await Axios.patch(`/admin/toggle-variant-status/${variantId}`
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error?.response?.data || error;
+  }
+};
+
+
+// ================= WALLET =================
+
+// Credit wallet
+export const creditWalletApi = async (payload) => {
+  try {
+    const res = await Axios.post("/admin/credit", payload);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to credit wallet");
+  }
+};
+
+// Get wallet by user ID
+export const getWalletByUserIdApi = async (userId) => {
+  try {
+    const res = await Axios.get(`/admin/${userId}`);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch wallet");
+  }
+};
+
+// ================= REFERRAL SETTINGS =================
+
+export const getReferralSettingApi = async () => {
+  try {
+    const res = await Axios.get("/admin/get-setting");
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch referral settings");
+  }
+};
+
+export const updateReferralSettingApi = async (payload) => {
+  try {
+    const res = await Axios.put("/admin/update-setting", payload);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to update referral settings");
+  }
+};
+
+export const createTimeSlot = async (payload) => {
+  try {
+    const res = await Axios.post("/admin/create-slot", payload);
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to create time slot");
+  }
+};
+
+export const getAllTimeSlots = async () => {
+  try {
+    const res = await Axios.get("/admin/all-slot");
+    return res.data;
+  } catch (error) {
+    return handleApiError(error, "Failed to fetch time slots");
+  }
+};
+
+export const updateSlotApi = async (slotId, payload) => {
+  try {
+    const res = await Axios.put(
+      `/admin/update-slot/${slotId}`,
+      payload
+    );
+
+    return res.data;
+  } catch (error) {
+    return (
+      error?.response?.data || {
+        success: false,
+        message: error?.message || "Failed to update slot",
+      }
+    );
+  }
+};
+
+export const deleteSlotApi = async (slotId) => {
+  try {
+    const res = await Axios.delete(
+      `/admin/delete-slot/${slotId}`
+    );
+
+    return res.data;
+  } catch (error) {
+    return (
+      error?.response?.data || {
+        success: false,
+        message: error?.message || "Failed to delete slot",
+      }
+    );
+  }
+};
+
+///Notifications
+
+export const sendNotificationToAllApi = async (payload) => {
+  try {
+    const res = await Axios.post(
+      "/admin/notifications/send-all",
+      payload
+    );
+
+    return res.data;
+  } catch (error) {
+    return (
+      error?.response?.data || {
+        success: false,
+        message:
+          error?.message ||
+          "Failed to send notification to all users",
+      }
+    );
+  }
+};
+
+export const sendNotificationToUserApi = async (
+  userId,
+  payload
+) => {
+  try {
+    const res = await Axios.post(
+      `/admin/notifications/send-user?userId=${userId}`,
+      payload
+    );
+
+    return res.data;
+  } catch (error) {
+    return (
+      error?.response?.data || {
+        success: false,
+        message:
+          error?.message ||
+          "Failed to send notification to user",
+      }
+    );
+  }
+};
+

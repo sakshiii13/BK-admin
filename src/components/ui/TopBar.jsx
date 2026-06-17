@@ -8,6 +8,7 @@ import {
   FaUser,
   FaCog,
   FaSignOutAlt,
+  FaBell, // ✅ ADD THIS IMPORT
 } from "react-icons/fa";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { MdKeyboardArrowRight } from "react-icons/md";
@@ -110,12 +111,13 @@ const TopBar = ({ onMenuClick }) => {
   return (
     <div
       className="
-        sticky top-3 z-50 mx-4
+        sticky top-3 z-40 mx-4
         flex items-center justify-between
         rounded-2xl
-        border border-white/60
-        bg-white/70 backdrop-blur-xl
-        shadow-[0_10px_30px_rgba(0,0,0,0.08)]
+        border border-slate-200
+        border-b-4 border-b-slate-300/80
+        bg-white/80 backdrop-blur-xl
+        shadow-[0_8px_20px_rgba(15,23,42,0.04)]
         px-5 py-3
       "
     >
@@ -123,9 +125,9 @@ const TopBar = ({ onMenuClick }) => {
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="lg:hidden h-10 w-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:scale-105 transition"
+          className="lg:hidden btn-3d btn-white h-10 w-10 flex items-center justify-center p-0"
         >
-          <GiHamburgerMenu />
+          <GiHamburgerMenu size={18} />
         </button>
 
         <div className="hidden sm:block">
@@ -135,22 +137,11 @@ const TopBar = ({ onMenuClick }) => {
 
       {/* CENTER SEARCH */}
       <div className="hidden lg:block w-[380px]">
-        <div className="relative">
-          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative group">
+          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[var(--primary-green)] transition" />
           <input
             placeholder="Search anything..."
-            className="
-              w-full h-11 pl-11 pr-4
-              rounded-xl
-              bg-white/80
-              border border-slate-200
-              text-sm text-slate-700
-              shadow-inner
-              focus:outline-none
-              focus:border-orange-400
-              focus:ring-4 focus:ring-orange-100
-              transition
-            "
+            className="input-3d w-full h-11 pl-11 pr-4 text-sm focus:scale-[1.02]"
           />
         </div>
       </div>
@@ -158,21 +149,25 @@ const TopBar = ({ onMenuClick }) => {
       {/* RIGHT */}
       <div className="flex items-center gap-3">
 
+        {/* ✅ NOTIFICATION BELL */}
+        <button
+          onClick={() => navigate("/dashboard/notifications")}
+          className="relative btn-3d btn-white h-10 w-10 flex items-center justify-center p-0 hover:text-[var(--primary-green)]"
+        >
+          <FaBell size={15} />
+          {/* unread dot — agar future me unread count API aaye to yahan dynamically dikha sakte ho */}
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+        </button>
+
         {/* fullscreen */}
         <button
           onClick={toggleFullscreen}
-          className="
-            h-10 w-10 rounded-xl
-            bg-white border border-slate-200
-            shadow-sm hover:shadow-md
-            flex items-center justify-center
-            hover:text-orange-500 transition
-          "
+          className="btn-3d btn-white h-10 w-10 flex items-center justify-center p-0 hover:text-[var(--primary-green)]"
         >
           {isFullscreen ? (
-            <FaCompressArrowsAlt />
+            <FaCompressArrowsAlt size={15} />
           ) : (
-            <FaExpandArrowsAlt />
+            <FaExpandArrowsAlt size={15} />
           )}
         </button>
 
@@ -185,20 +180,23 @@ const TopBar = ({ onMenuClick }) => {
               px-3 py-1.5
               rounded-xl
               bg-white border border-slate-200
-              shadow-sm
-              cursor-pointer
-              hover:shadow-md transition
+              border-b-[4px] border-b-slate-300
+              cursor-pointer select-none
+              hover:-translate-y-0.5 hover:border-b-[5px]
+              active:translate-y-[2px] active:border-b-[2px]
+              transition-all duration-100 shadow-sm
             "
           >
             <img
               src="https://i.pravatar.cc/100?img=12"
-              className="w-9 h-9 rounded-xl object-cover"
+              className="w-8 h-8 rounded-lg object-cover border border-slate-100 shadow-sm"
+              alt="avatar"
             />
-            <div className="hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">
+            <div className="hidden sm:block text-left">
+              <p className="text-xs font-black text-slate-800 leading-tight">
                 Admin
               </p>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-400 font-bold leading-none mt-0.5">
                 Super Admin
               </p>
             </div>
@@ -211,39 +209,42 @@ const TopBar = ({ onMenuClick }) => {
                 absolute right-0 mt-3 w-56
                 rounded-2xl
                 bg-white
-                border border-slate-100
-                shadow-[0_20px_50px_rgba(0,0,0,0.15)]
-                overflow-hidden
+                border border-slate-200
+                border-b-4 border-b-slate-300/80
+                shadow-[0_15px_30px_rgba(15,23,42,0.12)]
+                overflow-hidden z-50
               "
             >
-              <div className="p-4 text-center border-b">
+              <div className="p-4 text-center border-b border-slate-100">
                 <img
                   src="https://i.pravatar.cc/100?img=12"
-                  className="w-14 h-14 mx-auto rounded-xl mb-2"
+                  className="w-14 h-14 mx-auto rounded-xl mb-2 border border-slate-200 shadow-sm"
+                  alt="avatar-lg"
                 />
-                <p className="text-sm font-bold">Admin</p>
-                <p className="text-xs text-slate-400">
-                  admin@example.com
+                <p className="text-sm font-extrabold text-slate-800">Admin</p>
+                <p className="text-xs text-slate-400 font-bold">
+                  admin@bkgrocery.com
                 </p>
               </div>
 
-              <button className="w-full px-4 py-2 text-left text-xs hover:bg-slate-50">
-                <FaUser className="inline mr-2" /> Profile
+              <button className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-600 hover:bg-[var(--primary-green)]/10 hover:text-[var(--primary-green)] flex items-center gap-2 transition-all">
+                <FaUser className="shrink-0" /> Profile
               </button>
 
-              <button className="w-full px-4 py-2 text-left text-xs hover:bg-slate-50">
-                <FaCog className="inline mr-2" /> Settings
+              <button className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-600 hover:bg-[var(--primary-green)]/10 hover:text-[var(--primary-green)] flex items-center gap-2 transition-all">
+                <FaCog className="shrink-0" /> Settings
               </button>
 
               <button
                 onClick={handleLogout}
                 className="
                   w-full px-4 py-3
-                  text-xs font-semibold text-red-600
-                  bg-red-50 hover:bg-red-100
+                  text-xs font-black text-red-600
+                  bg-red-50 hover:bg-red-600 hover:text-white
+                  flex items-center gap-2 transition-all duration-200
                 "
               >
-                <FaSignOutAlt className="inline mr-2" />
+                <FaSignOutAlt className="shrink-0" />
                 Logout
               </button>
             </div>

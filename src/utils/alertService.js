@@ -79,7 +79,7 @@ export const showSuccess = (message) => {
     icon: 'success',
     title: 'Success!',
     text: message,
-    confirmButtonText: "Great, Got It ✨",
+    confirmButtonText: "OKay",
   });
 };
 
@@ -98,7 +98,7 @@ export const showError = (message) => {
   });
 };
 
-export const showConfirm = ({ title = "Are you sure?", text = "This action cannot be undone.", confirmButtonText = "Yes, Proceed" }) => {
+export const showConfirm = ({ title = "Are you sure?", text = "This action cannot be undone.", confirmButtonText = " Proceed" }) => {
   return Swal.fire({
     ...commonLightConfig,
     icon: 'warning',

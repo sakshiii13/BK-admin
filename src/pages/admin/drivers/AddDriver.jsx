@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDriversByStoreApi, assignDriverApi } from "../../../api/admin.api.js";
-import { showSuccess, showError } from "../../../utils/alertService.js";
+import {
+  showSuccess,
+  showError,
+  showConfirm,
+  showToast,
+} from "../../../utils/alertService.js";
 import { ArrowLeft, Mail, Phone, CheckCircle, XCircle, Truck, User } from "lucide-react";
 
 const AddDriver = () => {
@@ -12,43 +17,58 @@ const AddDriver = () => {
   const [assigningId, setAssigningId] = useState(null);
 
   const fetchDrivers = async () => {
-    setLoading(true);
-    try {
-      const res = await getDriversByStoreApi(storeId);
-      if (res?.success) {
-        setDrivers(res.data || []);
-      } else {
-        console.error(res.message);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const res = await getDriversByStoreApi(storeId);
+    if (res?.success) {
+      setDrivers(res.data || []);
+    } else {
+      showToast(res?.message || "Failed to fetch drivers", "error"); 
     }
-  };
+  } catch (err) {
+    showToast("Failed to fetch drivers", "error"); 
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (storeId) fetchDrivers();
   }, [storeId]);
 
-  const handleAssignDriver = async (driverId) => {
-    if (!orderId) return;
-    setAssigningId(driverId);
-    try {
-      const res = await assignDriverApi(storeId, orderId, driverId);
-      if (res?.success) {
-        showSuccess(res.message || "Driver assigned successfully!");
-        navigate(`/dashboard/orders/${storeId}`);
-      } else {
-        showError(res?.message || "Failed to assign driver.");
-      }
-    } catch (err) {
-      showError(err?.message || "Failed to assign driver.");
-    } finally {
-      setAssigningId(null);
-    }
-  };
+const handleAssignDriver = async (driverId) => {
+  const confirm = await showConfirm({
+    title: "Assign Driver?",
+    text: "This driver will be assigned to the selected order.",
+    confirmButtonText: "Assign Driver",
+  });
 
+  if (!confirm.isConfirmed) return;
+
+  setAssigningId(driverId);
+
+  try {
+    const res = await assignDriverApi(storeId, orderId, driverId);
+
+    if (res?.success) {
+      // 2. Success dialog (SweetAlert2)
+      await showSuccess(res?.message || "Driver assigned successfully!");
+      navigate(`/dashboard/orders/${storeId}`);
+    } else {
+      // 3. Error dialog (SweetAlert2)
+      await showError(res?.message || "Failed to assign driver.");
+    }
+  } catch (err) {
+    // 4. Catch block (SweetAlert2)
+    await showError(
+      err?.response?.data?.message || 
+      err?.message || 
+      "Failed to assign driver."
+    );
+  } finally {
+    setAssigningId(null);
+  }
+};
   return (
     <div className="p-4 md:p-6 min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)]">
       {/* Header Card */}

@@ -3,6 +3,7 @@
 // ===============================================
 
 import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import {
   getStoreOrdersApi,
@@ -28,6 +29,7 @@ import {
   Phone,
   Mail,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 const Orders = () => {
   // =========================================
@@ -69,104 +71,101 @@ const Orders = () => {
     }
   };
 
-  // =========================================
-  // FETCH STORE ORDERS
-  // =========================================
-  // const fetchStoreOrders = async () => {
-  //   try {
-  //     setLoading(true);
+ 
 
-  //     console.log("STORE ID 👉", storeId);
-
-  //     const res = await getStoreOrdersApi(storeId);
-
-  //     console.log("STORE ORDERS RESPONSE 👉", res);
-
-  //     const finalData = Array.isArray(res?.data)
-  //       ? res.data
-  //       : Array.isArray(res?.data?.data)
-  //       ? res.data.data
-  //       : [];
-
-  //     setOrders(finalData);
-  //   } catch (error) {
-  //     console.log("STORE ORDERS ERROR 👉", error);
-
-  //     setOrders([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // // =========================================
-  // // COMPONENT LOAD
-  // // =========================================
-  // useEffect(() => {
-  //   if (storeId) {
-  //     // fetchStoreDetails();
-  //     fetchStoreOrders();
-  //   }
-  // }, []);
-
-  useEffect(()=>{
-    try{
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
       setLoading(true);
-      if(storeId){
-        Promise.all([
+      if (storeId) {
+        const [storeRes, ordersRes] = await Promise.all([
           getStoreByIdApi(storeId),
-          getStoreOrdersApi(storeId)
-        ]).then(([storeRes, ordersRes])=>{
-          console.log("STORE DETAILS 👉", storeRes);
-          console.log("STORE ORDERS RESPONSE 👉", ordersRes);
-          setStore(storeRes?.data || storeRes?.store || null);
-          setOrders(Array.isArray(ordersRes?.data) ? ordersRes.data : Array.isArray(ordersRes?.data?.data) ? ordersRes.data.data : []);
-        });
+          getStoreOrdersApi(storeId),
+        ]);
+        console.log("STORE DETAILS 👉", storeRes);
+        console.log("STORE ORDERS RESPONSE 👉", ordersRes);
+        setStore(storeRes?.data || storeRes?.store || null);
+        setOrders(
+          Array.isArray(ordersRes?.data)
+            ? ordersRes.data
+            : Array.isArray(ordersRes?.data?.data)
+            ? ordersRes.data.data
+            : []
+        );
       }
     } catch (error) {
       console.log("ERROR 👉", error);
     } finally {
-      setLoading(false);  
+      setLoading(false);
     }
-  },[])
+  };
+  fetchData();
+}, []);
 
   // =========================================
   // PACK ORDER
   // =========================================
-  const handlePackOrder = async (orderId) => {
-    try {
-      setPackingId(orderId);
+  const handlePackOrder = async (order) => {
+  try {
+    if (order?.orderStatus !== "CONFIRMED") {
+      await Swal.fire({
+        icon: "warning",
+        title: "Order Not Confirmed",
+        text: "This order cannot be packed because it has not been confirmed yet.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-      const res = await packStoreOrderApi(
-        storeId,
-        orderId
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Pack Order?",
+      text: "Only confirmed orders can be packed. Do you want to continue?",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Pack Order",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    setPackingId(order._id);
+
+    const res = await packStoreOrderApi(
+      storeId,
+      order._id
+    );
+
+    console.log("PACK ORDER RESPONSE 👉", res);
+
+    if (res?.success) {
+      setOrders((prev) =>
+        prev.map((item) =>
+          item._id === order._id
+            ? {
+                ...item,
+                orderStatus: "PACKED",
+                packedAt: new Date().toISOString(),
+              }
+            : item
+        )
       );
 
-      console.log("PACK ORDER RESPONSE 👉", res);
+      setPackSuccess(true);
 
-      if (res?.success) {
-        // =========================================
-        // LOCAL UI UPDATE
-        // =========================================
-        setOrders((prev) =>
-          prev.map((order) =>
-            order._id === orderId
-              ? {
-                  ...order,
-                  orderStatus: "PACKED",
-                  packedAt: new Date().toISOString(),
-                }
-              : order
-          )
-        );
-
-        setPackSuccess(true);
-      }
-    } catch (error) {
-      console.log("PACK ORDER ERROR 👉", error);
-    } finally {
-      setPackingId(null);
+      Swal.fire({
+        icon: "success",
+        title: "Order Packed",
+        text: "The order has been packed successfully.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     }
-  };
+  } catch (error) {
+    console.log("PACK ORDER ERROR 👉", error);
+  } finally {
+    setPackingId(null);
+  }
+};
 
   const handleClosePackModal = () => {
     setPackSuccess(false);
@@ -241,6 +240,17 @@ const Orders = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-4 md:p-6">
+
+      {/* Back Button */}
+<div className="mb-5">
+  <button
+    onClick={() => navigate(-1)}
+    className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-all cursor-pointer"
+  >
+    <ArrowLeft size={18} />
+    Back to Stores
+  </button>
+</div>
       {/* =========================================
           STORE HEADER
       ========================================= */}
@@ -661,13 +671,40 @@ const Orders = () => {
               {/* ACTION */}
               <div className="px-5 pb-5 flex flex-wrap gap-3 items-center">
                 {order?.orderStatus !== "PACKED" ? (
-                  <button
-                    onClick={() => handlePackOrder(order._id)}
-                    disabled={packingId === order._id}
-                    className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all shadow-lg shadow-orange-100 cursor-pointer"
-                  >
-                    {packingId === order._id ? "Packing..." : "Pack Order"}
-                  </button>
+                 
+
+  
+<button
+  onClick={async () => {
+    if (order?.orderStatus !== "CONFIRMED") {
+      return Swal.fire({
+        icon: "warning",
+        title: "Order Not Confirmed",
+        text: "This order cannot be packed because it has not been confirmed yet.",
+        confirmButtonText: "OK",
+      });
+    }
+
+    const result = await Swal.fire({
+      icon: "question",
+      title: "Pack Order?",
+      text: "Only confirmed orders can be packed. Do you want to continue?",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Pack Order",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      handlePackOrder(order); // ✅ order._id ki jagah order (full object)
+    }
+  }}
+  disabled={packingId === order._id}
+  className="px-5 py-3 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-semibold transition-all shadow-lg shadow-orange-100 cursor-pointer"
+>
+  {packingId === order._id ? "Packing..." : "Pack Order"}
+</button>
+                 
+                 
                 ) : (
                   <>
                     <div className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FaPlus, FaEdit, FaTimes, FaUpload, FaPowerOff, FaCheckCircle, FaMinusCircle } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTimes, FaUpload, FaPowerOff } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { showLoader, hideLoader } from "../../../redux/slices/loaderSlice";
 import { showSuccess, showError, showConfirm } from "../../../utils/alertService";
+import TableComponent from "../../../components/global/TableComponent";
 
 import {
   createSubCategoryApi,
@@ -16,24 +17,21 @@ const SubCategories = () => {
   const fileRef = useRef(null);
   const dispatch = useDispatch();
 
-  const [subcats, setSubcats] = useState([]);
+  const [subcats, setSubcats]       = useState([]);
   const [categories, setCategories] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId]         = useState(null);
+  const [loading, setLoading]       = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(false);
-
-  const [name, setName] = useState("");
+  const [name, setName]             = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory]     = useState("");
+  const [image, setImage]           = useState(null);
+  const [preview, setPreview]       = useState(null);
 
-  const [image, setImage] = useState(null);
-  const [preview, setPreview] = useState(null);
-
-  // Helper to handle backend image URLs
   const getImageUrl = (item) => {
     const img = item?.image || item?.imageUrl || item?.thumbnail;
     if (!img) return "/logo.png";
@@ -47,9 +45,7 @@ const SubCategories = () => {
   const fetchCategories = async () => {
     try {
       const response = await getAllCategoriesApi(1, 100);
-      if (response?.success) {
-        setCategories(response?.data || []);
-      }
+      if (response?.success) setCategories(response?.data || []);
     } catch (error) {
       console.error("Fetch Categories Error:", error);
     }
@@ -58,18 +54,13 @@ const SubCategories = () => {
   const fetchSubCategories = async () => {
     try {
       setFetchLoading(true);
-      dispatch(showLoader());
       const response = await getAllSubCategoriesApi({ page: 1, limit: 100 });
-      if (response?.success) {
-        setSubcats(response?.data || []);
-      } else {
-        setSubcats([]);
-      }
-    } catch (error) {
+      if (response?.success) setSubcats(response?.data || []);
+      else setSubcats([]);
+    } catch {
       showError("Failed to load sub categories");
     } finally {
       setFetchLoading(false);
-      dispatch(hideLoader());
     }
   };
 
@@ -79,13 +70,9 @@ const SubCategories = () => {
   }, []);
 
   const resetForm = () => {
-    setName("");
-    setDescription("");
-    setCategory("");
-    setImage(null);
-    setPreview(null);
-    setIsEditMode(false);
-    setEditId(null);
+    setName(""); setDescription(""); setCategory("");
+    setImage(null); setPreview(null);
+    setIsEditMode(false); setEditId(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -116,9 +103,7 @@ const SubCategories = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !description.trim() || !category) {
-      return showError("All fields are required");
-    }
+    if (!name.trim() || !description.trim() || !category) return showError("All fields are required");
 
     try {
       setLoading(true);
@@ -130,8 +115,8 @@ const SubCategories = () => {
       formData.append("category", category);
       if (image) formData.append("image", image);
 
-      const response = isEditMode 
-        ? await updateSubCategoryApi(editId, formData) 
+      const response = isEditMode
+        ? await updateSubCategoryApi(editId, formData)
         : await createSubCategoryApi(formData);
 
       if (response?.success) {
@@ -139,12 +124,14 @@ const SubCategories = () => {
         const result = await showSuccess(response?.message || "Saved successfully");
         if (result.isConfirmed || result.isDismissed) {
           resetForm();
-          fetchSubCategories();
+          await fetchSubCategories();
         }
       } else {
+        dispatch(hideLoader());
         showError(response?.message || "Operation failed");
       }
-    } catch (error) {
+    } catch {
+      dispatch(hideLoader());
       showError("Something went wrong while saving");
     } finally {
       setLoading(false);
@@ -157,7 +144,6 @@ const SubCategories = () => {
       title: "Change Status?",
       text: "Toggle visibility for this sub-category?",
     });
-
     if (confirm.isConfirmed) {
       try {
         dispatch(showLoader());
@@ -166,7 +152,7 @@ const SubCategories = () => {
           await showSuccess("Status updated successfully");
           fetchSubCategories();
         }
-      } catch (error) {
+      } catch {
         showError("Update failed");
       } finally {
         dispatch(hideLoader());
@@ -174,134 +160,111 @@ const SubCategories = () => {
     }
   };
 
+  const COLUMNS = [
+    {
+      key: "name",
+      label: "Sub Category Info",
+      render: (val, row) => (
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 shrink-0">
+            <img src={getImageUrl(row)} className="w-full h-full object-cover" alt={val} />
+          </div>
+          <div>
+            <p className="font-bold text-[#0f172a] text-sm">{val || "N/A"}</p>
+            <p className="text-[#64748b] text-xs font-semibold mt-0.5 line-clamp-1 max-w-xs">
+              {row?.description || "No description provided."}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "category",
+      label: "Parent Category",
+      render: (val) => (
+        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider text-[#ff7e00] bg-orange-50 border border-orange-100/50">
+          {val?.name || "No Category"}
+        </span>
+      ),
+    },
+    {
+      key: "isActive",
+      label: "Status",
+      render: (val) => (
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${val !== false ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-rose-50 border-rose-200 text-rose-600"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${val !== false ? "bg-emerald-500" : "bg-rose-500"}`} />
+          {val !== false ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+    {
+      key: "_id",
+      label: "Actions",
+      render: (val, row) => (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => handleEdit(row)}
+            className="p-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-blue-600 rounded-xl transition-all cursor-pointer"
+            title="Edit"
+          >
+            <FaEdit size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(val)}
+            className={`p-3 rounded-xl border transition-all cursor-pointer ${row?.isActive !== false ? "bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100" : "bg-emerald-50 border-emerald-100 text-emerald-500 hover:bg-emerald-100"}`}
+            title="Toggle Status"
+          >
+            <FaPowerOff size={13} />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="p-4 sm:p-6 md:p-8 min-h-screen font-sans antialiased bg-[#f8fafc] text-[#1e293b]">
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-4xl font-black text-[#0f172a] tracking-tight">
-            Sub <span className="text-[#ff7e00]">Categories</span>
-          </h1>
-          <p className="text-[#64748b] text-xs sm:text-sm font-semibold mt-1">Manage products into specialized sub-groups</p>
-        </div>
+    <div className="p-4 sm:p-6 md:p-8 min-h-screen bg-[#f8fafc]">
 
-        <button
-          type="button"
-          onClick={() => { resetForm(); setShowModal(true); }}
-          className="w-full md:w-auto px-6 sm:px-8 py-3.5 bg-[#ff7e00] hover:bg-[#e06f00] text-white rounded-2xl font-bold shadow-[0_8px_25px_rgba(255,126,0,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <FaPlus size={14} /> Add Sub Category
-        </button>
-      </div>
+      <TableComponent
+        title={<div className="text-3xl">Sub <span className="text-[#ff7e00] text-3xl">Categories</span></div>}
+        subtitle="Manage products into specialized sub-groups"
+        columns={COLUMNS}
+        data={subcats}
+        loading={fetchLoading}
+        showSearch={true}
+        showIndex={true}
+        searchPlaceholder="Search sub categories..."
+        addButtonText="Add Sub Category"
+        onAdd={() => { resetForm(); setShowModal(true); }}
+        onRefresh={fetchSubCategories}
+      />
 
-      {/* TABLE CONTAINER */}
-      <div className="bg-white border border-slate-200 rounded-[2rem] shadow-[0_10px_30px_rgba(15,23,42,0.03)] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/75 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="p-5 pl-8">Sub Category Info</th>
-                <th className="p-5">Parent Category</th>
-                <th className="p-5 text-center">Status</th>
-                <th className="p-5 text-center">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-100">
-              {fetchLoading ? (
-                <tr>
-                  <td colSpan="4" className="p-10 text-center text-slate-400 font-semibold animate-pulse">
-                    Loading sub categories...
-                  </td>
-                </tr>
-              ) : subcats.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="p-10 text-center text-slate-400 font-semibold">
-                    No sub categories found
-                  </td>
-                </tr>
-              ) : (
-                subcats.map((item) => (
-                  <tr key={item?._id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-5 pl-8">
-                      <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 shadow-sm shrink-0">
-                          <img 
-                            src={getImageUrl(item)} 
-                            className="w-full h-full object-cover" 
-                            alt={item?.name} 
-                          />
-                        </div>
-                        <div>
-                          <p className="font-bold text-[#0f172a] text-base">{item?.name || "N/A"}</p>
-                          <p className="text-[#64748b] text-xs font-semibold mt-0.5 line-clamp-1 max-w-sm">
-                            {item?.description || "No description provided."}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="p-5">
-                      <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold uppercase tracking-wider text-[#ff7e00] bg-orange-50 border border-orange-100/50">
-                        {item?.category?.name || "No Category"}
-                      </span>
-                    </td>
-
-                    <td className="p-5 text-center">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border ${item?.isActive !== false ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-rose-50 border-rose-200 text-rose-600'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${item?.isActive !== false ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        {item?.isActive !== false ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-
-                    <td className="p-5 text-center">
-                      <div className="flex justify-center items-center gap-3">
-                        <button 
-                          type="button"
-                          onClick={() => handleEdit(item)} 
-                          className="p-3 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-blue-600 rounded-xl transition-all cursor-pointer flex items-center justify-center font-bold"
-                          title="Edit"
-                        >
-                          <FaEdit size={14} />
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => handleToggleStatus(item?._id)} 
-                          className={`p-3 rounded-xl border transition-all cursor-pointer ${item?.isActive !== false ? 'bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100 hover:border-rose-300' : 'bg-emerald-50 border-emerald-100 text-emerald-500 hover:bg-emerald-100 hover:border-emerald-300'}`}
-                          title="Toggle Status"
-                        >
-                          <FaPowerOff size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* MODAL SECTION */}
+      {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-          <div className="w-full max-w-lg bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl relative animate-in fade-in zoom-in duration-300">
-            
+<div className="fixed inset-0 z-[999] overflow-y-auto bg-slate-900/40 backdrop-blur-md">
+  <div className="min-h-screen flex items-start sm:items-center justify-center p-4 py-8">          <div className="w-full max-w-lg bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-2xl relative">
+
             <button type="button" onClick={closeModal} className="absolute top-6 right-6 text-slate-400 hover:text-[#0f172a] cursor-pointer p-1">
-                <FaTimes size={20} />
+              <FaTimes size={20} />
             </button>
 
-            <h2 className="text-3xl font-black text-[#0f172a] text-center mb-8">{isEditMode ? "Update" : "New"} Sub Category</h2>
+            <h2 className="text-3xl font-black text-[#0f172a] text-center mb-8">
+              {isEditMode ? "Update" : "New"} Sub Category
+            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold placeholder-slate-400" placeholder="e.g. Lipsticks" />
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold placeholder-slate-400"
+                  placeholder="e.g. Lipsticks" />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">Parent Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold cursor-pointer text-slate-700">
+                <select value={category} onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold cursor-pointer text-slate-700">
                   <option value="">Select Category</option>
                   {categories.map((cat) => (
                     <option key={cat?._id} value={cat?._id}>{cat?.name}</option>
@@ -311,22 +274,30 @@ const SubCategories = () => {
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">Description</label>
-                <textarea rows="3" value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold resize-none placeholder-slate-400" placeholder="Details..." />
+                <textarea rows="3" value={description} onChange={(e) => setDescription(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 text-[#0f172a] outline-none focus:bg-white focus:border-[#ff7e00] focus:ring-4 focus:ring-[#ff7e00]/10 font-bold resize-none placeholder-slate-400"
+                  placeholder="Details..." />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase text-[#64748b] tracking-wider pl-1">Sub Category Image</label>
-                <div onClick={() => fileRef.current.click()} className="flex items-center justify-center h-28 bg-slate-50 border border-dashed border-slate-300 rounded-2xl cursor-pointer overflow-hidden hover:border-[#ff7e00]">
-                  {preview ? <img src={preview} className="h-full w-full object-cover" /> : <FaUpload className="text-slate-400 text-2xl"/>}
+                <div onClick={() => fileRef.current.click()}
+                  className="flex items-center justify-center h-28 bg-slate-50 border border-dashed border-slate-300 rounded-2xl cursor-pointer overflow-hidden hover:border-[#ff7e00]">
+                  {preview
+                    ? <img src={preview} className="h-full w-full object-cover" alt="preview" />
+                    : <FaUpload className="text-slate-400 text-2xl" />}
                   <input ref={fileRef} type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full py-5 bg-[#ff7e00] hover:bg-[#e06f00] text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-lg transition-all disabled:opacity-50 mt-4 cursor-pointer">
+              <button type="submit" disabled={loading}
+                className="w-full py-5 bg-[#ff7e00] hover:bg-[#e06f00] text-white rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-lg transition-all disabled:opacity-50 mt-4 cursor-pointer">
                 {loading ? "Processing..." : isEditMode ? "Confirm Changes" : "Create Sub Category"}
               </button>
             </form>
           </div>
+        </div>
+        
         </div>
       )}
     </div>
